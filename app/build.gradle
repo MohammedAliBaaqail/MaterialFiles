@@ -61,7 +61,7 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8.toString()
+        jvmTarget = '1.8'
     }
     externalNativeBuild {
         cmake {
@@ -101,6 +101,28 @@ android {
         language {
             enableSplit = false
         }
+    }
+
+    // Fix for illegal unicode escape in generated AIDL files
+    tasks.withType(JavaCompile) {
+        doFirst {
+            // Copy our fixed IRemoteCallback.java over the generated one
+            copy {
+                from "${rootDir}/fixed-IRemoteCallback.java"
+                into "build/generated/aidl_source_output_dir/debug/out/me/zhanghai/android/files/util/"
+                rename { fileName -> "IRemoteCallback.java" }
+            }
+            // Also for release if needed
+            copy {
+                from "${rootDir}/fixed-IRemoteCallback.java"
+                into "build/generated/aidl_source_output_dir/release/out/me/zhanghai/android/files/util/"
+                rename { fileName -> "IRemoteCallback.java" }
+            }
+        }
+    }
+
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << "-Xlint:deprecation"
     }
 }
 
