@@ -811,8 +811,9 @@
     <string name="file_tag_filter_title">Filter by Tags</string>
     <string name="file_tag_added_to_filter">Tag added to filter</string>
     <string name="create">Create</string>
-    <string name="file_tag_delete_message">Are you sure you want to delete this tag? This will remove the tag from all files.</string>
-    <string name="file_tag_filter_mode_any">Match any selected tag</string>
-    <string name="file_tag_filter_mode_all">Match all selected tags</string>
+    <string name="file_tag_delete_message">Are you sure you want to delete this tag? This will remove it from all files.</string>
+    <string name="file_tag_filter_mode_all">Match all</string>
+    <string name="file_tag_filter_mode_any">Match any</string>
+    <string name="drag_to_reorder">Drag to reorder tags</string>
     <string name="color_picker_dialog_title">Choose Color</string>
 </resources>

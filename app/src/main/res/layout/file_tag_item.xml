@@ -36,5 +36,15 @@
             android:textColor="#FFFFFF" />
 
     </LinearLayout>
+    
+    <ImageView
+        android:id="@+id/dragHandle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:src="@drawable/ic_drag_handle_24dp"
+        android:contentDescription="@string/drag_to_reorder"
+        android:visibility="gone"
+        android:tint="?colorControlNormal" />
 
 </LinearLayout> 

@@ -1171,6 +1171,8 @@ private fun FileJob.copyForMove(
 @Throws(IOException::class)
 private fun FileJob.moveAtomically(source: Path, target: Path) {
     source.moveTo(target, LinkOption.NOFOLLOW_LINKS, StandardCopyOption.ATOMIC_MOVE)
+    // Preserve tags when moving files
+    me.zhanghai.android.files.file.FileTagManager.updatePathForFile(source, target)
 }
 
 @Throws(IOException::class)
@@ -1179,8 +1181,14 @@ private fun FileJob.moveByCopy(
     target: Path,
     transferInfo: TransferInfo,
     actionAllInfo: ActionAllInfo
-): Boolean =
-    copyOrMove(source, target, CopyMoveType.MOVE, false, true, transferInfo, actionAllInfo)
+): Boolean {
+    val result = copyOrMove(source, target, CopyMoveType.MOVE, false, true, transferInfo, actionAllInfo)
+    // Preserve tags when moving files by copy
+    if (result) {
+        me.zhanghai.android.files.file.FileTagManager.updatePathForFile(source, target)
+    }
+    return result
+}
 
 // @see https://github.com/GNOME/nautilus/blob/master/src/nautilus-file-operations.c copy_move_file
 @Throws(IOException::class)
@@ -1542,6 +1550,8 @@ class RenameFileJob(private val path: Path, private val newName: String) : FileJ
     override fun run() {
         val newPath = path.resolveSibling(newName)
         rename(path, newPath)
+        // Preserve tags when renaming files
+        me.zhanghai.android.files.file.FileTagManager.updatePathForFile(path, newPath)
     }
 }
 

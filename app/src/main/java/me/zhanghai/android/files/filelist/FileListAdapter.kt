@@ -16,6 +16,7 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import android.view.LayoutInflater
 import coil.dispose
 import coil.load
 import java8.nio.file.Path
@@ -45,6 +46,7 @@ import me.zhanghai.android.files.util.isMaterial3Theme
 import me.zhanghai.android.files.util.layoutInflater
 import me.zhanghai.android.files.util.valueCompat
 import java.util.Locale
+import android.util.Log
 
 class FileListAdapter(
     private val listener: Listener
@@ -224,9 +226,18 @@ class FileListAdapter(
                 isSelected = nameEllipsize == TextUtils.TruncateAt.MARQUEE
             }
         }
+        
+        // If this is just a tag update, refresh the tags view and return
+        if (payloads.contains(PAYLOAD_TAGS_CHANGED)) {
+            // Update the tags view if present
+            updateTagsView(holder, file)
+            return
+        }
+        
         if (payloads.isNotEmpty()) {
             return
         }
+        
         holder.itemLayout.apply {
             setOnClickListener {
                 if (selectedFiles.isEmpty()) {
@@ -321,13 +332,8 @@ class FileListAdapter(
         )
         holder.nameText.text = file.name
 
-        // Update tags
-        holder.tagsView?.apply {
-            setTags(FileTagManager.getTagsForFile(file.path))
-            setOnTagClickListener { tag ->
-                listener.onTagClick(tag)
-            }
-        }
+        // Always update the tags view when fully binding
+        updateTagsView(holder, file)
         
         // Set up popup menu click listener
         holder.popupMenu.setOnMenuItemClickListener {
@@ -385,6 +391,21 @@ class FileListAdapter(
         }
     }
 
+    private fun updateTagsView(holder: ViewHolder, file: FileItem) {
+        val tags = FileTagManager.getTagsForFile(file.path)
+        holder.tagsView?.apply {
+            if (tags.isNotEmpty()) {
+                visibility = View.VISIBLE
+                setTags(tags)
+                setOnTagClickListener { tag ->
+                    listener.onTagClick(tag)
+                }
+            } else {
+                visibility = View.GONE
+            }
+        }
+    }
+
     override fun getPopupText(view: View, position: Int): CharSequence {
         val file = getItem(position)
         return when (sortOptions.by) {
@@ -405,8 +426,17 @@ class FileListAdapter(
         filePositionMap.clear()
     }
 
+    fun refreshFileItemsWithUpdatedTags() {
+        Log.d("FileListAdapter", "Refreshing file items with updated tags")
+        // Notify items that they need to update their tag information
+        for (index in 0..<itemCount) {
+            notifyItemChanged(index, PAYLOAD_TAGS_CHANGED)
+        }
+    }
+
     companion object {
         private val PAYLOAD_STATE_CHANGED = Any()
+        private val PAYLOAD_TAGS_CHANGED = Any()
 
         private val CALLBACK = object : DiffUtil.ItemCallback<FileItem>() {
             override fun areItemsTheSame(oldItem: FileItem, newItem: FileItem): Boolean =

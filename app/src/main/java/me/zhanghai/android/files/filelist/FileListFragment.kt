@@ -1816,9 +1816,40 @@ class FileListFragment : Fragment(),
         get() = viewModel.selectedFiles
 
     override fun onTagsChanged() {
-        // Update the displayed tags without reloading the entire folder
+        // Get current file list
         val files = viewModel.fileListStateful.value ?: return
-        adapter.replaceListAndIsSearching(files, viewModel.searchState.isSearching)
+        
+        // If we have tag filters active, update them with latest tags
+        if (currentTagFilter.isNotEmpty()) {
+            // Re-fetch the tags to get latest data - find the same tags by ID
+            val updatedTagFilter = FileTagManager.getAllTags()
+                .filter { tag -> currentTagFilter.any { it.id == tag.id } }
+                .toSet()
+            
+            // If tags were deleted and none are left in the filter, clear the filter
+            if (updatedTagFilter.isEmpty() && currentTagFilter.isNotEmpty()) {
+                currentTagFilter = emptySet()
+                binding.filterTagsContainer.visibility = View.GONE
+                binding.breadcrumbLayout.visibility = View.VISIBLE
+                
+                // When all filter tags are deleted, show all files
+                adapter.replaceListAndIsSearching(files, viewModel.searchState.isSearching)
+                return
+            }
+            
+            // Update the filter with latest tag data (names, colors)
+            currentTagFilter = updatedTagFilter
+            
+            // Update the filter UI with latest tag data
+            updateFilterTagsView()
+            
+            // Apply the updated filters
+            val filteredFiles = files.filter { shouldShowFile(it) }
+            adapter.replaceListAndIsSearching(filteredFiles, viewModel.searchState.isSearching)
+        } else {
+            // Just refresh the tag display on files without changing the list
+            adapter.refreshFileItemsWithUpdatedTags()
+        }
     }
 
     override fun deleteFiles(files: FileItemSet) {

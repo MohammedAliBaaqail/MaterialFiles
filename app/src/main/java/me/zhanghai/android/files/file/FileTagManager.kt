@@ -7,6 +7,7 @@ package me.zhanghai.android.files.file
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.core.content.edit
 import java8.nio.file.Path
 import me.zhanghai.android.files.app.application
@@ -16,9 +17,18 @@ import org.json.JSONException
 import org.json.JSONObject
 
 object FileTagManager {
+    private const val TAG = "FileTagManager"
     private const val PREFS_NAME = "file_tags"
     private const val KEY_TAGS = "tags"
     private const val KEY_FILE_TAGS = "file_tags"
+    private const val KEY_TAG_ORDERS = "tag_orders"
+    
+    // JSON keys
+    private const val JSON_KEY_ID = "id"
+    private const val JSON_KEY_NAME = "name"
+    private const val JSON_KEY_COLOR = "color"
+    private const val JSON_KEY_TAG_IDS = "tagIds"
+    private const val JSON_KEY_ORDER = "order"
     
     private val prefs: SharedPreferences by lazy {
         application.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -26,6 +36,7 @@ object FileTagManager {
     
     private var tags: MutableList<FileTag> = loadTags()
     private var fileTagsMap: MutableMap<String, MutableSet<String>> = loadFileTags()
+    private var tagOrderMap: MutableMap<String, MutableMap<String, Int>> = loadTagOrders()
     
     fun getAllTags(): List<FileTag> = tags.toList()
     
@@ -55,21 +66,41 @@ object FileTagManager {
             tagIds.remove(tagId)
         }
         
+        // Remove this tag from all order maps
+        tagOrderMap.forEach { (_, orderMap) ->
+            orderMap.remove(tagId)
+        }
+        
         saveTags()
         saveFileTags()
+        saveTagOrders()
     }
     
     fun getTagsForFile(path: Path): List<FileTag> {
         val pathKey = path.toString()
         val tagIds = fileTagsMap[pathKey] ?: emptySet()
-        return tags.filter { it.id in tagIds }
+        val fileTags = tags.filter { it.id in tagIds }
+        
+        // Sort by custom order if available
+        val orderMap = tagOrderMap[pathKey]
+        return if (orderMap != null) {
+            fileTags.sortedBy { orderMap[it.id] ?: Int.MAX_VALUE }
+        } else {
+            fileTags
+        }
     }
     
     fun addTagToFile(tagId: String, path: Path) {
         val pathKey = path.toString()
         val tagIds = fileTagsMap.getOrPut(pathKey) { mutableSetOf() }
         if (tagIds.add(tagId)) {
+            // Add to order map with default position at the end
+            val orderMap = tagOrderMap.getOrPut(pathKey) { mutableMapOf() }
+            if (!orderMap.containsKey(tagId)) {
+                orderMap[tagId] = orderMap.values.maxOrNull()?.plus(1) ?: 0
+            }
             saveFileTags()
+            saveTagOrders()
         }
     }
     
@@ -79,8 +110,13 @@ object FileTagManager {
         if (tagIds.remove(tagId)) {
             if (tagIds.isEmpty()) {
                 fileTagsMap.remove(pathKey)
+                tagOrderMap.remove(pathKey)
+            } else {
+                // Remove from order map
+                tagOrderMap[pathKey]?.remove(tagId)
             }
             saveFileTags()
+            saveTagOrders()
         }
     }
     
@@ -88,15 +124,71 @@ object FileTagManager {
         val pathKey = path.toString()
         if (tagIds.isEmpty()) {
             fileTagsMap.remove(pathKey)
+            tagOrderMap.remove(pathKey)
         } else {
             fileTagsMap[pathKey] = tagIds.toMutableSet()
+            
+            // Ensure all tags have an order
+            val orderMap = tagOrderMap.getOrPut(pathKey) { mutableMapOf() }
+            tagIds.forEachIndexed { index, tagId ->
+                if (!orderMap.containsKey(tagId)) {
+                    orderMap[tagId] = index
+                }
+            }
+            
+            // Remove any tags from order map that are no longer associated with the file
+            orderMap.keys.toList().forEach { id ->
+                if (id !in tagIds) {
+                    orderMap.remove(id)
+                }
+            }
         }
         saveFileTags()
+        saveTagOrders()
     }
     
     fun hasTag(path: Path, tagId: String): Boolean {
         val pathKey = path.toString()
         return fileTagsMap[pathKey]?.contains(tagId) == true
+    }
+    
+    /**
+     * Updates the order of tags for a specific file
+     */
+    fun updateTagOrderForFile(tagIds: List<String>, path: Path) {
+        val pathKey = path.toString()
+        val orderMap = tagOrderMap.getOrPut(pathKey) { mutableMapOf() }
+        
+        // Update order for each tag
+        tagIds.forEachIndexed { index, tagId ->
+            orderMap[tagId] = index
+        }
+        
+        saveTagOrders()
+    }
+    
+    /**
+     * Updates file tags when a file is moved or renamed
+     */
+    fun updatePathForFile(oldPath: Path, newPath: Path) {
+        val oldPathKey = oldPath.toString()
+        val newPathKey = newPath.toString()
+        
+        // Move tags from old path to new path
+        fileTagsMap[oldPathKey]?.let { tagIds ->
+            Log.d(TAG, "Moving tags from $oldPathKey to $newPathKey")
+            fileTagsMap[newPathKey] = tagIds.toMutableSet()
+            fileTagsMap.remove(oldPathKey)
+            
+            // Move order information too
+            tagOrderMap[oldPathKey]?.let { orderMap ->
+                tagOrderMap[newPathKey] = orderMap.toMutableMap()
+                tagOrderMap.remove(oldPathKey)
+            }
+            
+            saveFileTags()
+            saveTagOrders()
+        }
     }
     
     private fun loadTags(): MutableList<FileTag> {
@@ -110,15 +202,16 @@ object FileTagManager {
                 val tagObj = jsonArray.getJSONObject(i)
                 list.add(
                     FileTag(
-                        id = tagObj.getString("id"),
-                        name = tagObj.getString("name"),
-                        color = tagObj.getInt("color")
+                        id = tagObj.getString(JSON_KEY_ID),
+                        name = tagObj.getString(JSON_KEY_NAME),
+                        color = tagObj.getInt(JSON_KEY_COLOR)
                     )
                 )
             }
             
             list
         } catch (e: JSONException) {
+            Log.e(TAG, "Error loading tags", e)
             mutableListOf()
         }
     }
@@ -128,9 +221,9 @@ object FileTagManager {
         
         for (tag in tags) {
             val tagObj = JSONObject().apply {
-                put("id", tag.id)
-                put("name", tag.name)
-                put("color", tag.color)
+                put(JSON_KEY_ID, tag.id)
+                put(JSON_KEY_NAME, tag.name)
+                put(JSON_KEY_COLOR, tag.color)
             }
             jsonArray.put(tagObj)
         }
@@ -160,6 +253,7 @@ object FileTagManager {
             
             map
         } catch (e: JSONException) {
+            Log.e(TAG, "Error loading file tags", e)
             mutableMapOf()
         }
     }
@@ -178,6 +272,50 @@ object FileTagManager {
         
         prefs.edit {
             putString(KEY_FILE_TAGS, jsonObj.toString())
+        }
+    }
+    
+    private fun loadTagOrders(): MutableMap<String, MutableMap<String, Int>> {
+        val tagOrdersJson = prefs.getString(KEY_TAG_ORDERS, null) ?: return mutableMapOf()
+        
+        return try {
+            val jsonObj = JSONObject(tagOrdersJson)
+            val map = mutableMapOf<String, MutableMap<String, Int>>()
+            
+            for (pathKey in jsonObj.keys()) {
+                val pathOrderObj = jsonObj.getJSONObject(pathKey)
+                val orderMap = mutableMapOf<String, Int>()
+                
+                for (tagId in pathOrderObj.keys()) {
+                    orderMap[tagId] = pathOrderObj.getInt(tagId)
+                }
+                
+                map[pathKey] = orderMap
+            }
+            
+            map
+        } catch (e: JSONException) {
+            Log.e(TAG, "Error loading tag orders", e)
+            mutableMapOf()
+        }
+    }
+    
+    private fun saveTagOrders() {
+        val jsonObj = JSONObject()
+        
+        for ((pathKey, orderMap) in tagOrderMap) {
+            if (orderMap.isEmpty()) continue
+            
+            val pathOrderObj = JSONObject()
+            orderMap.forEach { (tagId, order) ->
+                pathOrderObj.put(tagId, order)
+            }
+            
+            jsonObj.put(pathKey, pathOrderObj)
+        }
+        
+        prefs.edit {
+            putString(KEY_TAG_ORDERS, jsonObj.toString())
         }
     }
 } 

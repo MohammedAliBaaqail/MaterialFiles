@@ -11,6 +11,11 @@ import android.widget.TextView
 import me.zhanghai.android.files.R
 import me.zhanghai.android.files.file.FileTag
 
+/**
+ * A view that displays file tags in a horizontal scrollable container.
+ * Shows tags in the order provided, which corresponds to the custom order 
+ * defined in FileTagManager for each file.
+ */
 class TagsView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
@@ -40,6 +45,10 @@ class TagsView @JvmOverloads constructor(
         this.isFilterView = isFilterView
     }
 
+    /**
+     * Sets the tags to display in the specified order.
+     * The order of tags in the list will be preserved in the UI.
+     */
     fun setTags(tags: List<FileTag>) {
         container.removeAllViews()
         
