@@ -10,7 +10,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/itemLayout"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/two_line_list_item_height"
+    android:layout_height="wrap_content"
+    android:minHeight="@dimen/two_line_list_item_height"
     android:foreground="?selectableItemBackground"
     android:gravity="center_vertical"
     android:orientation="horizontal">
@@ -93,6 +94,13 @@
             android:maxLines="1"
             android:textAppearance="?textAppearanceListItemSecondary"
             android:textColor="?android:textColorSecondary" />
+
+        <me.zhanghai.android.files.ui.TagsView
+            android:id="@+id/tagsView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:visibility="gone" />
     </LinearLayout>
 
     <!--

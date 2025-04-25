@@ -54,18 +54,15 @@ class ColorPreferenceDialogFragment : MaterialPreferenceDialogFragmentCompat() {
         outState.putState(State(colors, checkedColor, defaultColor))
     }
 
-    override fun onCreateDialogView(context: Context): View? =
-        super.onCreateDialogView(context.withTheme(theme))
-
-    override fun onBindDialogView(view: View) {
-        super.onBindDialogView(view)
-
+    override fun onCreateDialogView(context: Context): View? {
+        val view = View.inflate(context.withTheme(theme), R.layout.color_preference_dialog, null)
         paletteGrid = ViewCompat.requireViewById(view, R.id.palette)
         paletteGrid.adapter = ColorPaletteAdapter(colors)
         val checkedPosition = colors.indexOf(checkedColor)
         if (checkedPosition != -1) {
             paletteGrid.setItemChecked(checkedPosition, true)
         }
+        return view
     }
 
     override fun onPrepareDialogBuilder(builder: AlertDialog.Builder) {

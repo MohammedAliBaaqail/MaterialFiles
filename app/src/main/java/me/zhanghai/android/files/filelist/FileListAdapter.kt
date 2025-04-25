@@ -14,6 +14,7 @@ import android.widget.TextView
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import coil.dispose
 import coil.load
@@ -27,6 +28,8 @@ import me.zhanghai.android.files.compat.isSingleLineCompat
 import me.zhanghai.android.files.databinding.FileItemGridBinding
 import me.zhanghai.android.files.databinding.FileItemListBinding
 import me.zhanghai.android.files.file.FileItem
+import me.zhanghai.android.files.file.FileTag
+import me.zhanghai.android.files.file.FileTagManager
 import me.zhanghai.android.files.file.fileSize
 import me.zhanghai.android.files.file.formatShort
 import me.zhanghai.android.files.file.iconRes
@@ -37,6 +40,7 @@ import me.zhanghai.android.files.settings.Settings
 import me.zhanghai.android.files.ui.AnimatedListAdapter
 import me.zhanghai.android.files.ui.CheckableForegroundLinearLayout
 import me.zhanghai.android.files.ui.CheckableItemBackground
+import me.zhanghai.android.files.ui.TagsView
 import me.zhanghai.android.files.util.isMaterial3Theme
 import me.zhanghai.android.files.util.layoutInflater
 import me.zhanghai.android.files.util.valueCompat
@@ -44,7 +48,8 @@ import java.util.Locale
 
 class FileListAdapter(
     private val listener: Listener
-) : AnimatedListAdapter<FileItem, FileListAdapter.ViewHolder>(CALLBACK), PopupTextProvider {
+) : AnimatedListAdapter<FileItem, FileListAdapter.ViewHolder>(FileItemCallback()),
+    PopupTextProvider {
     private var isSearching = false
 
     private lateinit var _viewType: FileViewType
@@ -53,7 +58,7 @@ class FileListAdapter(
         set(value) {
             _viewType = value
             if (!isSearching) {
-                super.replace(list, true)
+                replace(list, false)
             }
         }
 
@@ -64,7 +69,7 @@ class FileListAdapter(
             _sortOptions = value
             if (!isSearching) {
                 val sortedList = list.sortedWith(value.createComparator())
-                super.replace(sortedList, true)
+                replace(sortedList, false)
                 rebuildFilePositionMap()
             }
         }
@@ -142,22 +147,10 @@ class FileListAdapter(
         }
     }
 
-    override fun clear() {
-        super.clear()
-
-        rebuildFilePositionMap()
-    }
-
-    @Deprecated("", ReplaceWith("replaceListAndSearching(list, searching)"))
-    override fun replace(list: List<FileItem>, clear: Boolean) {
-        throw UnsupportedOperationException()
-    }
-
     fun replaceListAndIsSearching(list: List<FileItem>, isSearching: Boolean) {
-        val clear = this.isSearching != isSearching
         this.isSearching = isSearching
         val sortedList = if (!isSearching) list.sortedWith(sortOptions.createComparator()) else list
-        super.replace(sortedList, clear)
+        replace(sortedList, false)
         rebuildFilePositionMap()
     }
 
@@ -234,7 +227,6 @@ class FileListAdapter(
         if (payloads.isNotEmpty()) {
             return
         }
-        bindViewHolderAnimation(holder)
         holder.itemLayout.apply {
             setOnClickListener {
                 if (selectedFiles.isEmpty()) {
@@ -252,9 +244,9 @@ class FileListAdapter(
                 true
             }
         }
-        holder.iconLayout.setOnClickListener { selectFile(file) }
+        holder.iconLayout?.setOnClickListener { selectFile(file) }
         val iconRes = file.mimeType.iconRes
-        holder.iconImage.apply {
+        holder.iconImage?.apply {
             isVisible = true
             setImageResource(iconRes)
         }
@@ -281,12 +273,12 @@ class FileListAdapter(
                 load(path to attributes) {
                     listener { _, _ ->
                         val iconImage = holder.thumbnailIconImage ?: holder.iconImage
-                        iconImage.isVisible = false
+                        iconImage?.isVisible = false
                     }
                 }
             }
         }
-        holder.appIconBadgeImage.apply {
+        holder.appIconBadgeImage?.apply {
             dispose()
             setImageDrawable(null)
             val appDirectoryPackageName = file.appDirectoryPackageName
@@ -296,7 +288,7 @@ class FileListAdapter(
                 load(AppIconPackageName(appDirectoryPackageName!!))
             }
         }
-        holder.badgeImage.apply {
+        holder.badgeImage?.apply {
             val badgeIconRes = if (file.attributesNoFollowLinks.isSymbolicLink) {
                 if (file.isSymbolicLinkBroken) {
                     R.drawable.error_badge_icon_18dp
@@ -316,78 +308,21 @@ class FileListAdapter(
                 setImageDrawable(null)
             }
         }
+        val lastModificationTime = attributes.lastModifiedTime().toInstant()
+            .formatShort(holder.descriptionText?.context ?: holder.nameText.context)
+        val size = attributes.fileSize.formatHumanReadable(
+            holder.descriptionText?.context ?: holder.nameText.context
+        )
+        val descriptionSeparator = holder.descriptionText?.context?.getString(
+            R.string.file_item_description_separator
+        ) ?: holder.nameText.context.getString(R.string.file_item_description_separator)
+        holder.descriptionText?.text = listOf(lastModificationTime, size).joinToString(
+            descriptionSeparator
+        )
         holder.nameText.text = file.name
-        holder.descriptionText?.text = if (isDirectory) {
-            null
-        } else {
-            val context = holder.descriptionText!!.context
-            val lastModificationTime = attributes.lastModifiedTime().toInstant()
-                .formatShort(context)
-            val size = attributes.fileSize.formatHumanReadable(context)
-            val descriptionSeparator = context.getString(R.string.file_item_description_separator)
-            listOf(lastModificationTime, size).joinToString(descriptionSeparator)
-        }
-        val isArchivePath = path.isArchivePath
-        menu.findItem(R.id.action_copy)
-            .setTitle(if (isArchivePath) R.string.file_item_action_extract else R.string.copy)
-        menu.findItem(R.id.action_delete).isVisible = !isReadOnly
-        menu.findItem(R.id.action_rename).isVisible = !isReadOnly
-        menu.findItem(R.id.action_extract).isVisible = file.isArchiveFile
-        menu.findItem(R.id.action_archive).isVisible = !isArchivePath
-        menu.findItem(R.id.action_add_bookmark).isVisible = isDirectory
-        holder.popupMenu.setOnMenuItemClickListener {
-            when (it.itemId) {
-                R.id.action_open_with -> {
-                    listener.openFileWith(file)
-                    true
-                }
-                R.id.action_cut -> {
-                    listener.cutFile(file)
-                    true
-                }
-                R.id.action_copy -> {
-                    listener.copyFile(file)
-                    true
-                }
-                R.id.action_delete -> {
-                    listener.confirmDeleteFile(file)
-                    true
-                }
-                R.id.action_rename -> {
-                    listener.showRenameFileDialog(file)
-                    true
-                }
-                R.id.action_extract -> {
-                    listener.extractFile(file)
-                    true
-                }
-                R.id.action_archive -> {
-                    listener.showCreateArchiveDialog(file)
-                    true
-                }
-                R.id.action_share -> {
-                    listener.shareFile(file)
-                    true
-                }
-                R.id.action_copy_path -> {
-                    listener.copyPath(file)
-                    true
-                }
-                R.id.action_add_bookmark -> {
-                    listener.addBookmark(file)
-                    true
-                }
-                R.id.action_create_shortcut -> {
-                    listener.createShortcut(file)
-                    true
-                }
-                R.id.action_properties -> {
-                    listener.showPropertiesDialog(file)
-                    true
-                }
-                else -> false
-            }
-        }
+
+        // Update tags
+        holder.tagsView?.setTags(FileTagManager.getTagsForFile(file.path))
     }
 
     override fun getPopupText(view: View, position: Int): CharSequence {
@@ -404,6 +339,12 @@ class FileListAdapter(
     override val isAnimationEnabled: Boolean
         get() = Settings.FILE_LIST_ANIMATION.valueCompat
 
+    override fun clear() {
+        super.clear()
+        selectedFiles.clear()
+        filePositionMap.clear()
+    }
+
     companion object {
         private val PAYLOAD_STATE_CHANGED = Any()
 
@@ -419,17 +360,18 @@ class FileListAdapter(
     class ViewHolder private constructor(
         root: View,
         val itemLayout: CheckableForegroundLinearLayout,
-        val iconLayout: View,
-        val iconImage: ImageView,
+        val iconLayout: View?,
+        val iconImage: ImageView?,
         val directoryThumbnailImage: ImageView?,
         val thumbnailOutlineView: View?,
         val thumbnailIconImage: ImageView?,
         val thumbnailImage: ImageView,
-        val appIconBadgeImage: ImageView,
-        val badgeImage: ImageView,
+        val appIconBadgeImage: ImageView?,
+        val badgeImage: ImageView?,
         val nameText: TextView,
         val descriptionText: TextView?,
-        val menuButton: ImageButton
+        val menuButton: ImageButton,
+        val tagsView: TagsView?
     ) : RecyclerView.ViewHolder(root) {
         constructor(binding: FileItemListBinding) : this(
             binding.root,
@@ -444,23 +386,25 @@ class FileListAdapter(
             binding.badgeImage,
             binding.nameText,
             binding.descriptionText,
-            binding.menuButton
+            binding.menuButton,
+            binding.tagsView
         )
 
         constructor(binding: FileItemGridBinding) : this(
             binding.root,
             binding.itemLayout,
-            binding.iconLayout,
-            binding.iconImage,
+            null,
+            null,
             binding.directoryThumbnailImage,
             binding.thumbnailOutlineView,
             binding.thumbnailIconImage,
             binding.thumbnailImage,
-            binding.appIconBadgeImage,
-            binding.badgeImage,
+            null,
+            null,
             binding.nameText,
             null,
-            binding.menuButton
+            binding.menuButton,
+            binding.tagsView
         )
 
         lateinit var popupMenu: PopupMenu

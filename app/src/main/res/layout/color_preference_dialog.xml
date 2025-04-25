@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<GridView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/palette"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:choiceMode="singleChoice"
+    android:columnWidth="48dp"
+    android:gravity="center"
+    android:horizontalSpacing="8dp"
+    android:numColumns="auto_fit"
+    android:padding="16dp"
+    android:stretchMode="spacingWidth"
+    android:verticalSpacing="8dp" /> 

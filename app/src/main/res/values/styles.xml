@@ -67,4 +67,13 @@
         <item name="colorControlNormal">?android:textColorSecondary</item>
         <item name="searchViewStyle">@style/Widget.AppCompat.SearchView</item>
     </style>
+
+    <style name="AppTheme.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.App.Dialog</item>
+    </style>
+
+    <style name="ShapeAppearanceOverlay.App.Dialog" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">0dp</item>
+    </style>
 </resources>

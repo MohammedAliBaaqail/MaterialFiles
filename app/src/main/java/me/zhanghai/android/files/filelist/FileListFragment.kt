@@ -39,6 +39,7 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.view.GravityCompat
+import androidx.core.view.MenuProvider
 import androidx.core.view.isVisible
 import androidx.core.view.updatePaddingRelative
 import androidx.drawerlayout.widget.DrawerLayout
@@ -64,12 +65,15 @@ import me.zhanghai.android.files.databinding.FileListFragmentContentIncludeBindi
 import me.zhanghai.android.files.databinding.FileListFragmentIncludeBinding
 import me.zhanghai.android.files.databinding.FileListFragmentSpeedDialIncludeBinding
 import me.zhanghai.android.files.file.FileItem
+import me.zhanghai.android.files.file.FileTag
+import me.zhanghai.android.files.file.FileTagManager
 import me.zhanghai.android.files.file.MimeType
 import me.zhanghai.android.files.file.asMimeTypeOrNull
 import me.zhanghai.android.files.file.extension
 import me.zhanghai.android.files.file.fileProviderUri
 import me.zhanghai.android.files.file.isApk
 import me.zhanghai.android.files.file.isImage
+import me.zhanghai.android.files.file.isSupportedArchive
 import me.zhanghai.android.files.filejob.FileJobService
 import me.zhanghai.android.files.filelist.FileSortOptions.By
 import me.zhanghai.android.files.filelist.FileSortOptions.Order
@@ -132,16 +136,25 @@ import me.zhanghai.android.files.util.withChooser
 import me.zhanghai.android.files.viewer.image.ImageViewerActivity
 import kotlin.math.roundToInt
 
-class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.Listener,
-    ConfirmReplaceFileDialogFragment.Listener, OpenApkDialogFragment.Listener,
-    ConfirmDeleteFilesDialogFragment.Listener, CreateArchiveDialogFragment.Listener,
-    RenameFileDialogFragment.Listener, CreateFileDialogFragment.Listener,
-    CreateDirectoryDialogFragment.Listener, NavigateToPathDialogFragment.Listener,
-    NavigationFragment.Listener, ShowRequestAllFilesAccessRationaleDialogFragment.Listener,
+class FileListFragment : Fragment(),
+    BreadcrumbLayout.Listener,
+    FileListAdapter.Listener,
+    ConfirmReplaceFileDialogFragment.Listener,
+    OpenApkDialogFragment.Listener,
+    ConfirmDeleteFilesDialogFragment.Listener,
+    CreateArchiveDialogFragment.Listener,
+    RenameFileDialogFragment.Listener,
+    CreateFileDialogFragment.Listener,
+    CreateDirectoryDialogFragment.Listener,
+    NavigateToPathDialogFragment.Listener,
+    NavigationFragment.Listener,
+    ShowRequestAllFilesAccessRationaleDialogFragment.Listener,
     ShowRequestNotificationPermissionRationaleDialogFragment.Listener,
     ShowRequestNotificationPermissionInSettingsRationaleDialogFragment.Listener,
     ShowRequestStoragePermissionRationaleDialogFragment.Listener,
-    ShowRequestStoragePermissionInSettingsRationaleDialogFragment.Listener {
+    ShowRequestStoragePermissionInSettingsRationaleDialogFragment.Listener,
+    MenuProvider,
+    FileTagFilterDialog.Listener {
     private val requestAllFilesAccessLauncher = registerForActivityResult(
         RequestAllFilesAccessContract(), this::onRequestAllFilesAccessResult
     )
@@ -191,6 +204,9 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
         }
         viewModel.search(query)
     }
+
+    private var currentTagFilter: Set<FileTag> = emptySet()
+    private var isMatchAllTags: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -327,9 +343,7 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
                 else ->
                     if (path != null) {
                         val mimeType = intent.type?.asMimeTypeOrNull()
-                        if (mimeType != null && path.isArchiveFile(mimeType)) {
-                            path = path.createArchiveRootPath()
-                        }
+                        path = handleArchivePath(path, mimeType)
                     }
             }
             if (path == null) {
@@ -454,6 +468,14 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
                 }
                 true
             }
+            R.id.action_filter_tags -> {
+                FileTagFilterDialog.show(this)
+                true
+            }
+            R.id.action_manage_tags -> {
+                FileTagManagementDialogFragment.show(emptyList(), this)
+                true
+            }
             R.id.action_view_list -> {
                 viewModel.viewType = FileViewType.LIST
                 true
@@ -463,22 +485,27 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
                 true
             }
             R.id.action_sort_by_name -> {
+                item.isChecked = true
                 viewModel.setSortBy(By.NAME)
                 true
             }
             R.id.action_sort_by_type -> {
+                item.isChecked = true
                 viewModel.setSortBy(By.TYPE)
                 true
             }
             R.id.action_sort_by_size -> {
+                item.isChecked = true
                 viewModel.setSortBy(By.SIZE)
                 true
             }
             R.id.action_sort_by_last_modified -> {
+                item.isChecked = true
                 viewModel.setSortBy(By.LAST_MODIFIED)
                 true
             }
             R.id.action_sort_order_ascending -> {
+                item.isChecked = true
                 viewModel.setSortOrder(
                     if (!menuBinding.sortOrderAscendingItem.isChecked) {
                         Order.ASCENDING
@@ -489,7 +516,8 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
                 true
             }
             R.id.action_sort_directories_first -> {
-                viewModel.setSortDirectoriesFirst(!menuBinding.sortDirectoriesFirstItem.isChecked)
+                item.isChecked = !item.isChecked
+                viewModel.setSortDirectoriesFirst(item.isChecked)
                 true
             }
             R.id.action_view_sort_path_specific -> {
@@ -517,7 +545,8 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
                 true
             }
             R.id.action_show_hidden_files -> {
-                setShowHiddenFiles(!menuBinding.showHiddenFilesItem.isChecked)
+                item.isChecked = !item.isChecked
+                Settings.FILE_LIST_SHOW_HIDDEN_FILES.putValue(item.isChecked)
                 true
             }
             R.id.action_share -> {
@@ -538,6 +567,18 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
             }
             R.id.action_create_shortcut -> {
                 createShortcut()
+                true
+            }
+            R.id.action_tag_filter_any -> {
+                item.isChecked = true
+                isMatchAllTags = false
+                viewModel.reload()
+                true
+            }
+            R.id.action_tag_filter_all -> {
+                item.isChecked = true
+                isMatchAllTags = true
+                viewModel.reload()
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -610,9 +651,8 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
         }
         binding.emptyView.fadeToVisibilityUnsafe(stateful is Success && !hasFiles)
         if (files != null) {
-            updateAdapterFileList()
+            updateFileList()
         } else {
-            // This resets animation as well.
             adapter.clear()
         }
         if (stateful is Success) {
@@ -722,19 +762,18 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
         viewModel.reload()
     }
 
-    private fun setShowHiddenFiles(showHiddenFiles: Boolean) {
-        Settings.FILE_LIST_SHOW_HIDDEN_FILES.putValue(showHiddenFiles)
-    }
-
     private fun onShowHiddenFilesChanged(showHiddenFiles: Boolean) {
-        updateAdapterFileList()
+        updateFileList()
         updateShowHiddenFilesMenuItem()
     }
 
-    private fun updateAdapterFileList() {
+    private fun updateFileList() {
         var files = viewModel.fileListStateful.value ?: return
         if (!Settings.FILE_LIST_SHOW_HIDDEN_FILES.valueCompat) {
             files = files.filterNot { it.isHidden }
+        }
+        if (currentTagFilter.isNotEmpty()) {
+            files = files.filter { shouldShowFile(it) }
         }
         adapter.replaceListAndIsSearching(files, viewModel.searchState.isSearching)
     }
@@ -912,46 +951,51 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
         }
     }
 
-    private fun onOverlayActionModeMenuItemClicked(item: MenuItem): Boolean =
-        when (item.itemId) {
+    private fun onOverlayActionModeMenuItemClicked(item: MenuItem): Boolean {
+        return when (item.itemId) {
             R.id.action_open -> {
-                pickFiles(viewModel.selectedFiles)
+                openSelectedFiles()
                 true
             }
             R.id.action_create -> {
-                confirmReplaceFile(viewModel.selectedFiles.single())
+                showCreateFileDialog()
                 true
             }
             R.id.action_cut -> {
-                cutFiles(viewModel.selectedFiles)
+                cutFiles()
                 true
             }
             R.id.action_copy -> {
-                copyFiles(viewModel.selectedFiles)
+                copyFiles()
                 true
             }
             R.id.action_delete -> {
-                confirmDeleteFiles(viewModel.selectedFiles)
+                confirmDeleteFiles()
                 true
             }
             R.id.action_extract -> {
-                extractFiles(viewModel.selectedFiles)
+                extractFiles()
                 true
             }
             R.id.action_archive -> {
-                showCreateArchiveDialog(viewModel.selectedFiles)
+                showCreateArchiveDialog()
                 true
             }
             R.id.action_share -> {
-                shareFiles(viewModel.selectedFiles)
+                shareFiles()
                 true
             }
             R.id.action_select_all -> {
                 selectAllFiles()
                 true
             }
+            R.id.action_manage_tags -> {
+                FileTagManagementDialogFragment.show(viewModel.selectedFiles.toList(), this)
+                true
+            }
             else -> false
         }
+    }
 
     private fun onOverlayActionModeFinished() {
         viewModel.clearSelectedFiles()
@@ -972,9 +1016,17 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
         pickFiles(fileItemSetOf(file))
     }
 
+    private fun cutFiles() {
+        cutFiles(viewModel.selectedFiles)
+    }
+
     private fun cutFiles(files: FileItemSet) {
         viewModel.addToPasteState(false, files)
         viewModel.selectFiles(files, false)
+    }
+
+    private fun copyFiles() {
+        copyFiles(viewModel.selectedFiles)
     }
 
     private fun copyFiles(files: FileItemSet) {
@@ -982,13 +1034,16 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
         viewModel.selectFiles(files, false)
     }
 
+    private fun confirmDeleteFiles() {
+        confirmDeleteFiles(viewModel.selectedFiles)
+    }
+
     private fun confirmDeleteFiles(files: FileItemSet) {
         ConfirmDeleteFilesDialogFragment.show(files, this)
     }
 
-    override fun deleteFiles(files: FileItemSet) {
-        FileJobService.delete(makePathListForJob(files), requireContext())
-        viewModel.selectFiles(files, false)
+    private fun extractFiles() {
+        extractFiles(viewModel.selectedFiles)
     }
 
     private fun extractFiles(files: FileItemSet) {
@@ -996,8 +1051,21 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
         viewModel.selectFiles(files, false)
     }
 
+    private fun showCreateArchiveDialog() {
+        showCreateArchiveDialog(viewModel.selectedFiles)
+    }
+
     private fun showCreateArchiveDialog(files: FileItemSet) {
         CreateArchiveDialogFragment.show(files, this)
+    }
+
+    private fun shareFiles() {
+        shareFiles(viewModel.selectedFiles)
+    }
+
+    private fun shareFiles(files: FileItemSet) {
+        shareFiles(files.map { it.path }, files.map { it.mimeType })
+        viewModel.selectFiles(files, false)
     }
 
     override fun archive(
@@ -1011,11 +1079,6 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
         FileJobService.archive(
             makePathListForJob(files), archiveFile, format, filter, password, requireContext()
         )
-        viewModel.selectFiles(files, false)
-    }
-
-    private fun shareFiles(files: FileItemSet) {
-        shareFiles(files.map { it.path }, files.map { it.mimeType })
         viewModel.selectFiles(files, false)
     }
 
@@ -1621,6 +1684,74 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
         }
     }
 
+    override fun onTagFilterChanged(selectedTags: Set<FileTag>, matchAll: Boolean) {
+        currentTagFilter = selectedTags
+        isMatchAllTags = matchAll
+        viewModel.reload()
+    }
+
+    private fun shouldShowFile(file: FileItem): Boolean {
+        if (currentTagFilter.isEmpty()) {
+            return true
+        }
+        val fileTags = FileTagManager.getTagsForFile(file.path)
+        return if (isMatchAllTags) {
+            currentTagFilter.all { it in fileTags }
+        } else {
+            currentTagFilter.any { it in fileTags }
+        }
+    }
+
+    private fun isArchivePath(path: Path, mimeType: MimeType): Boolean {
+        return path.isArchivePath || (mimeType.isSupportedArchive && !path.isArchivePath)
+    }
+
+    private fun handleArchivePath(path: Path, mimeType: MimeType?): Path {
+        if (mimeType != null && isArchivePath(path, mimeType)) {
+            return path.createArchiveRootPath()
+        }
+        return path
+    }
+
+    override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+        menuBinding = MenuBinding.inflate(menu, menuInflater)
+    }
+
+    override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+        return when (menuItem.itemId) {
+            android.R.id.home -> {
+                binding.drawerLayout?.openDrawer(GravityCompat.START)
+                if (binding.persistentDrawerLayout != null) {
+                    Settings.FILE_LIST_PERSISTENT_DRAWER_OPEN.putValue(
+                        !Settings.FILE_LIST_PERSISTENT_DRAWER_OPEN.valueCompat
+                    )
+                }
+                true
+            }
+            else -> onOptionsItemSelected(menuItem)
+        }
+    }
+
+    override fun getCurrentTagFilter(): Set<FileTag> = currentTagFilter
+
+    override fun isMatchAllTags(): Boolean = isMatchAllTags
+
+    override fun deleteFiles(files: FileItemSet) {
+        FileJobService.delete(makePathListForJob(files), requireContext())
+        viewModel.selectFiles(files, false)
+    }
+
+    private fun openSelectedFiles() {
+        val files = viewModel.selectedFiles
+        for (file in files) {
+            openFile(file)
+        }
+        viewModel.selectFiles(files, false)
+    }
+
+    private val selectedFiles: FileItemSet
+        get() = viewModel.selectedFiles
+
     companion object {
         private const val ACTION_VIEW_DOWNLOADS =
             "me.zhanghai.android.files.intent.action.VIEW_DOWNLOADS"
@@ -1721,8 +1852,10 @@ class FileListFragment : Fragment(), BreadcrumbLayout.Listener, FileListAdapter.
             fun inflate(menu: Menu, inflater: MenuInflater): MenuBinding {
                 inflater.inflate(R.menu.file_list, menu)
                 return MenuBinding(
-                    menu, menu.findItem(R.id.action_search), menu.findItem(R.id.action_view_sort),
-                    menu.findItem(R.id.action_view_list), menu.findItem(R.id.action_view_grid),
+                    menu, menu.findItem(R.id.action_search),
+                    menu.findItem(R.id.action_view_sort),
+                    menu.findItem(R.id.action_view_list),
+                    menu.findItem(R.id.action_view_grid),
                     menu.findItem(R.id.action_sort_by_name),
                     menu.findItem(R.id.action_sort_by_type),
                     menu.findItem(R.id.action_sort_by_size),

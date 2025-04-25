@@ -37,6 +37,7 @@
     <string name="retry">Retry</string>
     <string name="save">Save</string>
     <string name="search">Search</string>
+    <string name="sort_by">Sort by</string>
     <string name="select">Select</string>
     <string name="select_all">Select all</string>
     <string name="share">Share</string>
@@ -60,11 +61,11 @@
 
     <string name="all_files_access_rationale_message">App needs access to manage all files. Please allow the access in the upcoming system setting.</string>
     <!-- The allow button before Android 10 was in all-caps. -->
-    <string name="storage_permission_rationale_message">App needs permission to access files. Please click “ALLOW” in the upcoming system dialog.</string>
-    <string name="storage_permission_permanently_denied_message">App needs permission to access files. Please grant the “Storage” permission in system settings.</string>
+    <string name="storage_permission_rationale_message">App needs permission to access files. Please click "ALLOW" in the upcoming system dialog.</string>
+    <string name="storage_permission_permanently_denied_message">App needs permission to access files. Please grant the "Storage" permission in system settings.</string>
     <!-- The allow button is in sentence case now. -->
-    <string name="notification_permission_rationale_message">App needs permission to post notifications about file operations. Please click “Allow” in the upcoming system dialog.</string>
-    <string name="notification_permission_permanently_denied_message">App needs permission to post notifications about file operations. Please grant the “Notification” permission in system settings.</string>
+    <string name="notification_permission_rationale_message">App needs permission to post notifications about file operations. Please click "Allow" in the upcoming system dialog.</string>
+    <string name="notification_permission_permanently_denied_message">App needs permission to post notifications about file operations. Please grant the "Notification" permission in system settings.</string>
 
     <string name="notification_channel_background_activity_start_name">Actions while background</string>
     <string name="notification_channel_background_activity_start_description">Take actions while app is in the background</string>
@@ -74,44 +75,44 @@
     <string name="notification_channel_ftp_server_description">Display and control the FTP server</string>
 
     <string name="file_action_archive_password_title">Password required</string>
-    <string name="file_action_archive_password_message_format">“%1$s” is password-protected.</string>
+    <string name="file_action_archive_password_message_format">"%1$s" is password-protected.</string>
     <string name="file_action_archive_password_error_empty">Password cannot be empty</string>
 
     <plurals name="file_job_archive_scan_notification_title_format">
         <item quantity="one">Preparing to compress %1$,d file (%2$s)</item>
         <item quantity="other">Preparing to compress %1$,d files (%2$s)</item>
     </plurals>
-    <string name="file_job_archive_notification_title_one_format">Compressing “%1$s” into “%2$s”</string>
+    <string name="file_job_archive_notification_title_one_format">Compressing "%1$s" into "%2$s"</string>
     <plurals name="file_job_archive_notification_title_multiple_format">
-        <item quantity="one">Compressing %1$,d file into “%2$s”</item>
-        <item quantity="other">Compressing %1$,d files into “%2$s”</item>
+        <item quantity="one">Compressing %1$,d file into "%2$s"</item>
+        <item quantity="other">Compressing %1$,d files into "%2$s"</item>
     </plurals>
     <plurals name="file_job_copy_scan_notification_title_format">
         <item quantity="one">Preparing to copy %1$,d file (%2$s)</item>
         <item quantity="other">Preparing to copy %1$,d files (%2$s)</item>
     </plurals>
-    <string name="file_job_copy_notification_title_one_format">Copying “%1$s” to “%2$s”</string>
+    <string name="file_job_copy_notification_title_one_format">Copying "%1$s" to "%2$s"</string>
     <plurals name="file_job_copy_notification_title_multiple_format">
-        <item quantity="one">Copying %1$,d file to “%2$s”</item>
-        <item quantity="other">Copying %1$,d files to “%2$s”</item>
+        <item quantity="one">Copying %1$,d file to "%2$s"</item>
+        <item quantity="other">Copying %1$,d files to "%2$s"</item>
     </plurals>
     <plurals name="file_job_extract_scan_notification_title_format">
         <item quantity="one">Preparing to extract %1$,d file (%2$s)</item>
         <item quantity="other">Preparing to extract %1$,d files (%2$s)</item>
     </plurals>
-    <string name="file_job_extract_notification_title_one_format">Extracting “%1$s” to “%2$s”</string>
+    <string name="file_job_extract_notification_title_one_format">Extracting "%1$s" to "%2$s"</string>
     <plurals name="file_job_extract_notification_title_multiple_format">
-        <item quantity="one">Extracting %1$,d file to “%2$s”</item>
-        <item quantity="other">Extracting %1$,d files to “%2$s”</item>
+        <item quantity="one">Extracting %1$,d file to "%2$s"</item>
+        <item quantity="other">Extracting %1$,d files to "%2$s"</item>
     </plurals>
     <plurals name="file_job_move_scan_notification_title_format">
         <item quantity="one">Preparing to move %1$,d file (%2$s)</item>
         <item quantity="other">Preparing to move %1$,d files (%2$s)</item>
     </plurals>
-    <string name="file_job_move_notification_title_one_format">Moving “%1$s” to “%2$s”</string>
+    <string name="file_job_move_notification_title_one_format">Moving "%1$s" to "%2$s"</string>
     <plurals name="file_job_move_notification_title_multiple_format">
-        <item quantity="one">Moving %1$,d file to “%2$s”</item>
-        <item quantity="other">Moving %1$,d files to “%2$s”</item>
+        <item quantity="one">Moving %1$,d file to "%2$s"</item>
+        <item quantity="other">Moving %1$,d files to "%2$s"</item>
     </plurals>
     <string name="file_job_transfer_size_notification_text_one_format">%1$s / %2$s</string>
     <string name="file_job_transfer_size_notification_text_multiple_format">%1$,d / %2$,d</string>
@@ -119,7 +120,7 @@
         <item quantity="one">Preparing to delete %1$,d file</item>
         <item quantity="other">Preparing to delete %1$,d files</item>
     </plurals>
-    <string name="file_job_delete_notification_title_one_format">Deleting “%1$s”</string>
+    <string name="file_job_delete_notification_title_one_format">Deleting "%1$s"</string>
     <plurals name="file_job_delete_notification_title_multiple_format">
         <item quantity="one">Deleting %1$,d file</item>
         <item quantity="other">Deleting %1$,d files</item>
@@ -128,7 +129,7 @@
         <item quantity="one">Preparing to change owner for %1$,d file</item>
         <item quantity="other">Preparing to change owner for %1$,d files</item>
     </plurals>
-    <string name="file_job_set_owner_notification_title_one_format">Changing owner for “%1$s”</string>
+    <string name="file_job_set_owner_notification_title_one_format">Changing owner for "%1$s"</string>
     <plurals name="file_job_set_owner_notification_title_multiple_format">
         <item quantity="one">Changing owner for %1$,d file</item>
         <item quantity="other">Changing owner for %1$,d files</item>
@@ -137,7 +138,7 @@
         <item quantity="one">Preparing to change group for %1$,d file</item>
         <item quantity="other">Preparing to change group for %1$,d files</item>
     </plurals>
-    <string name="file_job_set_group_notification_title_one_format">Changing group for “%1$s”</string>
+    <string name="file_job_set_group_notification_title_one_format">Changing group for "%1$s"</string>
     <plurals name="file_job_set_group_notification_title_multiple_format">
         <item quantity="one">Changing group for %1$,d file</item>
         <item quantity="other">Changing group for %1$,d files</item>
@@ -146,7 +147,7 @@
         <item quantity="one">Preparing to change mode for %1$,d file</item>
         <item quantity="other">Preparing to change mode for %1$,d files</item>
     </plurals>
-    <string name="file_job_set_mode_notification_title_one_format">Changing mode for “%1$s”</string>
+    <string name="file_job_set_mode_notification_title_one_format">Changing mode for "%1$s"</string>
     <plurals name="file_job_set_mode_notification_title_multiple_format">
         <item quantity="one">Changing mode for %1$,d file</item>
         <item quantity="other">Changing mode for %1$,d files</item>
@@ -155,7 +156,7 @@
         <item quantity="one">Preparing to change SELinux context for %1$,d file</item>
         <item quantity="other">Preparing to change SELinux context for %1$,d files</item>
     </plurals>
-    <string name="file_job_set_selinux_context_notification_title_one_format">Changing SELinux context for “%1$s”</string>
+    <string name="file_job_set_selinux_context_notification_title_one_format">Changing SELinux context for "%1$s"</string>
     <plurals name="file_job_set_selinux_context_notification_title_multiple_format">
         <item quantity="one">Changing SELinux context for %1$,d file</item>
         <item quantity="other">Changing SELinux context for %1$,d files</item>
@@ -164,15 +165,15 @@
         <item quantity="one">Preparing to restore SELinux context for %1$,d file</item>
         <item quantity="other">Preparing to restore SELinux context for %1$,d files</item>
     </plurals>
-    <string name="file_job_restore_selinux_context_notification_title_one_format">Restoring SELinux context for “%1$s”</string>
+    <string name="file_job_restore_selinux_context_notification_title_one_format">Restoring SELinux context for "%1$s"</string>
     <plurals name="file_job_restore_selinux_context_notification_title_multiple_format">
         <item quantity="one">Restoring SELinux context for %1$,d file</item>
         <item quantity="other">Restoring SELinux context for %1$,d files</item>
     </plurals>
     <string name="file_job_transfer_count_notification_text_multiple_format">%1$,d / %2$,d</string>
-    <string name="file_job_write_notification_title_format">Writing “%1$s”</string>
+    <string name="file_job_write_notification_title_format">Writing "%1$s"</string>
     <string name="file_job_create_error_title">Error while creating</string>
-    <string name="file_job_create_error_message_format">There was an error creating “%1$s”.\n%2$s</string>
+    <string name="file_job_create_error_message_format">There was an error creating "%1$s".\n%2$s</string>
     <string name="file_job_cannot_copy_into_itself_title">Cannot copy a folder into itself</string>
     <string name="file_job_cannot_extract_into_itself_title">Cannot extract a folder into itself</string>
     <string name="file_job_cannot_move_into_itself_title">Cannot move a folder into itself</string>
@@ -181,11 +182,11 @@
     <string name="file_job_cannot_extract_over_itself_title">Cannot extract a file over itself</string>
     <string name="file_job_cannot_move_over_itself_title">Cannot move a file over itself</string>
     <string name="file_job_cannot_copy_move_over_itself_message">The source file would be overwritten by the destination.</string>
-    <string name="file_job_replace_title_format">Replace file “%1$s”?</string>
-    <string name="file_job_replace_message_format">Another file with the same name already exists in “%1$s”.\nReplacing it will overwrite its content.</string>
+    <string name="file_job_replace_title_format">Replace file "%1$s"?</string>
+    <string name="file_job_replace_message_format">Another file with the same name already exists in "%1$s".\nReplacing it will overwrite its content.</string>
     <string name="file_job_replace_target_name">Original file</string>
     <string name="file_job_replace_source_name">Replace with</string>
-    <string name="file_job_merge_title_format">Merge folder “%1$s”?</string>
+    <string name="file_job_merge_title_format">Merge folder "%1$s"?</string>
     <string name="file_job_merge_copy_message_format">Merging will ask for confirmation before replacing any files in the folder that conflict with the files being copied.</string>
     <string name="file_job_merge_extract_message_format">Merging will ask for confirmation before replacing any files in the folder that conflict with the files being extracted.</string>
     <string name="file_job_merge_move_message_format">Merging will ask for confirmation before replacing any files in the folder that conflict with the files being moved.</string>
@@ -193,56 +194,56 @@
     <string name="file_job_merge_source_name">Merge with</string>
     <string name="file_job_conflict_show_name">Select a new name for the destination</string>
     <string name="file_job_conflict_name_hint">New name</string>
-    <string name="file_job_archive_error_title_format">Error while compressing “%1$s”</string>
-    <string name="file_job_archive_error_message_format">There was an error compressing the file into “%1$s”.\n%2$s</string>
-    <string name="file_job_copy_error_title_format">Error while copying “%1$s”</string>
-    <string name="file_job_copy_error_message_format">There was an error copying the file into “%1$s”.\n%2$s</string>
-    <string name="file_job_extract_error_title_format">Error while extracting “%1$s”</string>
-    <string name="file_job_extract_error_message_format">There was an error extracting the file into “%1$s”.\n%2$s</string>
-    <string name="file_job_move_error_title_format">Error while moving “%1$s”</string>
-    <string name="file_job_move_error_message_format">There was an error moving the file into “%1$s”.\n%2$s</string>
+    <string name="file_job_archive_error_title_format">Error while compressing "%1$s"</string>
+    <string name="file_job_archive_error_message_format">There was an error compressing the file into "%1$s".\n%2$s</string>
+    <string name="file_job_copy_error_title_format">Error while copying "%1$s"</string>
+    <string name="file_job_copy_error_message_format">There was an error copying the file into "%1$s".\n%2$s</string>
+    <string name="file_job_extract_error_title_format">Error while extracting "%1$s"</string>
+    <string name="file_job_extract_error_message_format">There was an error extracting the file into "%1$s".\n%2$s</string>
+    <string name="file_job_move_error_title_format">Error while moving "%1$s"</string>
+    <string name="file_job_move_error_message_format">There was an error moving the file into "%1$s".\n%2$s</string>
     <string name="file_job_delete_error_title">Error while deleting</string>
-    <string name="file_job_delete_error_message_format">There was an error deleting “%1$s”.\n%2$s</string>
-    <string name="file_job_rename_error_title_format">Error while renaming “%1$s”</string>
-    <string name="file_job_rename_error_message_format">There was an error renaming the file to “%1$s”.\n%2$s</string>
-    <string name="file_job_set_owner_error_title_format">Error while changing owner for “%1$s”</string>
-    <string name="file_job_set_owner_error_message_format">There was an error changing the owner to “%1$s”.\n%2$s</string>
-    <string name="file_job_set_group_error_title_format">Error while changing group for “%1$s”</string>
-    <string name="file_job_set_group_error_message_format">There was an error changing the group to “%1$s”.\n%2$s</string>
-    <string name="file_job_set_mode_error_title_format">Error while changing mode for “%1$s”</string>
-    <string name="file_job_set_mode_error_message_format">There was an error changing the mode to “%1$s”.\n%2$s</string>
-    <string name="file_job_set_selinux_context_error_title_format">Error while changing SELinux context for “%1$s”</string>
-    <string name="file_job_set_selinux_context_error_message_format">There was an error changing the SELinux context to “%1$s”.\n%2$s</string>
+    <string name="file_job_delete_error_message_format">There was an error deleting "%1$s".\n%2$s</string>
+    <string name="file_job_rename_error_title_format">Error while renaming "%1$s"</string>
+    <string name="file_job_rename_error_message_format">There was an error renaming the file to "%1$s".\n%2$s</string>
+    <string name="file_job_set_owner_error_title_format">Error while changing owner for "%1$s"</string>
+    <string name="file_job_set_owner_error_message_format">There was an error changing the owner to "%1$s".\n%2$s</string>
+    <string name="file_job_set_group_error_title_format">Error while changing group for "%1$s"</string>
+    <string name="file_job_set_group_error_message_format">There was an error changing the group to "%1$s".\n%2$s</string>
+    <string name="file_job_set_mode_error_title_format">Error while changing mode for "%1$s"</string>
+    <string name="file_job_set_mode_error_message_format">There was an error changing the mode to "%1$s".\n%2$s</string>
+    <string name="file_job_set_selinux_context_error_title_format">Error while changing SELinux context for "%1$s"</string>
+    <string name="file_job_set_selinux_context_error_message_format">There was an error changing the SELinux context to "%1$s".\n%2$s</string>
     <string name="file_job_restore_selinux_context_error_title">Error while restoring SELinux context</string>
-    <string name="file_job_restore_selinux_context_error_message_format">There was an error restoring the SELinux context for “%1$s”.\n%2$s</string>
+    <string name="file_job_restore_selinux_context_error_message_format">There was an error restoring the SELinux context for "%1$s".\n%2$s</string>
     <string name="file_job_write_error_title">Error while writing</string>
-    <string name="file_job_write_error_message_format">There was an error writing “%1$s”.\n%2$s</string>
-    <string name="file_job_get_information_error_message_format">There was an error getting information about “%1$s”.</string>
-    <string name="file_job_remount_format">Remount “%1$s” as read-write</string>
-    <string name="file_job_remount_loading_format">Remounting “%1$s” as read-write…</string>
-    <string name="file_job_remount_success_format">“%1$s” has been remounted as read-write</string>
+    <string name="file_job_write_error_message_format">There was an error writing "%1$s".\n%2$s</string>
+    <string name="file_job_get_information_error_message_format">There was an error getting information about "%1$s".</string>
+    <string name="file_job_remount_format">Remount "%1$s" as read-write</string>
+    <string name="file_job_remount_loading_format">Remounting "%1$s" as read-write…</string>
+    <string name="file_job_remount_success_format">"%1$s" has been remounted as read-write</string>
     <string name="file_job_action_all">Apply this action to all files</string>
 
     <string name="file_open_apk_message">This file is an Android package. Do you want to install it, or view its contents?</string>
     <string name="file_edit_title" translatable="false">@string/edit</string>
     <string name="file_open_as_title">Open as…</string>
-    <string name="file_open_as_title_format">Open “%1$s” as</string>
+    <string name="file_open_as_title_format">Open "%1$s" as</string>
     <string name="file_open_as_type_text">Text</string>
     <string name="file_open_as_type_image">Image</string>
     <string name="file_open_as_type_audio">Audio</string>
     <string name="file_open_as_type_video">Video</string>
     <string name="file_open_as_type_directory">Folder</string>
     <string name="file_open_as_type_any">Other</string>
-    <string name="file_install_apk_from_background_title_format">“%1$s” is ready to be installed</string>
+    <string name="file_install_apk_from_background_title_format">"%1$s" is ready to be installed</string>
     <string name="file_install_apk_from_background_text">Tap to install</string>
-    <string name="file_open_from_background_title_format">“%1$s” is ready to be opened</string>
+    <string name="file_open_from_background_title_format">"%1$s" is ready to be opened</string>
     <string name="file_open_from_background_text">Tap to open</string>
     <string name="file_name_error_empty">File name cannot be empty</string>
     <string name="file_name_error_invalid">Invalid file name</string>
     <string name="file_name_error_already_exists">A file with this name already exists</string>
-    <string name="file_replace_message_format">Replace “%1$s”?</string>
-    <string name="file_delete_message_file_format">Delete “%1$s”?</string>
-    <string name="file_delete_message_directory_format">Delete folder “%1$s” and its contents?</string>
+    <string name="file_replace_message_format">Replace "%1$s"?</string>
+    <string name="file_delete_message_file_format">Delete "%1$s"?</string>
+    <string name="file_delete_message_directory_format">Delete folder "%1$s" and its contents?</string>
     <plurals name="file_delete_message_multiple_files_format">
         <item quantity="one">Delete %1$,d file?</item>
         <item quantity="other">Delete %1$,d files?</item>
@@ -312,7 +313,7 @@
     <string name="file_list_create_file_name_hint">File name</string>
     <string name="file_list_create_file_name_error_empty" translatable="false">@string/file_name_error_empty</string>
     <string name="file_list_create_file_name_error_invalid" translatable="false">@string/file_name_error_invalid</string>
-    <string name="file_list_open_current_directory_format">Select “%1$s”</string>
+    <string name="file_list_open_current_directory_format">Select "%1$s"</string>
     <string name="file_list_paste_move_title_format">Moving %1$,d</string>
     <string name="file_list_paste_copy_title_format">Copying %1$,d</string>
     <string name="file_list_paste_extract_title_format">Extracting %1$,d</string>
@@ -330,7 +331,7 @@
     <string name="file_item_action_create_shortcut" translatable="false">@string/file_list_action_create_shortcut</string>
     <string name="file_item_action_properties">Properties</string>
 
-    <string name="file_properties_title_format">“%1$s” properties</string>
+    <string name="file_properties_title_format">"%1$s" properties</string>
     <string name="file_properties_basic">Basic</string>
     <string name="file_properties_basic_name">Name</string>
     <string name="file_properties_basic_type">Type</string>
@@ -377,7 +378,7 @@
         <item>Set GID</item>
         <item>Sticky bit</item>
     </string-array>
-    <string name="file_properties_permission_set_mode_uppercase_x">Don’t add “Execute” for enclosed files</string>
+    <string name="file_properties_permission_set_mode_uppercase_x">Don\'t add \"Execute\" for enclosed files</string>
     <string name="file_properties_permission_selinux_context">SELinux Context</string>
     <string name="file_properties_permission_set_selinux_context_title">Change SELinux context</string>
     <string name="file_properties_permission_set_selinux_context_restore">Restore</string>
@@ -699,7 +700,7 @@
     <string name="image_viewer_delete_message_format" translatable="false">@string/file_delete_message_file_format</string>
     <string name="save_as_title">Save as</string>
     <string name="save_as_error">Error while saving file</string>
-    <string name="save_as_success_format">“%1$s” has been saved to “%2$s”</string>
+    <string name="save_as_success_format">"%1$s" has been saved to "%2$s"</string>
     <string name="text_editor_title">Text editor</string>
     <string name="text_editor_title_format">%1$s</string>
     <string name="text_editor_title_changed_format">*%1$s</string>
@@ -719,9 +720,9 @@
     <string name="ftp_server_url_menu_copy_url">Copy URL</string>
     <string name="ftp_server_url_menu_copy_password">Copy password</string>
     <string name="ftp_server_add_tile_title">Add to Quick Settings</string>
-    <string name="ftp_server_add_tile_result_added">“FTP server” has been added to Quick Settings</string>
-    <string name="ftp_server_add_tile_result_already_added">“FTP server” is already added to Quick Settings</string>
-    <string name="ftp_server_add_tile_result_error">Error while adding “FTP server” to Quick Settings</string>
+    <string name="ftp_server_add_tile_result_added">"FTP server" has been added to Quick Settings</string>
+    <string name="ftp_server_add_tile_result_already_added">"FTP server" is already added to Quick Settings</string>
+    <string name="ftp_server_add_tile_result_error">Error while adding "FTP server" to Quick Settings</string>
     <string name="ftp_server_configuration_title">Configuration</string>
     <string name="ftp_server_anonymous_login_title">Anonymous login</string>
     <string name="ftp_server_username_title">Username</string>
@@ -800,4 +801,16 @@
 
     <string name="shortcut_downloads_title" translatable="false">@string/navigation_standard_directory_downloads</string>
     <string name="shortcut_ftp_server_title" translatable="false">@string/ftp_server_title</string>
+
+    <!-- File tags -->
+    <string name="file_tag_management_title">Manage Tags</string>
+    <string name="file_tag_add_title">Add New Tag</string>
+    <string name="file_tag_add_new">Add New Tag</string>
+    <string name="file_tag_name">Tag Name</string>
+    <string name="file_tag_color">Tag Color</string>
+    <string name="file_tag_filter_title">Filter by Tags</string>
+    <string name="create">Create</string>
+    <string name="file_tag_filter_mode_any">Match any selected tag</string>
+    <string name="file_tag_filter_mode_all">Match all selected tags</string>
+    <string name="color_picker_dialog_title">Choose Color</string>
 </resources>
