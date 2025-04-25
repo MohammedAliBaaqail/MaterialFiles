@@ -5,10 +5,27 @@
   ~ All Rights Reserved.
   -->
 
-<androidx.recyclerview.widget.RecyclerView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/recyclerView"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="16dp"
-    android:clipToPadding="false" />
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <com.larswerkman.holocolorpicker.ColorPicker
+        android:id="@+id/color_picker"
+        android:layout_width="match_parent"
+        android:layout_height="240dp"
+        android:layout_marginBottom="16dp" />
+
+    <com.larswerkman.holocolorpicker.SaturationBar
+        android:id="@+id/saturation_bar"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginBottom="8dp" />
+
+    <com.larswerkman.holocolorpicker.ValueBar
+        android:id="@+id/value_bar"
+        android:layout_width="match_parent"
+        android:layout_height="40dp" />
+
+</LinearLayout>

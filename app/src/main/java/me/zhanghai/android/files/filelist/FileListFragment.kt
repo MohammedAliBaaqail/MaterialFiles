@@ -28,6 +28,7 @@ import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.appcompat.widget.SwitchCompat
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
@@ -135,6 +136,7 @@ import me.zhanghai.android.files.util.viewModels
 import me.zhanghai.android.files.util.withChooser
 import me.zhanghai.android.files.viewer.image.ImageViewerActivity
 import kotlin.math.roundToInt
+import me.zhanghai.android.files.ui.TagsView
 
 class FileListFragment : Fragment(),
     BreadcrumbLayout.Listener,
@@ -154,7 +156,8 @@ class FileListFragment : Fragment(),
     ShowRequestStoragePermissionRationaleDialogFragment.Listener,
     ShowRequestStoragePermissionInSettingsRationaleDialogFragment.Listener,
     MenuProvider,
-    FileTagFilterDialog.Listener {
+    FileTagFilterDialog.Listener,
+    FileTagManagementDialogFragment.Listener {
     private val requestAllFilesAccessLauncher = registerForActivityResult(
         RequestAllFilesAccessContract(), this::onRequestAllFilesAccessResult
     )
@@ -382,6 +385,9 @@ class FileListFragment : Fragment(),
         Settings.FILE_LIST_SHOW_HIDDEN_FILES.observe(viewLifecycleOwner) {
             onShowHiddenFilesChanged(it)
         }
+        
+        // Initialize filter tags view
+        updateFilterTagsView()
     }
 
     override fun onResume() {
@@ -469,7 +475,7 @@ class FileListFragment : Fragment(),
                 true
             }
             R.id.action_filter_tags -> {
-                FileTagFilterDialog.show(this)
+                showFileTagFilterDialog()
                 true
             }
             R.id.action_manage_tags -> {
@@ -505,14 +511,13 @@ class FileListFragment : Fragment(),
                 true
             }
             R.id.action_sort_order_ascending -> {
-                item.isChecked = true
-                viewModel.setSortOrder(
-                    if (!menuBinding.sortOrderAscendingItem.isChecked) {
-                        Order.ASCENDING
-                    } else {
-                        Order.DESCENDING
-                    }
-                )
+                val newOrder = if (menuBinding.sortOrderAscendingItem.isChecked) {
+                    Order.DESCENDING
+                } else {
+                    Order.ASCENDING
+                }
+                item.isChecked = newOrder == Order.ASCENDING
+                viewModel.setSortOrder(newOrder)
                 true
             }
             R.id.action_sort_directories_first -> {
@@ -1684,10 +1689,77 @@ class FileListFragment : Fragment(),
         }
     }
 
+    private fun showFileTagFilterDialog() {
+        FileTagFilterDialog.show(this, currentTagFilter, isMatchAllTags)
+    }
+
     override fun onTagFilterChanged(selectedTags: Set<FileTag>, matchAll: Boolean) {
         currentTagFilter = selectedTags
         isMatchAllTags = matchAll
         viewModel.reload()
+        updateFilterTagsView()
+    }
+
+    override fun onTagClick(tag: FileTag) {
+        // If tag is already in filter, do nothing
+        if (tag in currentTagFilter) {
+            return
+        }
+        
+        // Add the tag to current filter
+        val newFilter = currentTagFilter.toMutableSet().apply { add(tag) }
+        
+        // Update filter and reload
+        currentTagFilter = newFilter
+        updateFileList()
+        updateFilterTagsView()
+        
+        // Show a brief toast to confirm the tag was added to filter
+        showToast(R.string.file_tag_added_to_filter)
+    }
+
+    private fun updateFilterTagsView() {
+        if (currentTagFilter.isEmpty()) {
+            binding.filterTagsContainer.visibility = View.GONE
+            binding.breadcrumbLayout.visibility = View.VISIBLE
+            return
+        }
+
+        binding.filterTagsContainer.visibility = View.VISIBLE
+        binding.breadcrumbLayout.visibility = View.GONE
+        
+        // Update switch state
+        binding.filterModeSwitchButton.apply {
+            isChecked = isMatchAllTags
+            text = getString(
+                if (isMatchAllTags) R.string.file_tag_filter_mode_all 
+                else R.string.file_tag_filter_mode_any
+            )
+            setOnCheckedChangeListener { _, isChecked ->
+                if (isMatchAllTags != isChecked) {
+                    isMatchAllTags = isChecked
+                    text = getString(
+                        if (isChecked) R.string.file_tag_filter_mode_all 
+                        else R.string.file_tag_filter_mode_any
+                    )
+                    viewModel.reload()
+                }
+            }
+        }
+        
+        val tagsView = binding.filterTagsView
+        tagsView.setAsFilterView(true)
+        tagsView.setTags(currentTagFilter.toList())
+        tagsView.setOnTagClickListener { tag ->
+            removeTagFromFilter(tag)
+        }
+    }
+
+    private fun removeTagFromFilter(tag: FileTag) {
+        val newFilter = currentTagFilter.toMutableSet().apply { remove(tag) }
+        currentTagFilter = newFilter
+        updateFileList()
+        updateFilterTagsView()
     }
 
     private fun shouldShowFile(file: FileItem): Boolean {
@@ -1732,15 +1804,6 @@ class FileListFragment : Fragment(),
         }
     }
 
-    override fun getCurrentTagFilter(): Set<FileTag> = currentTagFilter
-
-    override fun isMatchAllTags(): Boolean = isMatchAllTags
-
-    override fun deleteFiles(files: FileItemSet) {
-        FileJobService.delete(makePathListForJob(files), requireContext())
-        viewModel.selectFiles(files, false)
-    }
-
     private fun openSelectedFiles() {
         val files = viewModel.selectedFiles
         for (file in files) {
@@ -1751,6 +1814,17 @@ class FileListFragment : Fragment(),
 
     private val selectedFiles: FileItemSet
         get() = viewModel.selectedFiles
+
+    override fun onTagsChanged() {
+        // Update the displayed tags without reloading the entire folder
+        val files = viewModel.fileListStateful.value ?: return
+        adapter.replaceListAndIsSearching(files, viewModel.searchState.isSearching)
+    }
+
+    override fun deleteFiles(files: FileItemSet) {
+        FileJobService.delete(makePathListForJob(files), requireContext())
+        viewModel.selectFiles(files, false)
+    }
 
     companion object {
         private const val ACTION_VIEW_DOWNLOADS =
@@ -1794,6 +1868,9 @@ class FileListFragment : Fragment(),
         val toolbar: Toolbar,
         val overlayToolbar: Toolbar,
         val breadcrumbLayout: BreadcrumbLayout,
+        val filterTagsContainer: ViewGroup,
+        val filterModeSwitchButton: SwitchCompat,
+        val filterTagsView: TagsView,
         val contentLayout: ViewGroup,
         val progress: ProgressBar,
         val errorText: TextView,
@@ -1822,11 +1899,14 @@ class FileListFragment : Fragment(),
                     bindingRoot, includeBinding.drawerLayout, includeBinding.persistentDrawerLayout,
                     includeBinding.persistentBarLayout, appBarBinding.appBarLayout,
                     appBarBinding.toolbar, appBarBinding.overlayToolbar,
-                    appBarBinding.breadcrumbLayout, contentBinding.contentLayout,
-                    contentBinding.progress, contentBinding.errorText, contentBinding.emptyView,
-                    contentBinding.swipeRefreshLayout, contentBinding.recyclerView,
-                    bottomBarBinding.bottomBarLayout, bottomBarBinding.bottomToolbar,
-                    bottomBarBinding.bottomCreateFileNameEdit, speedDialBinding.speedDialView
+                    appBarBinding.breadcrumbLayout, appBarBinding.filterTagsContainer,
+                    appBarBinding.filterModeSwitchButton,
+                    appBarBinding.filterTagsView, contentBinding.contentLayout,
+                    contentBinding.progress, contentBinding.errorText,
+                    contentBinding.emptyView, contentBinding.swipeRefreshLayout,
+                    contentBinding.recyclerView, bottomBarBinding.bottomBarLayout,
+                    bottomBarBinding.bottomToolbar, bottomBarBinding.bottomCreateFileNameEdit,
+                    speedDialBinding.speedDialView
                 )
             }
         }

@@ -51,7 +51,44 @@
             android:id="@+id/breadcrumbLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingStart="@dimen/content_start_margin_minus_12dp"
-            android:paddingEnd="@dimen/screen_edge_margin_minus_12dp" />
+            android:paddingStart="@dimen/content_start_margin"
+            android:paddingEnd="@dimen/screen_edge_margin"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:clipToPadding="false" />
+
+        <LinearLayout
+            android:id="@+id/filterTagsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+            
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="@dimen/content_start_margin"
+                android:paddingEnd="@dimen/screen_edge_margin"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp">
+                
+                <me.zhanghai.android.files.ui.TagsView
+                    android:id="@+id/filterTagsView"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+                
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/filterModeSwitchButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/file_tag_filter_mode_all"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </LinearLayout>
+
     </me.zhanghai.android.files.ui.CoordinatorAppBarLayout>
 </merge>

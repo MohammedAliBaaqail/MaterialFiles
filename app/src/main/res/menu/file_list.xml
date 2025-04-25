@@ -24,7 +24,7 @@
         android:icon="@drawable/tags_icon_control_normal_24dp"
         android:orderInCategory="150"
         android:title="@string/file_tag_filter_title"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="always" />
 
     <item
         android:id="@+id/action_view_sort"

@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.CheckBox
+import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import me.zhanghai.android.files.R
 import me.zhanghai.android.files.file.FileTag
@@ -43,11 +44,13 @@ class FileTagFilterAdapter(
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val checkBox: CheckBox = itemView.findViewById(R.id.checkBox)
+        private val tagText: TextView = itemView.findViewById(R.id.tagText)
+        private val tagContainer: View = itemView.findViewById(R.id.tagContainer)
 
         fun bind(tag: FileTag) {
-            checkBox.text = tag.name
+            tagText.text = tag.name
             checkBox.isChecked = selectedTags.contains(tag)
-            checkBox.buttonTintList = ColorStateList.valueOf(tag.color)
+            tagContainer.setBackgroundColor(tag.color)
             
             checkBox.setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) {
@@ -56,6 +59,10 @@ class FileTagFilterAdapter(
                     selectedTags.remove(tag)
                 }
                 onTagSelectionChanged(selectedTags)
+            }
+            
+            itemView.setOnClickListener {
+                checkBox.toggle()
             }
         }
     }

@@ -322,7 +322,67 @@ class FileListAdapter(
         holder.nameText.text = file.name
 
         // Update tags
-        holder.tagsView?.setTags(FileTagManager.getTagsForFile(file.path))
+        holder.tagsView?.apply {
+            setTags(FileTagManager.getTagsForFile(file.path))
+            setOnTagClickListener { tag ->
+                listener.onTagClick(tag)
+            }
+        }
+        
+        // Set up popup menu click listener
+        holder.popupMenu.setOnMenuItemClickListener {
+            when (it.itemId) {
+                R.id.action_open_with -> {
+                    listener.openFileWith(file)
+                    true
+                }
+                R.id.action_cut -> {
+                    listener.cutFile(file)
+                    true
+                }
+                R.id.action_copy -> {
+                    listener.copyFile(file)
+                    true
+                }
+                R.id.action_delete -> {
+                    listener.confirmDeleteFile(file)
+                    true
+                }
+                R.id.action_rename -> {
+                    listener.showRenameFileDialog(file)
+                    true
+                }
+                R.id.action_extract -> {
+                    listener.extractFile(file)
+                    true
+                }
+                R.id.action_archive -> {
+                    listener.showCreateArchiveDialog(file)
+                    true
+                }
+                R.id.action_share -> {
+                    listener.shareFile(file)
+                    true
+                }
+                R.id.action_copy_path -> {
+                    listener.copyPath(file)
+                    true
+                }
+                R.id.action_add_bookmark -> {
+                    listener.addBookmark(file)
+                    true
+                }
+                R.id.action_create_shortcut -> {
+                    listener.createShortcut(file)
+                    true
+                }
+                R.id.action_properties -> {
+                    listener.showPropertiesDialog(file)
+                    true
+                }
+                else -> false
+            }
+        }
     }
 
     override fun getPopupText(view: View, position: Int): CharSequence {
@@ -427,5 +487,6 @@ class FileListAdapter(
         fun addBookmark(file: FileItem)
         fun createShortcut(file: FileItem)
         fun showPropertiesDialog(file: FileItem)
+        fun onTagClick(tag: FileTag)
     }
 }
