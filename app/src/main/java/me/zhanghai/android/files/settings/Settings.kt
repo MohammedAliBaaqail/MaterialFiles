@@ -181,4 +181,10 @@ object Settings {
             R.string.pref_key_read_remote_files_for_thumbnail,
             R.bool.pref_default_value_read_remote_files_for_thumbnail
         )
+
+    val FILE_LIST_SHOW_CREATION_DATE: SettingLiveData<Boolean> =
+        BooleanSettingLiveData(
+            R.string.pref_key_file_list_show_creation_date,
+            R.bool.pref_default_value_file_list_show_creation_date
+        )
 }

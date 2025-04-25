@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="pref_default_value_file_list_show_creation_date">false</bool>
+</resources> 

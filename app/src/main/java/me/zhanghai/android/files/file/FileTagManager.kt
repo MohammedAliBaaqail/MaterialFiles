@@ -11,6 +11,7 @@ import android.util.Log
 import androidx.core.content.edit
 import java8.nio.file.Path
 import me.zhanghai.android.files.app.application
+import java.io.File
 import java.util.UUID
 import org.json.JSONArray
 import org.json.JSONException
@@ -188,6 +189,141 @@ object FileTagManager {
             
             saveFileTags()
             saveTagOrders()
+        }
+    }
+    
+    /**
+     * Exports all tag data to a JSON file
+     * 
+     * @param file The destination file to write the exported data
+     * @return true if export was successful, false otherwise
+     */
+    fun exportTags(file: File): Boolean {
+        return try {
+            val jsonObject = JSONObject()
+            
+            // Export tags
+            val tagsJson = JSONArray()
+            for (tag in tags) {
+                val tagObj = JSONObject().apply {
+                    put(JSON_KEY_ID, tag.id)
+                    put(JSON_KEY_NAME, tag.name)
+                    put(JSON_KEY_COLOR, tag.color)
+                }
+                tagsJson.put(tagObj)
+            }
+            jsonObject.put(KEY_TAGS, tagsJson)
+            
+            // Export file-tag associations
+            val fileTagsJson = JSONObject()
+            for ((path, tagIds) in fileTagsMap) {
+                if (tagIds.isEmpty()) continue
+                
+                val tagIdsArray = JSONArray()
+                tagIds.forEach { tagIdsArray.put(it) }
+                
+                fileTagsJson.put(path, tagIdsArray)
+            }
+            jsonObject.put(KEY_FILE_TAGS, fileTagsJson)
+            
+            // Export tag orders
+            val tagOrdersJson = JSONObject()
+            for ((pathKey, orderMap) in tagOrderMap) {
+                if (orderMap.isEmpty()) continue
+                
+                val pathOrderObj = JSONObject()
+                orderMap.forEach { (tagId, order) ->
+                    pathOrderObj.put(tagId, order)
+                }
+                
+                tagOrdersJson.put(pathKey, pathOrderObj)
+            }
+            jsonObject.put(KEY_TAG_ORDERS, tagOrdersJson)
+            
+            // Write to file
+            file.writeText(jsonObject.toString(2)) // Use indented format
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error exporting tags", e)
+            false
+        }
+    }
+    
+    /**
+     * Imports all tag data from a JSON file
+     * 
+     * @param file The source file containing the exported data
+     * @return true if import was successful, false otherwise
+     */
+    fun importTags(file: File): Boolean {
+        return try {
+            val jsonString = file.readText()
+            val jsonObject = JSONObject(jsonString)
+            
+            // Import tags
+            if (jsonObject.has(KEY_TAGS)) {
+                val tagsArray = jsonObject.getJSONArray(KEY_TAGS)
+                val newTags = mutableListOf<FileTag>()
+                
+                for (i in 0 until tagsArray.length()) {
+                    val tagObj = tagsArray.getJSONObject(i)
+                    newTags.add(
+                        FileTag(
+                            id = tagObj.getString(JSON_KEY_ID),
+                            name = tagObj.getString(JSON_KEY_NAME),
+                            color = tagObj.getInt(JSON_KEY_COLOR)
+                        )
+                    )
+                }
+                
+                tags = newTags
+                saveTags()
+            }
+            
+            // Import file-tag associations
+            if (jsonObject.has(KEY_FILE_TAGS)) {
+                val fileTagsObj = jsonObject.getJSONObject(KEY_FILE_TAGS)
+                val newFileTagsMap = mutableMapOf<String, MutableSet<String>>()
+                
+                for (key in fileTagsObj.keys()) {
+                    val tagIdsArray = fileTagsObj.getJSONArray(key)
+                    val tagIds = mutableSetOf<String>()
+                    
+                    for (i in 0 until tagIdsArray.length()) {
+                        tagIds.add(tagIdsArray.getString(i))
+                    }
+                    
+                    newFileTagsMap[key] = tagIds
+                }
+                
+                fileTagsMap = newFileTagsMap
+                saveFileTags()
+            }
+            
+            // Import tag orders
+            if (jsonObject.has(KEY_TAG_ORDERS)) {
+                val tagOrdersObj = jsonObject.getJSONObject(KEY_TAG_ORDERS)
+                val newTagOrderMap = mutableMapOf<String, MutableMap<String, Int>>()
+                
+                for (pathKey in tagOrdersObj.keys()) {
+                    val pathOrderObj = tagOrdersObj.getJSONObject(pathKey)
+                    val orderMap = mutableMapOf<String, Int>()
+                    
+                    for (tagId in pathOrderObj.keys()) {
+                        orderMap[tagId] = pathOrderObj.getInt(tagId)
+                    }
+                    
+                    newTagOrderMap[pathKey] = orderMap
+                }
+                
+                tagOrderMap = newTagOrderMap
+                saveTagOrders()
+            }
+            
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error importing tags", e)
+            false
         }
     }
     

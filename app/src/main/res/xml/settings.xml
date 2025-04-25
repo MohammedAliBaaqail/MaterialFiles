@@ -74,6 +74,11 @@
             android:title="@string/settings_bookmark_directories_title"
             android:summary="@string/settings_bookmark_directories_summary_empty" />
 
+        <me.zhanghai.android.files.settings.TagBackupPreference
+            android:key="file_tags_backup"
+            android:title="@string/settings_tags_backup_title"
+            android:summary="@string/settings_tags_backup_summary" />
+
         <me.zhanghai.android.files.settings.RootStrategyPreference
             android:key="@string/pref_key_root_strategy"
             android:title="@string/settings_root_strategy_title"
@@ -107,5 +112,10 @@
             android:key="@string/pref_key_read_remote_files_for_thumbnail"
             android:title="@string/settings_read_remote_files_for_thumbnail_title"
             android:defaultValue="@bool/pref_default_value_read_remote_files_for_thumbnail" />
+
+        <SwitchPreferenceCompat
+            android:key="@string/pref_key_file_list_show_creation_date"
+            android:title="@string/settings_file_list_show_creation_date_title"
+            android:defaultValue="@bool/pref_default_value_file_list_show_creation_date" />
     </PreferenceCategory>
 </PreferenceScreen>

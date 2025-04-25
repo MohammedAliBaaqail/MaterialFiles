@@ -18,13 +18,13 @@
 
     <FrameLayout
         android:id="@+id/iconLayout"
-        android:layout_width="@dimen/touch_target_size"
-        android:layout_height="@dimen/touch_target_size"
-        android:layout_marginStart="@dimen/screen_edge_margin_minus_4dp"
-        android:layout_marginEnd="@dimen/content_start_from_screen_edge_margin_minus_44dp"
+        android:layout_width="@dimen/list_thumbnail_container_size"
+        android:layout_height="@dimen/list_thumbnail_container_size"
+        android:layout_marginStart="0dp"
+        android:layout_marginEnd="4dp"
         android:clipToPadding="false"
         android:duplicateParentState="true"
-        android:padding="@dimen/touch_target_large_icon_padding">
+        android:padding="0dp">
 
         <me.zhanghai.android.files.ui.DisabledAlphaImageView
             android:id="@+id/iconImage"
@@ -36,8 +36,9 @@
 
         <me.zhanghai.android.files.ui.DisabledAlphaImageView
             android:id="@+id/thumbnailImage"
-            android:layout_width="@dimen/large_icon_size"
-            android:layout_height="@dimen/large_icon_size"
+            android:layout_width="@dimen/list_thumbnail_size"
+            android:layout_height="@dimen/list_thumbnail_size"
+            android:layout_gravity="center"
             android:duplicateParentState="true"
             android:scaleType="centerCrop" />
 
@@ -47,9 +48,9 @@
             android:layout_height="@dimen/badge_size_plus_1dp"
             android:layout_gravity="end|bottom"
             android:layout_marginStart="-0.5dp"
-            android:layout_marginEnd="-0.5dp"
+            android:layout_marginEnd="4dp"
             android:layout_marginTop="-0.5dp"
-            android:layout_marginBottom="-0.5dp"
+            android:layout_marginBottom="4dp"
             android:duplicateParentState="true" />
 
         <me.zhanghai.android.files.ui.DisabledAlphaImageView
@@ -57,6 +58,8 @@
             android:layout_width="@dimen/badge_size"
             android:layout_height="@dimen/badge_size"
             android:layout_gravity="end|bottom"
+            android:layout_marginEnd="4dp"
+            android:layout_marginBottom="4dp"
             android:background="@drawable/badge_background_18dp"
             android:duplicateParentState="true" />
 
@@ -64,6 +67,8 @@
             android:layout_width="@dimen/badge_size"
             android:layout_height="@dimen/badge_size"
             android:layout_gravity="end|bottom"
+            android:layout_marginEnd="4dp"
+            android:layout_marginBottom="4dp"
             android:duplicateParentState="true"
             android:src="@drawable/checkable_badge_18dp" />
     </FrameLayout>
@@ -72,6 +77,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
+        android:layout_marginStart="8dp"
         android:duplicateParentState="true"
         android:orientation="vertical">
 

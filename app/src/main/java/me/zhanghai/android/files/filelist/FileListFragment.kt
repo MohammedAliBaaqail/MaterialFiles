@@ -137,6 +137,7 @@ import me.zhanghai.android.files.util.withChooser
 import me.zhanghai.android.files.viewer.image.ImageViewerActivity
 import kotlin.math.roundToInt
 import me.zhanghai.android.files.ui.TagsView
+import me.zhanghai.android.files.filelist.VideoMetadataCache
 
 class FileListFragment : Fragment(),
     BreadcrumbLayout.Listener,
@@ -385,6 +386,7 @@ class FileListFragment : Fragment(),
         Settings.FILE_LIST_SHOW_HIDDEN_FILES.observe(viewLifecycleOwner) {
             onShowHiddenFilesChanged(it)
         }
+        Settings.FILE_LIST_SHOW_CREATION_DATE.observe(viewLifecycleOwner, this::onShowDateTypeChanged)
         
         // Initialize filter tags view
         updateFilterTagsView()
@@ -586,6 +588,11 @@ class FileListFragment : Fragment(),
                 viewModel.reload()
                 true
             }
+            R.id.action_show_date_type -> {
+                val newShowCreationDate = !Settings.FILE_LIST_SHOW_CREATION_DATE.valueCompat
+                Settings.FILE_LIST_SHOW_CREATION_DATE.putValue(newShowCreationDate)
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -748,6 +755,14 @@ class FileListFragment : Fragment(),
         menuBinding.sortOrderAscendingItem.isChecked = sortOptions.order == Order.ASCENDING
         menuBinding.sortDirectoriesFirstItem.isChecked = sortOptions.isDirectoriesFirst
         menuBinding.viewSortPathSpecificItem.isChecked = viewModel.isViewSortPathSpecific
+        val showCreationDate = Settings.FILE_LIST_SHOW_CREATION_DATE.valueCompat
+        val title = if (showCreationDate) {
+            R.string.file_list_action_show_modification_date
+        } else {
+            R.string.file_list_action_show_creation_date
+        }
+        menuBinding.showDateTypeItem.title = getString(title)
+        menuBinding.showDateTypeItem.isChecked = showCreationDate
     }
 
     private fun navigateUp() {
@@ -1857,6 +1872,26 @@ class FileListFragment : Fragment(),
         viewModel.selectFiles(files, false)
     }
 
+    private fun onShowDateTypeChanged(showCreationDate: Boolean) {
+        val title = if (showCreationDate) {
+            R.string.file_list_action_show_modification_date
+        } else {
+            R.string.file_list_action_show_creation_date
+        }
+        if (this::menuBinding.isInitialized) {
+            menuBinding.showDateTypeItem.title = getString(title)
+            menuBinding.showDateTypeItem.isChecked = showCreationDate
+        }
+        // The adapter will update automatically since it observes the setting
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        
+        // Clear video metadata cache to free up memory
+        VideoMetadataCache.clearCache()
+    }
+
     companion object {
         private const val ACTION_VIEW_DOWNLOADS =
             "me.zhanghai.android.files.intent.action.VIEW_DOWNLOADS"
@@ -1957,7 +1992,8 @@ class FileListFragment : Fragment(),
         val sortDirectoriesFirstItem: MenuItem,
         val viewSortPathSpecificItem: MenuItem,
         val selectAllItem: MenuItem,
-        val showHiddenFilesItem: MenuItem
+        val showHiddenFilesItem: MenuItem,
+        val showDateTypeItem: MenuItem
     ) {
         companion object {
             fun inflate(menu: Menu, inflater: MenuInflater): MenuBinding {
@@ -1975,7 +2011,8 @@ class FileListFragment : Fragment(),
                     menu.findItem(R.id.action_sort_directories_first),
                     menu.findItem(R.id.action_view_sort_path_specific),
                     menu.findItem(R.id.action_select_all),
-                    menu.findItem(R.id.action_show_hidden_files)
+                    menu.findItem(R.id.action_show_hidden_files),
+                    menu.findItem(R.id.action_show_date_type)
                 )
             }
         }

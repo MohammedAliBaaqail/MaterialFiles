@@ -16,6 +16,7 @@ import me.zhanghai.android.files.ui.PreferenceFragmentCompat
 
 class SettingsPreferenceFragment : PreferenceFragmentCompat() {
     private lateinit var localePreference: LocalePreference
+    private lateinit var tagBackupPreference: TagBackupPreference
 
     override fun onCreatePreferencesFix(savedInstanceState: Bundle?, rootKey: String?) {
         addPreferencesFromResource(R.xml.settings)
@@ -27,10 +28,17 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
                 activity.setApplicationLocalesPre33(locales)
             }
         }
+        
+        // Initialize the tag backup preference
+        tagBackupPreference = preferenceScreen.findPreference("file_tags_backup")!!
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
+
+        val activity = requireActivity() as SettingsActivity
+        // Register the tag backup preference for activity results
+        tagBackupPreference.registerForActivityResult(activity)
 
         val viewLifecycleOwner = viewLifecycleOwner
         // The following may end up passing the same lambda instance to the observer because it has

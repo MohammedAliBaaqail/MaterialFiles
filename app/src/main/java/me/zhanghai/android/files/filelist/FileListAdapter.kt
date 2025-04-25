@@ -35,6 +35,8 @@ import me.zhanghai.android.files.file.fileSize
 import me.zhanghai.android.files.file.formatShort
 import me.zhanghai.android.files.file.iconRes
 import me.zhanghai.android.files.file.isApk
+import me.zhanghai.android.files.file.isVideo
+import me.zhanghai.android.files.file.format
 import me.zhanghai.android.files.provider.archive.isArchivePath
 import me.zhanghai.android.files.provider.common.isEncrypted
 import me.zhanghai.android.files.settings.Settings
@@ -45,6 +47,7 @@ import me.zhanghai.android.files.ui.TagsView
 import me.zhanghai.android.files.util.isMaterial3Theme
 import me.zhanghai.android.files.util.layoutInflater
 import me.zhanghai.android.files.util.valueCompat
+import me.zhanghai.android.files.util.isMediaMetadataRetrieverCompatible
 import java.util.Locale
 import android.util.Log
 
@@ -319,17 +322,41 @@ class FileListAdapter(
                 setImageDrawable(null)
             }
         }
-        val lastModificationTime = attributes.lastModifiedTime().toInstant()
-            .formatShort(holder.descriptionText?.context ?: holder.nameText.context)
+        val showCreationDate = Settings.FILE_LIST_SHOW_CREATION_DATE.valueCompat
+        val dateTime = if (showCreationDate) {
+            attributes.creationTime().toInstant()
+        } else {
+            attributes.lastModifiedTime().toInstant()
+        }
+        val formattedDate = dateTime.formatShort(holder.descriptionText?.context ?: holder.nameText.context)
         val size = attributes.fileSize.formatHumanReadable(
             holder.descriptionText?.context ?: holder.nameText.context
         )
         val descriptionSeparator = holder.descriptionText?.context?.getString(
             R.string.file_item_description_separator
         ) ?: holder.nameText.context.getString(R.string.file_item_description_separator)
-        holder.descriptionText?.text = listOf(lastModificationTime, size).joinToString(
-            descriptionSeparator
-        )
+        
+        // Set the initial description
+        val descriptionParts = mutableListOf(formattedDate, size)
+        holder.descriptionText?.text = descriptionParts.joinToString(descriptionSeparator)
+        
+        // If it's a video file, try to load and display the duration
+        if (file.mimeType.isVideo && file.path.isMediaMetadataRetrieverCompatible) {
+            // Use a tag to avoid duplicate requests
+            val viewPosition = holder.bindingAdapterPosition
+            if (viewPosition != RecyclerView.NO_POSITION) {
+                VideoMetadataCache.getVideoDuration(file.path) { duration ->
+                    // Make sure the view hasn't been recycled
+                    if (holder.bindingAdapterPosition == viewPosition && duration != null) {
+                        val context = holder.descriptionText?.context ?: holder.nameText.context
+                        val formattedDuration = duration.format()
+                        val updatedParts = listOf(formattedDate, size, formattedDuration)
+                        holder.descriptionText?.text = updatedParts.joinToString(descriptionSeparator)
+                    }
+                }
+            }
+        }
+        
         holder.nameText.text = file.name
 
         // Always update the tags view when fully binding
@@ -412,8 +439,15 @@ class FileListAdapter(
             FileSortOptions.By.NAME -> file.name.take(1).uppercase(Locale.getDefault())
             FileSortOptions.By.TYPE -> file.extension.uppercase(Locale.getDefault())
             FileSortOptions.By.SIZE -> file.attributes.fileSize.formatHumanReadable(view.context)
-            FileSortOptions.By.LAST_MODIFIED ->
-                file.attributes.lastModifiedTime().toInstant().formatShort(view.context)
+            FileSortOptions.By.LAST_MODIFIED -> {
+                val showCreationDate = Settings.FILE_LIST_SHOW_CREATION_DATE.valueCompat
+                val dateTime = if (showCreationDate) {
+                    file.attributes.creationTime().toInstant()
+                } else {
+                    file.attributes.lastModifiedTime().toInstant()
+                }
+                dateTime.formatShort(view.context)
+            }
         }
     }
 

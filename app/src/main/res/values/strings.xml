@@ -788,6 +788,7 @@
     <string name="settings_show_pdf_thumbnail_pre_28_title">Show thumbnail for PDF documents</string>
     <string name="settings_show_pdf_thumbnail_pre_28_summary">Might make the app unstable on older versions of Android</string>
     <string name="settings_read_remote_files_for_thumbnail_title">Read remote files for thumbnail</string>
+    <string name="settings_file_list_show_creation_date_title">Show file creation date</string>
 
     <string name="about_title">About</string>
     <string name="about_version_title">Version</string>
@@ -816,4 +817,19 @@
     <string name="file_tag_filter_mode_any">Match any</string>
     <string name="drag_to_reorder">Drag to reorder tags</string>
     <string name="color_picker_dialog_title">Choose Color</string>
+
+    <!-- Tags backup strings -->
+    <string name="settings_tags_backup_title">Tag Backup &amp; Restore</string>
+    <string name="settings_tags_backup_summary">Import or export tag data</string>
+    <string name="tags_backup_title">Tag Backup &amp; Restore</string>
+    <string name="tags_backup_export">Export tags</string>
+    <string name="tags_backup_import">Import tags</string>
+    <string name="tags_export_success">Tags exported successfully</string>
+    <string name="tags_export_error">Failed to export tags</string>
+    <string name="tags_import_success">Tags imported successfully</string>
+    <string name="tags_import_error">Failed to import tags</string>
+
+    <string name="pref_key_file_list_show_creation_date" translatable="false">file_list_show_creation_date</string>
+    <string name="file_list_action_show_creation_date">Show creation date</string>
+    <string name="file_list_action_show_modification_date">Show modification date</string>
 </resources>
