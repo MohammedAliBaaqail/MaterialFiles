@@ -138,6 +138,10 @@ import me.zhanghai.android.files.viewer.image.ImageViewerActivity
 import kotlin.math.roundToInt
 import me.zhanghai.android.files.ui.TagsView
 import me.zhanghai.android.files.filelist.VideoMetadataCache
+import me.zhanghai.android.files.file.FileRatingManager
+import java8.nio.file.attribute.BasicFileAttributes
+import java8.nio.file.attribute.FileTime
+import java.text.CollationKey
 
 class FileListFragment : Fragment(),
     BreadcrumbLayout.Listener,
@@ -390,6 +394,11 @@ class FileListFragment : Fragment(),
         
         // Initialize filter tags view
         updateFilterTagsView()
+        
+        // Observe rating changes
+        FileRatingManager.ratingChangedLiveData.observe(viewLifecycleOwner) {
+            adapter.notifyDataSetChanged()
+        }
     }
 
     override fun onResume() {
@@ -512,6 +521,11 @@ class FileListFragment : Fragment(),
                 viewModel.setSortBy(By.LAST_MODIFIED)
                 true
             }
+            R.id.action_sort_by_rating -> {
+                item.isChecked = true
+                viewModel.setSortBy(By.RATING)
+                true
+            }
             R.id.action_sort_order_ascending -> {
                 val newOrder = if (menuBinding.sortOrderAscendingItem.isChecked) {
                     Order.DESCENDING
@@ -537,6 +551,10 @@ class FileListFragment : Fragment(),
             }
             R.id.action_navigate_up -> {
                 navigateUp()
+                true
+            }
+            R.id.action_set_rating -> {
+                showSetRatingDialog()
                 true
             }
             R.id.action_navigate_to -> {
@@ -750,6 +768,7 @@ class FileListFragment : Fragment(),
             By.TYPE -> menuBinding.sortByTypeItem
             By.SIZE -> menuBinding.sortBySizeItem
             By.LAST_MODIFIED -> menuBinding.sortByLastModifiedItem
+            By.RATING -> menuBinding.sortByRatingItem
         }
         checkedSortByItem.isChecked = true
         menuBinding.sortOrderAscendingItem.isChecked = sortOptions.order == Order.ASCENDING
@@ -1011,6 +1030,10 @@ class FileListFragment : Fragment(),
             }
             R.id.action_manage_tags -> {
                 FileTagManagementDialogFragment.show(viewModel.selectedFiles.toList(), this)
+                true
+            }
+            R.id.action_set_rating -> {
+                showSetRatingDialog()
                 true
             }
             else -> false
@@ -1988,6 +2011,7 @@ class FileListFragment : Fragment(),
         val sortByTypeItem: MenuItem,
         val sortBySizeItem: MenuItem,
         val sortByLastModifiedItem: MenuItem,
+        val sortByRatingItem: MenuItem,
         val sortOrderAscendingItem: MenuItem,
         val sortDirectoriesFirstItem: MenuItem,
         val viewSortPathSpecificItem: MenuItem,
@@ -2007,6 +2031,7 @@ class FileListFragment : Fragment(),
                     menu.findItem(R.id.action_sort_by_type),
                     menu.findItem(R.id.action_sort_by_size),
                     menu.findItem(R.id.action_sort_by_last_modified),
+                    menu.findItem(R.id.action_sort_by_rating),
                     menu.findItem(R.id.action_sort_order_ascending),
                     menu.findItem(R.id.action_sort_directories_first),
                     menu.findItem(R.id.action_view_sort_path_specific),
@@ -2015,6 +2040,66 @@ class FileListFragment : Fragment(),
                     menu.findItem(R.id.action_show_date_type)
                 )
             }
+        }
+    }
+
+    private fun showSetRatingDialog() {
+        if (selectedFiles.isEmpty()) {
+            // If no files are selected, try to use the current directory
+            val currentDirectory = FileItem(
+                path = currentPath,
+                nameCollationKey = DummyCollationKey(),
+                attributesNoFollowLinks = DummyDirectoryBasicFileAttributes(),
+                symbolicLinkTarget = null,
+                symbolicLinkTargetAttributes = null,
+                isHidden = false,
+                mimeType = MimeType.DIRECTORY
+            )
+            FileRatingDialogFragment.show(listOf(currentDirectory), this)
+        } else {
+            FileRatingDialogFragment.show(selectedFiles.toList(), this)
+        }
+    }
+
+    // Dummy collation key only to be used for directory references
+    private class DummyCollationKey : CollationKey("") {
+        override fun compareTo(other: CollationKey?): Int {
+            throw UnsupportedOperationException()
+        }
+
+        override fun toByteArray(): ByteArray {
+            throw UnsupportedOperationException()
+        }
+    }
+
+    // Dummy attributes only to be used for directory references
+    private class DummyDirectoryBasicFileAttributes : BasicFileAttributes {
+        override fun lastModifiedTime(): FileTime {
+            throw UnsupportedOperationException()
+        }
+
+        override fun lastAccessTime(): FileTime {
+            throw UnsupportedOperationException()
+        }
+
+        override fun creationTime(): FileTime {
+            throw UnsupportedOperationException()
+        }
+
+        override fun isRegularFile(): Boolean = false
+
+        override fun isDirectory(): Boolean = true
+
+        override fun isSymbolicLink(): Boolean = false
+
+        override fun isOther(): Boolean = false
+
+        override fun size(): Long {
+            throw UnsupportedOperationException()
+        }
+
+        override fun fileKey(): Any {
+            throw UnsupportedOperationException()
         }
     }
 }

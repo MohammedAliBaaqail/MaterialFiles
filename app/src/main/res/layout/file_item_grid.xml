@@ -60,6 +60,18 @@
             android:duplicateParentState="true" />
     </me.zhanghai.android.files.ui.AspectRatioFrameLayout>
 
+    <TextView
+        android:id="@+id/ratingText"
+        android:layout_width="30dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="4dp"
+        android:gravity="center"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="?colorPrimary"
+        android:visibility="gone" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

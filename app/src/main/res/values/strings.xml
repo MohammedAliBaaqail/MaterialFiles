@@ -10,6 +10,7 @@
     <string name="app_name">Material Files</string>
 
     <string name="close">Close</string>
+    <string name="clear">Clear</string>
     <string name="copy">Copy</string>
     <string name="cut">Cut</string>
     <string name="default_">Default</string>
@@ -832,4 +833,13 @@
     <string name="pref_key_file_list_show_creation_date" translatable="false">file_list_show_creation_date</string>
     <string name="file_list_action_show_creation_date">Show creation date</string>
     <string name="file_list_action_show_modification_date">Show modification date</string>
+
+    <!-- File Rating -->
+    <string name="file_rating_title">Set Rating</string>
+    <string name="file_rating_subtitle">1 is best, 9 is worst (0 = no rating)</string>
+    <string name="file_rating_best">Best (1)</string>
+    <string name="file_rating_worst">Worst (9)</string>
+    <string name="file_list_action_set_rating">Set Rating</string>
+    <string name="file_list_action_sort_by_rating">Rating</string>
+    <string name="rating_set_success">Rating set successfully</string>
 </resources>

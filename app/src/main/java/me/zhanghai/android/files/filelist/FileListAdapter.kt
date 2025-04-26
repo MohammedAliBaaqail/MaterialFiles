@@ -50,6 +50,7 @@ import me.zhanghai.android.files.util.valueCompat
 import me.zhanghai.android.files.util.isMediaMetadataRetrieverCompatible
 import java.util.Locale
 import android.util.Log
+import me.zhanghai.android.files.file.FileRatingManager
 
 class FileListAdapter(
     private val listener: Listener
@@ -362,6 +363,17 @@ class FileListAdapter(
         // Always update the tags view when fully binding
         updateTagsView(holder, file)
         
+        // Display rating if present
+        val rating = FileRatingManager.getRating(file.path)
+        holder.ratingText?.apply {
+            if (rating > 0) {
+                text = rating.toString()
+                visibility = View.VISIBLE
+            } else {
+                visibility = View.GONE
+            }
+        }
+        
         // Set up popup menu click listener
         holder.popupMenu.setOnMenuItemClickListener {
             when (it.itemId) {
@@ -448,6 +460,10 @@ class FileListAdapter(
                 }
                 dateTime.formatShort(view.context)
             }
+            FileSortOptions.By.RATING -> {
+                val rating = FileRatingManager.getRating(file.path)
+                if (rating > 0) rating.toString() else "-"
+            }
         }
     }
 
@@ -495,7 +511,8 @@ class FileListAdapter(
         val nameText: TextView,
         val descriptionText: TextView?,
         val menuButton: ImageButton,
-        val tagsView: TagsView?
+        val tagsView: TagsView?,
+        val ratingText: TextView?
     ) : RecyclerView.ViewHolder(root) {
         constructor(binding: FileItemListBinding) : this(
             binding.root,
@@ -511,7 +528,8 @@ class FileListAdapter(
             binding.nameText,
             binding.descriptionText,
             binding.menuButton,
-            binding.tagsView
+            binding.tagsView,
+            binding.ratingText
         )
 
         constructor(binding: FileItemGridBinding) : this(
@@ -528,7 +546,8 @@ class FileListAdapter(
             binding.nameText,
             null,
             binding.menuButton,
-            binding.tagsView
+            binding.tagsView,
+            binding.ratingText
         )
 
         lateinit var popupMenu: PopupMenu

@@ -59,6 +59,9 @@
                     android:id="@+id/action_sort_by_last_modified"
                     android:title="@string/file_list_action_sort_by_last_modified" />
                 <item
+                    android:id="@+id/action_sort_by_rating"
+                    android:title="@string/file_list_action_sort_by_rating" />
+                <item
                     android:id="@+id/action_sort_order_ascending"
                     android:checkable="true"
                     android:title="@string/file_list_action_sort_order_ascending" />
