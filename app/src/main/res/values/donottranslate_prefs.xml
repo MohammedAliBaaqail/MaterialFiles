@@ -82,4 +82,16 @@
     <bool name="pref_visible_show_pdf_thumbnail_pre_28">true</bool>
     <string name="pref_key_read_remote_files_for_thumbnail">key_read_remote_files_for_thumbnail</string>
     <bool name="pref_default_value_read_remote_files_for_thumbnail">true</bool>
+    
+    <string name="pref_key_file_list_square_thumbnails_in_grid">key_file_list_square_thumbnails_in_grid</string>
+    <bool name="pref_default_value_file_list_square_thumbnails_in_grid">true</bool>
+    
+    <string name="pref_key_file_list_show_creation_date">key_file_list_show_creation_date</string>
+    <bool name="pref_default_value_file_list_show_creation_date">false</bool>
+    
+    <string name="pref_key_file_list_hide_info_in_grid">key_file_list_hide_info_in_grid</string>
+    <bool name="pref_default_value_file_list_hide_info_in_grid">false</bool>
+    
+    <string name="pref_key_file_list_use_square_thumbnails">key_file_list_use_square_thumbnails</string>
+    <bool name="pref_default_value_file_list_use_square_thumbnails">false</bool>
 </resources>

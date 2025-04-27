@@ -382,6 +382,9 @@ class FileListFragment : Fragment(),
         viewModel.viewSortPathSpecificLiveData.observe(viewLifecycleOwner) {
             onViewSortPathSpecificChanged(it)
         }
+        viewModel.squareThumbnailsInGridLiveData.observe(viewLifecycleOwner) {
+            onSquareThumbnailsInGridChanged(it)
+        }
         viewModel.pickOptionsLiveData.observe(viewLifecycleOwner) { onPickOptionsChanged(it) }
         viewModel.selectedFilesLiveData.observe(viewLifecycleOwner) { onSelectedFilesChanged(it) }
         viewModel.pasteStateLiveData.observe(viewLifecycleOwner) { onPasteStateChanged(it) }
@@ -526,6 +529,11 @@ class FileListFragment : Fragment(),
                 viewModel.setSortBy(By.RATING)
                 true
             }
+            R.id.action_sort_by_duration -> {
+                item.isChecked = true
+                viewModel.setSortBy(By.DURATION)
+                true
+            }
             R.id.action_sort_order_ascending -> {
                 val newOrder = if (menuBinding.sortOrderAscendingItem.isChecked) {
                     Order.DESCENDING
@@ -607,8 +615,26 @@ class FileListFragment : Fragment(),
                 true
             }
             R.id.action_show_date_type -> {
-                val newShowCreationDate = !Settings.FILE_LIST_SHOW_CREATION_DATE.valueCompat
-                Settings.FILE_LIST_SHOW_CREATION_DATE.putValue(newShowCreationDate)
+                item.isChecked = !item.isChecked
+                Settings.FILE_LIST_SHOW_CREATION_DATE.putValue(item.isChecked)
+                true
+            }
+            R.id.action_hide_info_in_grid -> {
+                item.isChecked = !item.isChecked
+                Settings.FILE_LIST_HIDE_INFO_IN_GRID.putValue(item.isChecked)
+                adapter.notifyDataSetChanged()
+                true
+            }
+            R.id.action_use_square_thumbnails -> {
+                item.isChecked = !item.isChecked
+                viewModel.isSquareThumbnailsInGrid = item.isChecked
+                adapter.notifyDataSetChanged()
+                true
+            }
+            R.id.action_square_thumbnails_in_grid -> {
+                item.isChecked = !item.isChecked
+                viewModel.isSquareThumbnailsInGrid = item.isChecked
+                adapter.notifyDataSetChanged()
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -682,6 +708,7 @@ class FileListFragment : Fragment(),
         binding.emptyView.fadeToVisibilityUnsafe(stateful is Success && !hasFiles)
         if (files != null) {
             updateFileList()
+            updateTitle()
         } else {
             adapter.clear()
         }
@@ -747,13 +774,15 @@ class FileListFragment : Fragment(),
         updateViewSortMenuItems()
     }
 
+    private fun onSquareThumbnailsInGridChanged(squareThumbnailsInGrid: Boolean) {
+        // Ensure to set this on the adapter regardless of current view type
+        // so it will apply to both list and grid views
+        adapter.isSquareThumbnailsInGrid = squareThumbnailsInGrid
+        updateViewSortMenuItems()
+    }
+
     private fun updateViewSortMenuItems() {
         if (!this::menuBinding.isInitialized) {
-            return
-        }
-        val searchViewExpanded = viewModel.isSearchViewExpanded
-        menuBinding.viewSortItem.isVisible = !searchViewExpanded
-        if (searchViewExpanded) {
             return
         }
         val viewType = viewModel.viewType
@@ -769,6 +798,7 @@ class FileListFragment : Fragment(),
             By.SIZE -> menuBinding.sortBySizeItem
             By.LAST_MODIFIED -> menuBinding.sortByLastModifiedItem
             By.RATING -> menuBinding.sortByRatingItem
+            By.DURATION -> menuBinding.sortByDurationItem
         }
         checkedSortByItem.isChecked = true
         menuBinding.sortOrderAscendingItem.isChecked = sortOptions.order == Order.ASCENDING
@@ -782,6 +812,32 @@ class FileListFragment : Fragment(),
         }
         menuBinding.showDateTypeItem.title = getString(title)
         menuBinding.showDateTypeItem.isChecked = showCreationDate
+        
+        // Show or hide the "Hide file info in grid" menu item based on view type
+        val hideInfoInGrid = Settings.FILE_LIST_HIDE_INFO_IN_GRID.valueCompat
+        menuBinding.hideInfoInGridItem.isVisible = viewType == FileViewType.GRID
+        menuBinding.hideInfoInGridItem.isChecked = hideInfoInGrid
+        
+        // Handle square thumbnails menu items
+        val squareThumbnailsInGrid = viewModel.isSquareThumbnailsInGrid
+        // Show only one menu item - use the regular one for both views
+        menuBinding.useSquareThumbnailsItem.isVisible = true
+        menuBinding.squareThumbnailsInGridItem.isVisible = false
+        menuBinding.useSquareThumbnailsItem.isChecked = squareThumbnailsInGrid
+    }
+
+    private fun updateSquareThumbnailsInGridMenuItem() {
+        if (!this::menuBinding.isInitialized) {
+            return
+        }
+        val viewType = viewModel.viewType
+        val checkedViewTypeItem = when (viewType) {
+            FileViewType.LIST -> menuBinding.viewListItem
+            FileViewType.GRID -> menuBinding.viewGridItem
+        }
+        checkedViewTypeItem.isChecked = true
+        val squareThumbnailsInGrid = viewModel.isSquareThumbnailsInGrid
+        menuBinding.useSquareThumbnailsItem.isChecked = squareThumbnailsInGrid
     }
 
     private fun navigateUp() {
@@ -815,6 +871,22 @@ class FileListFragment : Fragment(),
             files = files.filter { shouldShowFile(it) }
         }
         adapter.replaceListAndIsSearching(files, viewModel.searchState.isSearching)
+    }
+
+    private fun updateTitle() {
+        val pickOptions = viewModel.pickOptions
+        val title = if (pickOptions != null) {
+            when (pickOptions.mode) {
+                PickOptions.Mode.OPEN_FILE -> "Select a file"
+                PickOptions.Mode.OPEN_DIRECTORY -> "Select a folder"
+                PickOptions.Mode.CREATE_FILE -> "Create a file"
+            }
+        } else {
+            null
+        }
+        if (title != null) {
+            requireActivity().title = title
+        }
     }
 
     private fun updateShowHiddenFilesMenuItem() {
@@ -859,23 +931,9 @@ class FileListFragment : Fragment(),
     }
 
     private fun onPickOptionsChanged(pickOptions: PickOptions?) {
-        val title = if (pickOptions == null) {
-            getString(R.string.file_list_title)
-        } else {
-            val count = if (pickOptions.allowMultiple) Int.MAX_VALUE else 1
-            when (pickOptions.mode) {
-                PickOptions.Mode.OPEN_FILE ->
-                    getQuantityString(R.plurals.file_list_title_open_file, count)
-                PickOptions.Mode.CREATE_FILE -> getString(R.string.file_list_title_create_file)
-                PickOptions.Mode.OPEN_DIRECTORY ->
-                    getQuantityString(R.plurals.file_list_title_open_directory, count)
-            }
-        }
-        requireActivity().title = title
-        updateSelectAllMenuItem()
-        updateOverlayToolbar()
-        updateBottomToolbar()
         adapter.pickOptions = pickOptions
+        updateTitle()
+        updateSelectAllMenuItem()
     }
 
     private fun updateSelectAllMenuItem() {
@@ -2012,12 +2070,16 @@ class FileListFragment : Fragment(),
         val sortBySizeItem: MenuItem,
         val sortByLastModifiedItem: MenuItem,
         val sortByRatingItem: MenuItem,
+        val sortByDurationItem: MenuItem,
         val sortOrderAscendingItem: MenuItem,
         val sortDirectoriesFirstItem: MenuItem,
         val viewSortPathSpecificItem: MenuItem,
         val selectAllItem: MenuItem,
         val showHiddenFilesItem: MenuItem,
-        val showDateTypeItem: MenuItem
+        val showDateTypeItem: MenuItem,
+        val hideInfoInGridItem: MenuItem,
+        val useSquareThumbnailsItem: MenuItem,
+        val squareThumbnailsInGridItem: MenuItem
     ) {
         companion object {
             fun inflate(menu: Menu, inflater: MenuInflater): MenuBinding {
@@ -2032,12 +2094,16 @@ class FileListFragment : Fragment(),
                     menu.findItem(R.id.action_sort_by_size),
                     menu.findItem(R.id.action_sort_by_last_modified),
                     menu.findItem(R.id.action_sort_by_rating),
+                    menu.findItem(R.id.action_sort_by_duration),
                     menu.findItem(R.id.action_sort_order_ascending),
                     menu.findItem(R.id.action_sort_directories_first),
                     menu.findItem(R.id.action_view_sort_path_specific),
                     menu.findItem(R.id.action_select_all),
                     menu.findItem(R.id.action_show_hidden_files),
-                    menu.findItem(R.id.action_show_date_type)
+                    menu.findItem(R.id.action_show_date_type),
+                    menu.findItem(R.id.action_hide_info_in_grid),
+                    menu.findItem(R.id.action_use_square_thumbnails),
+                    menu.findItem(R.id.action_square_thumbnails_in_grid)
                 )
             }
         }

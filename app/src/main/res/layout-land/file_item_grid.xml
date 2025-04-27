@@ -33,7 +33,7 @@
             android:layout_marginStart="@dimen/screen_edge_margin_half"
             android:layout_marginEnd="@dimen/screen_edge_margin_half"
             android:duplicateParentState="true"
-            app:aspectRatio="1.78">
+            app:aspectRatio="1.778">
 
             <me.zhanghai.android.files.ui.DisabledAlphaImageView
                 android:id="@+id/directoryThumbnailImage"
@@ -135,4 +135,4 @@
             android:textStyle="bold"
             android:textAppearance="?textAppearanceListItemSecondary" />
     </LinearLayout>
-</me.zhanghai.android.files.ui.CheckableForegroundLinearLayout>
+</me.zhanghai.android.files.ui.CheckableForegroundLinearLayout> 

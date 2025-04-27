@@ -240,6 +240,12 @@ object FileTagManager {
             }
             jsonObject.put(KEY_TAG_ORDERS, tagOrdersJson)
             
+            // Include ratings data from FileRatingManager
+            val ratingsJson = FileRatingManager.exportRatingsToJson()
+            for (key in ratingsJson.keys()) {
+                jsonObject.put(key, ratingsJson.get(key))
+            }
+            
             // Write to file
             file.writeText(jsonObject.toString(2)) // Use indented format
             true
@@ -319,6 +325,9 @@ object FileTagManager {
                 tagOrderMap = newTagOrderMap
                 saveTagOrders()
             }
+            
+            // Import ratings data
+            FileRatingManager.importRatingsFromJson(jsonObject)
             
             true
         } catch (e: Exception) {

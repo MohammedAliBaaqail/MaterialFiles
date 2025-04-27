@@ -48,9 +48,11 @@ import me.zhanghai.android.files.util.isMaterial3Theme
 import me.zhanghai.android.files.util.layoutInflater
 import me.zhanghai.android.files.util.valueCompat
 import me.zhanghai.android.files.util.isMediaMetadataRetrieverCompatible
+import me.zhanghai.android.files.util.VideoMetadataCache
 import java.util.Locale
 import android.util.Log
 import me.zhanghai.android.files.file.FileRatingManager
+import me.zhanghai.android.files.ui.AspectRatioFrameLayout
 
 class FileListAdapter(
     private val listener: Listener
@@ -96,6 +98,19 @@ class FileListAdapter(
         set(value) {
             _nameEllipsize = value
             notifyItemRangeChanged(0, itemCount, PAYLOAD_STATE_CHANGED)
+        }
+
+    private var _isSquareThumbnailsInGrid: Boolean = false
+    var isSquareThumbnailsInGrid: Boolean
+        get() = _isSquareThumbnailsInGrid
+        set(value) {
+            if (_isSquareThumbnailsInGrid == value) {
+                return
+            }
+            _isSquareThumbnailsInGrid = value
+            Log.e("FileListAdapter", "Square thumbnails setting changed to: $value - forcing item refresh")
+            // Force a complete redraw of all items
+            notifyItemRangeChanged(0, itemCount, PAYLOAD_SQUARE_THUMBNAILS_CHANGED)
         }
 
     fun replaceSelectedFiles(files: FileItemSet) {
@@ -238,6 +253,16 @@ class FileListAdapter(
             return
         }
         
+        // If this is just for square thumbnails, just update that
+        if (payloads.contains(PAYLOAD_SQUARE_THUMBNAILS_CHANGED)) {
+            holder.thumbnailLayout?.let { thumbnailLayout ->
+                val newRatio = if (isSquareThumbnailsInGrid) 1.0f else 1.78f
+                Log.e("FileListAdapter", "Updating thumbnail ratio to $newRatio due to settings change")
+                thumbnailLayout.ratio = newRatio
+            }
+            return
+        }
+        
         if (payloads.isNotEmpty()) {
             return
         }
@@ -259,7 +284,42 @@ class FileListAdapter(
                 true
             }
         }
-        holder.iconLayout?.setOnClickListener { selectFile(file) }
+
+        // Re-implement thumbnail aspect ratio handling - always apply square thumbnails setting
+        holder.thumbnailLayout?.let { thumbnailLayout ->
+            // CRITICAL FIX: Apply square thumbnails setting regardless of view type
+            val newRatio = if (isSquareThumbnailsInGrid) 1.0f else 1.78f
+            Log.d("FileListAdapter", "Setting thumbnail ratio: $newRatio, isSquareThumbsInGrid: $isSquareThumbnailsInGrid, viewType: $viewType")
+            thumbnailLayout.ratio = newRatio
+        }
+
+        // CRITICAL FIX: Fix thumbnail click handling - reset and force to work with a direct approach
+        holder.thumbnailClickArea?.let { clickArea ->
+            // Remove all previous listeners
+            clickArea.setOnClickListener(null)
+            clickArea.setOnLongClickListener(null)
+            
+            // Disable any parent interception
+            clickArea.parent?.requestDisallowInterceptTouchEvent(true)
+            
+            // Configure the view for better click detection
+            clickArea.isClickable = true
+            clickArea.isFocusable = true
+            
+            // Set up the most direct click handler possible
+            clickArea.setOnClickListener(object : View.OnClickListener {
+                override fun onClick(view: View) {
+                    Log.e("FileListAdapter", "THUMBNAIL CLICKED FOR: ${file.path}")
+                    view.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
+                    // Directly call the listener method
+                    listener.openFile(file)
+                }
+            })
+        }
+
+        // Remove any potentially conflicting click listeners
+        holder.iconLayout?.setOnClickListener(null)
+
         val iconRes = file.mimeType.iconRes
         holder.iconImage?.apply {
             isVisible = true
@@ -360,19 +420,22 @@ class FileListAdapter(
         
         holder.nameText.text = file.name
 
-        // Always update the tags view when fully binding
-        updateTagsView(holder, file)
+        // Check if we need to hide file info in grid view
+        val isGridView = viewType == FileViewType.GRID
+        val hideInfoInGrid = isGridView && Settings.FILE_LIST_HIDE_INFO_IN_GRID.valueCompat
         
-        // Display rating if present
+        // Handle the info container visibility for grid view
+        holder.infoContainer?.isVisible = !hideInfoInGrid
+        
+        // Ensure rating is always visible with consistent spacing
         val rating = FileRatingManager.getRating(file.path)
         holder.ratingText?.apply {
-            if (rating > 0) {
-                text = rating.toString()
-                visibility = View.VISIBLE
-            } else {
-                visibility = View.GONE
-            }
+            text = if (rating > 0) rating.toString() else ""
+            isVisible = true // Always visible for consistent layout
         }
+        
+        // Always update tags view regardless of view type
+        updateTagsView(holder, file)
         
         // Set up popup menu click listener
         holder.popupMenu.setOnMenuItemClickListener {
@@ -464,6 +527,14 @@ class FileListAdapter(
                 val rating = FileRatingManager.getRating(file.path)
                 if (rating > 0) rating.toString() else "-"
             }
+            FileSortOptions.By.DURATION -> {
+                val duration = VideoMetadataCache.getVideoDurationSync(file.path)
+                if (duration != null && duration > 0) {
+                    duration.format()
+                } else {
+                    "-"
+                }
+            }
         }
     }
 
@@ -487,6 +558,7 @@ class FileListAdapter(
     companion object {
         private val PAYLOAD_STATE_CHANGED = Any()
         private val PAYLOAD_TAGS_CHANGED = Any()
+        private val PAYLOAD_SQUARE_THUMBNAILS_CHANGED = Any()
 
         private val CALLBACK = object : DiffUtil.ItemCallback<FileItem>() {
             override fun areItemsTheSame(oldItem: FileItem, newItem: FileItem): Boolean =
@@ -512,7 +584,10 @@ class FileListAdapter(
         val descriptionText: TextView?,
         val menuButton: ImageButton,
         val tagsView: TagsView?,
-        val ratingText: TextView?
+        val ratingText: TextView?,
+        val infoContainer: View?,
+        val thumbnailLayout: AspectRatioFrameLayout?,
+        val thumbnailClickArea: View?
     ) : RecyclerView.ViewHolder(root) {
         constructor(binding: FileItemListBinding) : this(
             binding.root,
@@ -529,7 +604,10 @@ class FileListAdapter(
             binding.descriptionText,
             binding.menuButton,
             binding.tagsView,
-            binding.ratingText
+            binding.ratingText,
+            null,
+            binding.thumbnailLayout,
+            binding.thumbnailClickArea
         )
 
         constructor(binding: FileItemGridBinding) : this(
@@ -547,7 +625,10 @@ class FileListAdapter(
             null,
             binding.menuButton,
             binding.tagsView,
-            binding.ratingText
+            binding.ratingText,
+            binding.infoContainer,
+            binding.thumbnailLayout,
+            binding.thumbnailClickArea
         )
 
         lateinit var popupMenu: PopupMenu

@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+
+<!--
+  ~ Copyright (c) 2018 Hai Zhang <dreaming.in.code.zh@gmail.com>
+  ~ All Rights Reserved.
+  -->
+
 <resources>
-    <bool name="pref_default_value_file_list_show_creation_date">false</bool>
+    <!-- Boolean resources have been moved to donottranslate_prefs.xml -->
 </resources> 

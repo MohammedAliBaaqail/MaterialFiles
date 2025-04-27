@@ -71,7 +71,7 @@ class FileTagManagementDialogFragment : DialogFragment() {
         // Setup drag and drop functionality
         setupDragAndDrop()
 
-        return MaterialAlertDialogBuilder(context, R.style.AppTheme_Dialog)
+        return MaterialAlertDialogBuilder(context)
             .setTitle(R.string.file_tag_management_title)
             .setView(view)
             .setPositiveButton(android.R.string.ok) { _, _ ->
@@ -80,6 +80,7 @@ class FileTagManagementDialogFragment : DialogFragment() {
                     val currentTags = adapter.getAllTags().filter { tag -> adapter.isTagSelected(tag) }
                     val path = files.first().path
                     FileTagManager.updateTagOrderForFile(currentTags.map { it.id }, path)
+                    notifyTagsChanged()
                 }
             }
             .setNeutralButton(R.string.file_tag_add_new) { _, _ ->
@@ -137,6 +138,9 @@ class FileTagManagementDialogFragment : DialogFragment() {
                     val currentTags = adapter.getAllTags().filter { tag -> adapter.isTagSelected(tag) }
                     val path = files.first().path
                     FileTagManager.updateTagOrderForFile(currentTags.map { it.id }, path)
+                    
+                    // Notify that tags have changed to refresh the UI
+                    notifyTagsChanged()
                 }
             }
         }
@@ -158,7 +162,7 @@ class FileTagManagementDialogFragment : DialogFragment() {
         val colorButton = view.findViewById<ImageButton>(R.id.colorButton)
         colorButton.setBackgroundColor(selectedColor)
         
-        val dialog = MaterialAlertDialogBuilder(context, R.style.AppTheme_Dialog)
+        val dialog = MaterialAlertDialogBuilder(context)
             .setTitle(R.string.file_tag_add_title)
             .setView(view)
             .setPositiveButton(R.string.create) { _, _ ->

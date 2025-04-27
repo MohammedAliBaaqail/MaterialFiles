@@ -25,6 +25,7 @@
     <string name="keep_editing">Keep editing</string>
     <string name="loading">Loading…</string>
     <string name="maybe_later">Maybe later</string>
+    <string name="menu">Menu</string>
     <string name="merge">Merge</string>
     <string name="none">None</string>
     <string name="open_navigation_drawer">Open navigation drawer</string>
@@ -294,6 +295,7 @@
     <string name="file_list_action_sort_by_type">Type</string>
     <string name="file_list_action_sort_by_size">Size</string>
     <string name="file_list_action_sort_by_last_modified">Last modified</string>
+    <string name="file_list_action_sort_by_duration">Duration</string>
     <string name="file_list_action_sort_order_ascending">Ascending</string>
     <string name="file_list_action_sort_directories_first">Folders first</string>
     <string name="file_list_action_view_sort_path_specific">Only for this folder</string>
@@ -790,6 +792,8 @@
     <string name="settings_show_pdf_thumbnail_pre_28_summary">Might make the app unstable on older versions of Android</string>
     <string name="settings_read_remote_files_for_thumbnail_title">Read remote files for thumbnail</string>
     <string name="settings_file_list_show_creation_date_title">Show file creation date</string>
+    <string name="file_list_action_show_creation_date">Show creation date</string>
+    <string name="file_list_action_show_modification_date">Show modification date</string>
 
     <string name="about_title">About</string>
     <string name="about_version_title">Version</string>
@@ -830,9 +834,10 @@
     <string name="tags_import_success">Tags imported successfully</string>
     <string name="tags_import_error">Failed to import tags</string>
 
-    <string name="pref_key_file_list_show_creation_date" translatable="false">file_list_show_creation_date</string>
-    <string name="file_list_action_show_creation_date">Show creation date</string>
-    <string name="file_list_action_show_modification_date">Show modification date</string>
+    <string name="settings_file_list_hide_info_in_grid_title">Hide file info in grid view</string>
+    <string name="settings_file_list_hide_info_in_grid_summary">Hides rating, tags, and file name in grid view mode</string>
+    <string name="file_list_action_use_square_thumbnails">Use square thumbnails</string>
+    <string name="file_list_action_use_square_thumbnails_in_grid">Use square thumbnails</string>
 
     <!-- File Rating -->
     <string name="file_rating_title">Set Rating</string>
@@ -843,3 +848,5 @@
     <string name="file_list_action_sort_by_rating">Rating</string>
     <string name="rating_set_success">Rating set successfully</string>
 </resources>
+
+

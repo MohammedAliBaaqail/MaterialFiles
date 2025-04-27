@@ -13,6 +13,7 @@ import me.zhanghai.android.files.file.FileItem
 import me.zhanghai.android.files.file.FileRatingManager
 import me.zhanghai.android.files.util.ParcelableParceler
 import me.zhanghai.android.files.util.hash
+import me.zhanghai.android.files.util.VideoMetadataCache
 
 @Parcelize
 data class FileSortOptions(
@@ -25,7 +26,8 @@ data class FileSortOptions(
         TYPE,
         SIZE,
         LAST_MODIFIED,
-        RATING
+        RATING,
+        DURATION
     }
 
     enum class Order {
@@ -66,6 +68,7 @@ data class FileSortOptions(
                 By.SIZE -> compareBySize(file1, file2)
                 By.LAST_MODIFIED -> compareByLastModified(file1, file2)
                 By.RATING -> compareByRating(file1, file2)
+                By.DURATION -> compareByDuration(file1, file2)
             }
 
         private fun compareByName(file1: FileItem, file2: FileItem): Int =
@@ -134,6 +137,28 @@ data class FileSortOptions(
                 rating1.compareTo(rating2)
             }
             return if (result != 0) result else compareByName(file1, file2)
+        }
+        
+        private fun compareByDuration(file1: FileItem, file2: FileItem): Int {
+            val isDirectory1 = file1.attributes.isDirectory
+            val isDirectory2 = file2.attributes.isDirectory
+            return if (isDirectory1 && isDirectory2) {
+                compareByName(file1, file2)
+            } else if (isDirectory1) {
+                -1
+            } else if (isDirectory2) {
+                1
+            } else {
+                try {
+                    val duration1 = VideoMetadataCache.getVideoDurationSync(file1.path) ?: 0L
+                    val duration2 = VideoMetadataCache.getVideoDurationSync(file2.path) ?: 0L
+                    val result = duration1.compareTo(duration2)
+                    if (result != 0) result else compareByName(file1, file2)
+                } catch (e: Exception) {
+                    // If any exception occurs, fall back to comparing by name
+                    compareByName(file1, file2)
+                }
+            }
         }
     }
 

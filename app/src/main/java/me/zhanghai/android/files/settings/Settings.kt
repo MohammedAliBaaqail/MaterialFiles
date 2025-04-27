@@ -63,6 +63,24 @@ object Settings {
             FileSortOptions(FileSortOptions.By.NAME, FileSortOptions.Order.ASCENDING, true)
         )
 
+    val FILE_LIST_HIDE_INFO_IN_GRID: SettingLiveData<Boolean> =
+        BooleanSettingLiveData(
+            R.string.pref_key_file_list_hide_info_in_grid,
+            R.bool.pref_default_value_file_list_hide_info_in_grid
+        )
+
+    val FILE_LIST_USE_SQUARE_THUMBNAILS: SettingLiveData<Boolean> =
+        BooleanSettingLiveData(
+            R.string.pref_key_file_list_use_square_thumbnails,
+            R.bool.pref_default_value_file_list_use_square_thumbnails
+        )
+
+    val FILE_LIST_SQUARE_THUMBNAILS_IN_GRID: SettingLiveData<Boolean> =
+        BooleanSettingLiveData(
+            R.string.pref_key_file_list_square_thumbnails_in_grid,
+            R.bool.pref_default_value_file_list_square_thumbnails_in_grid
+        )
+
     val CREATE_ARCHIVE_TYPE: SettingLiveData<Int> =
         ResourceIdSettingLiveData(R.string.pref_key_create_archive_type, R.id.zipRadio)
 

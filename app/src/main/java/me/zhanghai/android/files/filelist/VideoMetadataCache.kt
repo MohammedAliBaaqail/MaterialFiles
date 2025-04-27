@@ -66,6 +66,32 @@ object VideoMetadataCache {
     }
     
     /**
+     * Get the duration of a video file synchronously (blocking)
+     * 
+     * @param path The path to the video file
+     * @return The duration in milliseconds, or null if not available
+     */
+    fun getVideoDurationSync(path: Path): Duration? {
+        // Handle null path to prevent NullPointerException
+        if (path == null) {
+            return null
+        }
+        
+        return cache.getOrPut(path) {
+            try {
+                MediaMetadataRetriever().use { retriever ->
+                    retriever.setDataSource(path)
+                    retriever.extractMetadataNotBlank(
+                        MediaMetadataRetriever.METADATA_KEY_DURATION
+                    )?.toLongOrNull()?.let { Duration.ofMillis(it) }
+                }
+            } catch (e: Exception) {
+                null
+            }
+        }
+    }
+    
+    /**
      * Clears the cache, useful when low on memory
      */
     fun clearCache() {

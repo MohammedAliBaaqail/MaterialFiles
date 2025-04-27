@@ -25,4 +25,10 @@ object PathSettings {
         ParcelValueSettingLiveData(
             NAME_SUFFIX, R.string.pref_key_file_list_sort_options, path.toString(), null
         )
+
+    fun getFileListSquareThumbnailsInGrid(path: Path): SettingLiveData<Boolean?> =
+        BooleanSettingLiveData(
+            NAME_SUFFIX, R.string.pref_key_file_list_square_thumbnails_in_grid, path.toString(),
+            R.bool.pref_default_value_file_list_square_thumbnails_in_grid
+        ) as SettingLiveData<Boolean?>
 }

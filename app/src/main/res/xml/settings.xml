@@ -117,5 +117,11 @@
             android:key="@string/pref_key_file_list_show_creation_date"
             android:title="@string/settings_file_list_show_creation_date_title"
             android:defaultValue="@bool/pref_default_value_file_list_show_creation_date" />
+
+        <SwitchPreferenceCompat
+            android:key="@string/pref_key_file_list_hide_info_in_grid"
+            android:title="@string/settings_file_list_hide_info_in_grid_title"
+            android:summary="@string/settings_file_list_hide_info_in_grid_summary"
+            android:defaultValue="@bool/pref_default_value_file_list_hide_info_in_grid" />
     </PreferenceCategory>
 </PreferenceScreen>

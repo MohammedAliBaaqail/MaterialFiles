@@ -14,127 +14,144 @@
     android:minHeight="@dimen/two_line_list_item_height"
     android:foreground="?selectableItemBackground"
     android:gravity="center_vertical"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    android:baselineAligned="false">
 
+    <!-- Thumbnail container that guarantees clicks -->
     <FrameLayout
-        android:id="@+id/iconLayout"
-        android:layout_width="@dimen/list_thumbnail_container_size"
+        android:id="@+id/thumbnailClickArea"
+        android:layout_width="wrap_content"
         android:layout_height="@dimen/list_thumbnail_container_size"
-        android:layout_marginStart="0dp"
-        android:layout_marginEnd="4dp"
-        android:clipToPadding="false"
-        android:duplicateParentState="true"
-        android:padding="0dp">
+        android:minWidth="@dimen/list_thumbnail_container_size"
+        android:clickable="true"
+        android:focusable="true"
+        android:descendantFocusability="beforeDescendants"
+        android:background="@android:color/transparent"
+        android:foreground="@drawable/selectable_item_background_oval">
 
-        <me.zhanghai.android.files.ui.DisabledAlphaImageView
-            android:id="@+id/iconImage"
-            android:layout_width="@dimen/icon_size"
-            android:layout_height="@dimen/icon_size"
-            android:layout_gravity="center"
+        <FrameLayout
+            android:id="@+id/iconLayout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
             android:duplicateParentState="true"
-            android:scaleType="centerCrop" />
+            android:padding="0dp">
 
-        <me.zhanghai.android.files.ui.DisabledAlphaImageView
-            android:id="@+id/thumbnailImage"
-            android:layout_width="@dimen/list_thumbnail_size"
-            android:layout_height="@dimen/list_thumbnail_size"
-            android:layout_gravity="center"
-            android:duplicateParentState="true"
-            android:scaleType="centerCrop" />
+            <me.zhanghai.android.files.ui.DisabledAlphaImageView
+                android:id="@+id/iconImage"
+                android:layout_width="@dimen/icon_size"
+                android:layout_height="@dimen/icon_size"
+                android:layout_gravity="center"
+                android:duplicateParentState="true"
+                android:scaleType="centerCrop" />
 
-        <me.zhanghai.android.files.ui.DisabledAlphaImageView
-            android:id="@+id/appIconBadgeImage"
-            android:layout_width="@dimen/badge_size_plus_1dp"
-            android:layout_height="@dimen/badge_size_plus_1dp"
-            android:layout_gravity="end|bottom"
-            android:layout_marginStart="-0.5dp"
-            android:layout_marginEnd="4dp"
-            android:layout_marginTop="-0.5dp"
-            android:layout_marginBottom="4dp"
-            android:duplicateParentState="true" />
+            <!-- Force 16:9 aspect with fixed height -->
+            <me.zhanghai.android.files.ui.AspectRatioFrameLayout
+                android:id="@+id/thumbnailLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:duplicateParentState="true"
+                app:aspectRatio="1.78">
 
-        <me.zhanghai.android.files.ui.DisabledAlphaImageView
-            android:id="@+id/badgeImage"
-            android:layout_width="@dimen/badge_size"
-            android:layout_height="@dimen/badge_size"
-            android:layout_gravity="end|bottom"
-            android:layout_marginEnd="4dp"
-            android:layout_marginBottom="4dp"
-            android:background="@drawable/badge_background_18dp"
-            android:duplicateParentState="true" />
+                <me.zhanghai.android.files.ui.DisabledAlphaImageView
+                    android:id="@+id/thumbnailImage"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:duplicateParentState="true"
+                    android:scaleType="centerCrop" />
+            </me.zhanghai.android.files.ui.AspectRatioFrameLayout>
 
-        <me.zhanghai.android.files.ui.DisabledAlphaImageView
-            android:layout_width="@dimen/badge_size"
-            android:layout_height="@dimen/badge_size"
-            android:layout_gravity="end|bottom"
-            android:layout_marginEnd="4dp"
-            android:layout_marginBottom="4dp"
-            android:duplicateParentState="true"
-            android:src="@drawable/checkable_badge_18dp" />
+            <me.zhanghai.android.files.ui.DisabledAlphaImageView
+                android:id="@+id/appIconBadgeImage"
+                android:layout_width="@dimen/badge_size_plus_1dp"
+                android:layout_height="@dimen/badge_size_plus_1dp"
+                android:layout_gravity="end|bottom"
+                android:layout_marginStart="-0.5dp"
+                android:layout_marginEnd="4dp"
+                android:layout_marginTop="-0.5dp"
+                android:layout_marginBottom="4dp"
+                android:duplicateParentState="true" />
+
+            <me.zhanghai.android.files.ui.DisabledAlphaImageView
+                android:id="@+id/badgeImage"
+                android:layout_width="@dimen/badge_size"
+                android:layout_height="@dimen/badge_size"
+                android:layout_gravity="end|bottom"
+                android:layout_marginEnd="4dp"
+                android:layout_marginBottom="4dp"
+                android:background="@drawable/badge_background_18dp"
+                android:duplicateParentState="true" />
+        </FrameLayout>
     </FrameLayout>
 
+    <!-- Fixed width spacer to maintain consistent layout -->
+    <Space
+        android:layout_width="4dp"
+        android:layout_height="match_parent" />
+
+    <!-- Rating positioned between thumbnail and info with reduced margins -->
     <TextView
         android:id="@+id/ratingText"
-        android:layout_width="30dp"
-        android:layout_height="match_parent"
-        android:layout_marginStart="4dp"
-        android:layout_marginEnd="4dp"
+        android:layout_width="24dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="0dp"
+        android:layout_marginEnd="2dp"
         android:gravity="center"
         android:textSize="20sp"
         android:textStyle="bold"
         android:textColor="?colorPrimary"
-        android:visibility="gone" />
+        android:textAppearance="?textAppearanceBodyMedium" />
 
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:layout_marginStart="8dp"
         android:duplicateParentState="true"
-        android:orientation="vertical">
+        android:gravity="center_vertical"
+        android:orientation="vertical"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp">
 
-        <!-- Lint says android:ellipsize="middle" and android:maxLines="1" crashes. -->
         <TextView
             android:id="@+id/nameText"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:duplicateParentState="true"
-            android:marqueeRepeatLimit="marquee_forever"
+            android:ellipsize="end"
             android:singleLine="true"
-            android:textAppearance="?textAppearanceListItem" />
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textAppearance="?textAppearanceBodyMedium" />
 
-        <me.zhanghai.android.files.ui.AutoGoneTextView
+        <TextView
             android:id="@+id/descriptionText"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:duplicateParentState="true"
             android:ellipsize="end"
             android:maxLines="1"
-            android:textAppearance="?textAppearanceListItemSecondary"
+            android:textSize="14sp"
+            android:textAppearance="?textAppearanceBodySmall"
             android:textColor="?android:textColorSecondary" />
 
         <me.zhanghai.android.files.ui.TagsView
             android:id="@+id/tagsView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
+            android:layout_marginTop="4dp"
+            android:duplicateParentState="true"
             android:visibility="gone" />
     </LinearLayout>
 
-    <!--
-      ~ Cannot use android:duplicateParentState="true" because a button needs to have its own
-      ~ pressed state, etc. Necessary states will be duplicated manually in the adapter
-      ~ implementation.
-      -->
-    <me.zhanghai.android.foregroundcompat.ForegroundImageButton
+    <ImageButton
         android:id="@+id/menuButton"
         android:layout_width="@dimen/touch_target_size"
         android:layout_height="@dimen/touch_target_size"
-        android:layout_marginStart="@dimen/content_start_from_screen_edge_margin_minus_36dp_considering_at_least_8dp"
-        android:layout_marginEnd="@dimen/screen_edge_margin_minus_12dp_at_least_8dp"
+        android:background="@drawable/selectable_item_background_oval"
+        android:contentDescription="@string/menu"
+        android:duplicateParentState="true"
         android:padding="@dimen/touch_target_icon_padding"
-        android:background="@null"
-        android:foreground="@drawable/selectable_item_background_oval"
         android:src="@drawable/more_vertical_icon_white_24dp"
-        app:tint="?colorControlNormal" />
+        android:tint="?colorControlNormal" />
 </me.zhanghai.android.files.ui.CheckableForegroundLinearLayout>
