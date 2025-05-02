@@ -27,12 +27,15 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.ProgressBar
+import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.widget.SwitchCompat
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
@@ -98,6 +101,7 @@ import me.zhanghai.android.files.ui.PersistentBarLayoutToolbarActionMode
 import me.zhanghai.android.files.ui.PersistentDrawerLayout
 import me.zhanghai.android.files.ui.ScrollingViewOnApplyWindowInsetsListener
 import me.zhanghai.android.files.ui.SpeedDialViewOnBackPressedCallback
+import me.zhanghai.android.files.ui.TagsView
 import me.zhanghai.android.files.ui.ThemedFastScroller
 import me.zhanghai.android.files.ui.ToolbarActionMode
 import me.zhanghai.android.files.util.DebouncedRunnable
@@ -135,13 +139,13 @@ import me.zhanghai.android.files.util.valueCompat
 import me.zhanghai.android.files.util.viewModels
 import me.zhanghai.android.files.util.withChooser
 import me.zhanghai.android.files.viewer.image.ImageViewerActivity
-import kotlin.math.roundToInt
-import me.zhanghai.android.files.ui.TagsView
 import me.zhanghai.android.files.filelist.VideoMetadataCache
 import me.zhanghai.android.files.file.FileRatingManager
 import java8.nio.file.attribute.BasicFileAttributes
 import java8.nio.file.attribute.FileTime
 import java.text.CollationKey
+import kotlin.math.roundToInt
+import kotlin.math.max
 
 class FileListFragment : Fragment(),
     BreadcrumbLayout.Listener,
@@ -368,6 +372,10 @@ class FileListFragment : Fragment(),
         }
         viewModel.breadcrumbLiveData.observe(viewLifecycleOwner) {
             binding.breadcrumbLayout.setData(it)
+            // Update title when breadcrumb changes and path is hidden
+            if (Settings.HIDE_BREADCRUMB_PATH.valueCompat) {
+                updateTitleWithCurrentFolder()
+            }
         }
         viewModel.viewTypeLiveData.observe(viewLifecycleOwner) { onViewTypeChanged(it) }
         // Live data only calls observeForever() on its sources when it is active, so we have to
@@ -385,6 +393,9 @@ class FileListFragment : Fragment(),
         viewModel.squareThumbnailsInGridLiveData.observe(viewLifecycleOwner) {
             onSquareThumbnailsInGridChanged(it)
         }
+        viewModel.itemScaleLiveData.observe(viewLifecycleOwner) {
+            onItemScaleChanged(it)
+        }
         viewModel.pickOptionsLiveData.observe(viewLifecycleOwner) { onPickOptionsChanged(it) }
         viewModel.selectedFilesLiveData.observe(viewLifecycleOwner) { onSelectedFilesChanged(it) }
         viewModel.pasteStateLiveData.observe(viewLifecycleOwner) { onPasteStateChanged(it) }
@@ -401,6 +412,11 @@ class FileListFragment : Fragment(),
         // Observe rating changes
         FileRatingManager.ratingChangedLiveData.observe(viewLifecycleOwner) {
             adapter.notifyDataSetChanged()
+        }
+        
+        // Observe the hide breadcrumb path setting
+        Settings.HIDE_BREADCRUMB_PATH.observe(viewLifecycleOwner) { hideBreadcrumbPath ->
+            updateBreadcrumbVisibility(hideBreadcrumbPath)
         }
     }
 
@@ -637,6 +653,10 @@ class FileListFragment : Fragment(),
                 adapter.notifyDataSetChanged()
                 true
             }
+            R.id.action_item_scale -> {
+                showItemScaleDialog()
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -677,6 +697,11 @@ class FileListFragment : Fragment(),
     private fun onCurrentPathChanged(path: Path) {
         updateOverlayToolbar()
         updateBottomToolbar()
+        
+        // Update title immediately when path changes if breadcrumb is hidden
+        if (Settings.HIDE_BREADCRUMB_PATH.valueCompat) {
+            updateTitleWithCurrentFolder()
+        }
     }
 
     private fun onSearchViewExpandedChanged(expanded: Boolean) {
@@ -760,7 +785,15 @@ class FileListFragment : Fragment(),
                     persistentDrawerLayout.isDrawerOpen(GravityCompat.START)) {
                     widthDp -= getDimensionDp(R.dimen.navigation_max_width).roundToInt()
                 }
-                (widthDp / 180).coerceAtLeast(2)
+                
+                // With reduced margins, we can fit more items per row
+                // Use 160dp instead of 180dp per item to account for the reduced margins
+                val itemSize = 160
+                val itemScale = viewModel.itemScale / 100f
+                val scaledItemSize = (itemSize * itemScale).roundToInt()
+                val spanCount = (widthDp / scaledItemSize).coerceAtLeast(2)
+                
+                spanCount
             }
         }
     }
@@ -779,6 +812,34 @@ class FileListFragment : Fragment(),
         // so it will apply to both list and grid views
         adapter.isSquareThumbnailsInGrid = squareThumbnailsInGrid
         updateViewSortMenuItems()
+    }
+
+    private fun onItemScaleChanged(scale: Int) {
+        adapter.itemScale = scale
+        
+        // Dynamically adjust grid span count based on item scale
+        if (viewModel.viewTypeLiveData.value == FileViewType.GRID) {
+            // Default span count is determined by screen width
+            // We'll reduce it as scale increases to allow proper item sizing
+            val activity = requireActivity()
+            val screenWidth = activity.resources.displayMetrics.widthPixels
+            
+            // Base span count on available width and scale
+            // As scale increases, we reduce the span count to prevent squished items
+            val scaleFactor = scale / 100f
+            val baseSpanCount = when {
+                activity.hasSw600Dp -> 6 // Tablet
+                activity.isOrientationLandscape -> 5 // Phone landscape
+                else -> 3 // Phone portrait
+            }
+            
+            // Reduce span count as scale increases
+            // This ensures items have enough space and forces reflow to new lines when needed
+            val spanCount = Math.max(1, (baseSpanCount / scaleFactor).roundToInt())
+            
+            // Apply the new span count
+            layoutManager.spanCount = spanCount
+        }
     }
 
     private fun updateViewSortMenuItems() {
@@ -1970,7 +2031,7 @@ class FileListFragment : Fragment(),
         super.onDestroy()
         
         // Clear video metadata cache to free up memory
-        VideoMetadataCache.clearCache()
+        // VideoMetadataCache.clearCache()
     }
 
     companion object {
@@ -2167,5 +2228,63 @@ class FileListFragment : Fragment(),
         override fun fileKey(): Any {
             throw UnsupportedOperationException()
         }
+    }
+
+    private fun showItemScaleDialog() {
+        val dialogView = View.inflate(requireContext(), R.layout.file_list_item_scale_dialog, null)
+        val scaleValueText = dialogView.findViewById<TextView>(R.id.scaleValueText)
+        val scaleSlider = dialogView.findViewById<SeekBar>(R.id.scaleSlider)
+        
+        // Set initial value (50-300 range)
+        val currentScale = viewModel.itemScale
+        val progress = currentScale - 50
+        scaleSlider.progress = progress
+        scaleValueText.text = getString(R.string. file_list_action_item_scale_value, currentScale)
+        
+        // Apply the scale immediately when slider changes
+        scaleSlider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
+                val scale = progress + 50
+                scaleValueText.text = getString(R.string.file_list_action_item_scale_value, scale)
+                
+                // Apply the scale immediately
+                if (fromUser) {
+                    viewModel.itemScale = scale
+                }
+            }
+            
+            override fun onStartTrackingTouch(seekBar: SeekBar) {}
+            
+            override fun onStopTrackingTouch(seekBar: SeekBar) {}
+        })
+        
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.file_list_action_item_scale)
+            .setView(dialogView)
+            .setPositiveButton(android.R.string.ok, null) // No need to set the value on OK, it's already applied
+            .setNegativeButton(android.R.string.cancel) { _, _ ->
+                // Restore the original scale if canceled
+                viewModel.itemScale = currentScale
+            }
+            .create()
+            .show()
+    }
+
+    private fun updateBreadcrumbVisibility(hideBreadcrumbPath: Boolean) {
+        binding.breadcrumbLayout.isVisible = !hideBreadcrumbPath
+        if (hideBreadcrumbPath) {
+            updateTitleWithCurrentFolder()
+        } else {
+            // Reset title when showing breadcrumb
+            (requireActivity() as AppCompatActivity).setTitle(R.string.file_list_title)
+        }
+    }
+
+    private fun updateTitleWithCurrentFolder() {
+        val currentPath = viewModel.currentPath
+        val currentPathName = currentPath?.fileName?.toString() ?: currentPath?.toString()
+        ?: getString(R.string.file_list_title)
+        
+        (requireActivity() as AppCompatActivity).title = currentPathName
     }
 }

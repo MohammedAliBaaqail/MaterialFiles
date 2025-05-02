@@ -53,6 +53,12 @@
             android:entries="@array/settings_file_name_ellipsize_entries"
             android:entryValues="@array/pref_entry_values_file_name_ellipsize"
             app:useSimpleSummaryProvider="true" />
+
+        <SwitchPreferenceCompat
+            android:key="@string/pref_key_hide_breadcrumb_path"
+            android:title="@string/settings_hide_breadcrumb_path_title"
+            android:summary="@string/settings_hide_breadcrumb_path_summary"
+            android:defaultValue="false" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/settings_behavior_title">

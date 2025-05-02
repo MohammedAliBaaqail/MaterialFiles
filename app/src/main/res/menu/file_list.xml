@@ -88,6 +88,9 @@
                     android:id="@+id/action_square_thumbnails_in_grid"
                     android:checkable="true"
                     android:title="@string/file_list_action_use_square_thumbnails_in_grid" />
+                <item
+                    android:id="@+id/action_item_scale"
+                    android:title="@string/file_list_action_item_scale" />
             </group>
             <item
                 android:id="@+id/action_view_sort_path_specific"

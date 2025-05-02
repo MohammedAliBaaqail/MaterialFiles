@@ -94,4 +94,7 @@
     
     <string name="pref_key_file_list_use_square_thumbnails">key_file_list_use_square_thumbnails</string>
     <bool name="pref_default_value_file_list_use_square_thumbnails">false</bool>
+    
+    <string name="pref_key_hide_breadcrumb_path">key_hide_breadcrumb_path</string>
+    <bool name="pref_default_value_hide_breadcrumb_path">false</bool>
 </resources>

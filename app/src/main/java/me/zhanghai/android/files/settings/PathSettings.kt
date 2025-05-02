@@ -27,8 +27,12 @@ object PathSettings {
         )
 
     fun getFileListSquareThumbnailsInGrid(path: Path): SettingLiveData<Boolean?> =
-        BooleanSettingLiveData(
-            NAME_SUFFIX, R.string.pref_key_file_list_square_thumbnails_in_grid, path.toString(),
-            R.bool.pref_default_value_file_list_square_thumbnails_in_grid
-        ) as SettingLiveData<Boolean?>
+        ParcelValueSettingLiveData(
+            NAME_SUFFIX, R.string.pref_key_file_list_square_thumbnails_in_grid, path.toString(), null
+        )
+
+    fun getFileListItemScale(path: Path): SettingLiveData<Int?> =
+        ParcelValueSettingLiveData(
+            NAME_SUFFIX, R.string.pref_key_file_list_item_scale, path.toString(), null
+        )
 }

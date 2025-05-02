@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<resources>
+    <item name="tag_original_width" type="id" />
+    <item name="tag_original_height" type="id" />
+    <item name="tag_original_text_size" type="id" />
+</resources> 

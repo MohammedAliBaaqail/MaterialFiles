@@ -11,6 +11,7 @@ import android.os.Looper
 import java.time.Duration
 import java8.nio.file.Path
 import me.zhanghai.android.files.fileproperties.extractMetadataNotBlank
+import me.zhanghai.android.files.util.MediaLogger
 import me.zhanghai.android.files.util.setDataSource
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
@@ -20,7 +21,9 @@ import java.util.concurrent.Executors
  * extracting data from the same video files.
  */
 object VideoMetadataCache {
-    private val cache = ConcurrentHashMap<Path, Duration?>()
+    private val durationCache = ConcurrentHashMap<Path, Duration?>()
+    private val widthCache = ConcurrentHashMap<Path, Int?>()
+    private val heightCache = ConcurrentHashMap<Path, Int?>()
     private val executor = Executors.newFixedThreadPool(2)
     private val mainThreadHandler = Handler(Looper.getMainLooper())
     
@@ -32,7 +35,7 @@ object VideoMetadataCache {
      */
     fun getVideoDuration(path: Path, callback: (Duration?) -> Unit) {
         // Return cached result immediately if available
-        val cachedDuration = cache[path]
+        val cachedDuration = durationCache[path]
         if (cachedDuration != null) {
             callback(cachedDuration)
             return
@@ -49,15 +52,18 @@ object VideoMetadataCache {
                 }
                 
                 // Cache the result (null is valid to avoid repeated extraction attempts)
-                cache[path] = duration
+                durationCache[path] = duration
                 
                 // Call back on main thread
                 mainThreadHandler.post {
                     callback(duration)
                 }
             } catch (e: Exception) {
+                // Log the error, suppressing common ones
+                MediaLogger.logException(e)
+                
                 // Cache null to prevent repeated attempts
-                cache[path] = null
+                durationCache[path] = null
                 mainThreadHandler.post {
                     callback(null)
                 }
@@ -77,7 +83,7 @@ object VideoMetadataCache {
             return null
         }
         
-        return cache.getOrPut(path) {
+        return durationCache.getOrPut(path) {
             try {
                 MediaMetadataRetriever().use { retriever ->
                     retriever.setDataSource(path)
@@ -86,6 +92,59 @@ object VideoMetadataCache {
                     )?.toLongOrNull()?.let { Duration.ofMillis(it) }
                 }
             } catch (e: Exception) {
+                MediaLogger.logException(e)
+                null
+            }
+        }
+    }
+    
+    /**
+     * Get the width of a video file synchronously
+     * 
+     * @param path The path to the video file
+     * @return The width in pixels, or null if not available
+     */
+    fun getVideoWidthSync(path: Path): Int? {
+        if (path == null) {
+            return null
+        }
+        
+        return widthCache.getOrPut(path) {
+            try {
+                MediaMetadataRetriever().use { retriever ->
+                    retriever.setDataSource(path)
+                    retriever.extractMetadataNotBlank(
+                        MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH
+                    )?.toIntOrNull()
+                }
+            } catch (e: Exception) {
+                MediaLogger.logException(e)
+                null
+            }
+        }
+    }
+    
+    /**
+     * Get the height of a video file synchronously
+     * 
+     * @param path The path to the video file
+     * @return The height in pixels, or null if not available
+     */
+    fun getVideoHeightSync(path: Path): Int? {
+        if (path == null) {
+            return null
+        }
+        
+        return heightCache.getOrPut(path) {
+            try {
+                MediaMetadataRetriever().use { retriever ->
+                    retriever.setDataSource(path)
+                    retriever.extractMetadataNotBlank(
+                        MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT
+                    )?.toIntOrNull()
+                }
+            } catch (e: Exception) {
+                MediaLogger.logException(e)
                 null
             }
         }
@@ -95,6 +154,8 @@ object VideoMetadataCache {
      * Clears the cache, useful when low on memory
      */
     fun clearCache() {
-        cache.clear()
+        durationCache.clear()
+        widthCache.clear()
+        heightCache.clear()
     }
 } 

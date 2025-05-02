@@ -48,6 +48,7 @@ import me.zhanghai.android.files.util.isMediaMetadataRetrieverCompatible
 import me.zhanghai.android.files.util.runWithCancellationSignal
 import me.zhanghai.android.files.util.setDataSource
 import me.zhanghai.android.files.util.valueCompat
+import me.zhanghai.android.files.util.MediaLogger
 import okio.buffer
 import okio.source
 import java.io.Closeable
@@ -127,7 +128,7 @@ class PathAttributesFetcher(
                         retriever.embeddedPicture
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    MediaLogger.logException(e)
                     null
                 }
                 if (embeddedPicture != null) {

@@ -835,7 +835,7 @@
     <string name="tags_import_error">Failed to import tags</string>
 
     <string name="settings_file_list_hide_info_in_grid_title">Hide file info in grid view</string>
-    <string name="settings_file_list_hide_info_in_grid_summary">Hides rating, tags, and file name in grid view mode</string>
+    <string name="settings_file_list_hide_info_in_grid_summary">Show only icon and name in grid view</string>
     <string name="file_list_action_use_square_thumbnails">Use square thumbnails</string>
     <string name="file_list_action_use_square_thumbnails_in_grid">Use square thumbnails</string>
 
@@ -847,6 +847,13 @@
     <string name="file_list_action_set_rating">Set Rating</string>
     <string name="file_list_action_sort_by_rating">Rating</string>
     <string name="rating_set_success">Rating set successfully</string>
+    <string name="file_list_action_item_scale">Item scale</string>
+    <string name="file_list_action_item_scale_value">%1$d%%</string>
+    <string name="pref_key_file_list_item_scale" translatable="false">file_list_item_scale</string>
+
+    <!-- Added missing string resources -->
+    <string name="settings_hide_breadcrumb_path_title">Hide breadcrumb path</string>
+    <string name="settings_hide_breadcrumb_path_summary">Hide the navigation path above the file list</string>
 </resources>
 
 

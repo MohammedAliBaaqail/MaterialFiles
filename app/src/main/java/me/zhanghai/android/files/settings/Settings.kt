@@ -81,6 +81,12 @@ object Settings {
             R.bool.pref_default_value_file_list_square_thumbnails_in_grid
         )
 
+    val FILE_LIST_ITEM_SCALE: SettingLiveData<Int> =
+        IntegerSettingLiveData(
+            R.string.pref_key_file_list_item_scale,
+            R.integer.pref_default_value_file_list_item_scale
+        )
+
     val CREATE_ARCHIVE_TYPE: SettingLiveData<Int> =
         ResourceIdSettingLiveData(R.string.pref_key_create_archive_type, R.id.zipRadio)
 
@@ -204,5 +210,11 @@ object Settings {
         BooleanSettingLiveData(
             R.string.pref_key_file_list_show_creation_date,
             R.bool.pref_default_value_file_list_show_creation_date
+        )
+
+    val HIDE_BREADCRUMB_PATH: SettingLiveData<Boolean> =
+        BooleanSettingLiveData(
+            R.string.pref_key_hide_breadcrumb_path,
+            R.bool.pref_default_value_hide_breadcrumb_path
         )
 }

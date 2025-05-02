@@ -140,6 +140,15 @@ class FileListViewModel : ViewModel() {
             _squareThumbnailsInGridLiveData.putValue(value)
         }
 
+    private val _itemScaleLiveData = FileItemScaleLiveData(currentPathLiveData)
+    val itemScaleLiveData: LiveData<Int>
+        get() = _itemScaleLiveData
+    var itemScale: Int
+        get() = _itemScaleLiveData.valueCompat
+        set(value) {
+            _itemScaleLiveData.putValue(value)
+        }
+
     private val _pickOptionsLiveData = MutableLiveData<PickOptions?>()
     val pickOptionsLiveData: LiveData<PickOptions?>
         get() = _pickOptionsLiveData

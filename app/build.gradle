@@ -3,26 +3,36 @@
  * All Rights Reserved.
  */
 
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-parcelize'
-apply plugin: 'kotlinx-serialization'
+//#ifdef NONFREE
+// buildscript block removed as plugins are defined in root build.gradle
+//#endif
+
+// Apply plugins using the modern plugins block
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'kotlin-parcelize'
+    id 'org.jetbrains.kotlin.plugin.serialization'
+    id 'com.google.devtools.ksp'
+    //#ifdef NONFREE
+    id 'com.google.gms.google-services'
+    id 'com.google.firebase.crashlytics'
+    //#endif
+}
+
+// Remove older apply plugin calls if they existed for these plugins
+// apply plugin: 'com.android.application' // Already handled by id('com.android.application')
+// apply plugin: 'kotlin-android'          // Already handled by id('org.jetbrains.kotlin.android')
+// apply plugin: 'kotlin-parcelize'      // Already handled by id('kotlin-parcelize')
+// apply plugin: 'kotlinx-serialization' // Handled by id('org.jetbrains.kotlin.plugin.serialization')
+// apply plugin: 'kotlin-ksp'            // Already handled by id('com.google.devtools.ksp')
 
 apply from: '../signing.gradle'
 
 //#ifdef NONFREE
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.google.gms:google-services:4.4.2'
-        classpath 'com.google.firebase:firebase-crashlytics-gradle:3.0.2'
-    }
-}
-apply plugin: 'com.google.gms.google-services'
-apply plugin: 'com.google.firebase.crashlytics'
+// buildscript block moved to top
+// apply plugin: 'com.google.gms.google-services' // Moved to plugins block
+// apply plugin: 'com.google.firebase.crashlytics' // Moved to plugins block
 //#endif
 
 android {
@@ -127,11 +137,6 @@ android {
     }
 }
 
-repositories {
-    maven {
-        url 'https://jitpack.io'
-    }
-}
 dependencies {
     implementation('com.github.bitfireAT:dav4jvm:c1bc143') {
         exclude group: 'org.ogce', module: 'xpp3'
@@ -242,4 +247,13 @@ dependencies {
 
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'com.larswerkman:HoloColorPicker:1.5'
+
+    // Room Database
+    def room_version = "2.6.1"
+    implementation "androidx.room:room-runtime:$room_version"
+    annotationProcessor "androidx.room:room-compiler:$room_version"
+    // To use Kotlin Symbol Processing (KSP)
+    ksp "androidx.room:room-compiler:$room_version"
+    // optional - Kotlin Extensions and Coroutines support for Room
+    implementation "androidx.room:room-ktx:$room_version"
 }

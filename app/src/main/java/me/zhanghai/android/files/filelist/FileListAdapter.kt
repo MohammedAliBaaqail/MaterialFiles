@@ -48,11 +48,21 @@ import me.zhanghai.android.files.util.isMaterial3Theme
 import me.zhanghai.android.files.util.layoutInflater
 import me.zhanghai.android.files.util.valueCompat
 import me.zhanghai.android.files.util.isMediaMetadataRetrieverCompatible
-import me.zhanghai.android.files.util.VideoMetadataCache
 import java.util.Locale
 import android.util.Log
 import me.zhanghai.android.files.file.FileRatingManager
 import me.zhanghai.android.files.ui.AspectRatioFrameLayout
+import android.media.MediaMetadataRetriever
+import me.zhanghai.android.files.provider.common.VideoMetadataRepository
+import kotlinx.coroutines.*
+import me.zhanghai.android.files.app.application
+import android.graphics.Bitmap
+import java.io.File
+import java.io.FileOutputStream
+import java.security.MessageDigest
+import me.zhanghai.android.files.util.toHex
+import me.zhanghai.android.files.util.pathString
+import java.time.Duration
 
 class FileListAdapter(
     private val listener: Listener
@@ -108,9 +118,32 @@ class FileListAdapter(
                 return
             }
             _isSquareThumbnailsInGrid = value
-            Log.e("FileListAdapter", "Square thumbnails setting changed to: $value - forcing item refresh")
             // Force a complete redraw of all items
             notifyItemRangeChanged(0, itemCount, PAYLOAD_SQUARE_THUMBNAILS_CHANGED)
+        }
+        
+    private var _itemScale: Int = 100
+    var itemScale: Int
+        get() = _itemScale
+        set(value) {
+            if (_itemScale == value) {
+                return
+            }
+            _itemScale = value
+            // Force a complete redraw of all items
+            notifyItemRangeChanged(0, itemCount, PAYLOAD_SCALE_CHANGED)
+        }
+
+    // Initialize repository lazily
+    private val metadataRepository: VideoMetadataRepository by lazy {
+        VideoMetadataRepository(application)
+    }
+    // Coroutine scope for background tasks tied to the adapter's lifecycle
+    private val adapterScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+
+    // Get thumbnail directory path
+    private val thumbnailDir: File by lazy {
+        File(application.filesDir, "video_thumbnails").apply { mkdirs() }
         }
 
     fun replaceSelectedFiles(files: FileItemSet) {
@@ -232,6 +265,8 @@ class FileListAdapter(
         holder.menuButton.isEnabled = isEnabled
         val menu = holder.popupMenu.menu
         val path = file.path
+        val pathString = path.pathString
+        val fileAttributes = file.attributes
         val hasPickOptions = pickOptions != null
         val isReadOnly = path.fileSystem.isReadOnly
         menu.findItem(R.id.action_cut).isVisible = !hasPickOptions && !isReadOnly
@@ -246,6 +281,12 @@ class FileListAdapter(
             }
         }
         
+        // Apply item scale if needed
+        if (payloads.contains(PAYLOAD_SCALE_CHANGED)) {
+            applyItemScale(holder)
+            return
+        }
+        
         // If this is just a tag update, refresh the tags view and return
         if (payloads.contains(PAYLOAD_TAGS_CHANGED)) {
             // Update the tags view if present
@@ -256,8 +297,7 @@ class FileListAdapter(
         // If this is just for square thumbnails, just update that
         if (payloads.contains(PAYLOAD_SQUARE_THUMBNAILS_CHANGED)) {
             holder.thumbnailLayout?.let { thumbnailLayout ->
-                val newRatio = if (isSquareThumbnailsInGrid) 1.0f else 1.78f
-                Log.e("FileListAdapter", "Updating thumbnail ratio to $newRatio due to settings change")
+                val newRatio = if (isSquareThumbnailsInGrid) 1.0f else getAspectRatioForFile(file)
                 thumbnailLayout.ratio = newRatio
             }
             return
@@ -285,11 +325,10 @@ class FileListAdapter(
             }
         }
 
-        // Re-implement thumbnail aspect ratio handling - always apply square thumbnails setting
+        // Apply thumbnail aspect ratio based on square thumbnails setting for both list and grid views
         holder.thumbnailLayout?.let { thumbnailLayout ->
-            // CRITICAL FIX: Apply square thumbnails setting regardless of view type
-            val newRatio = if (isSquareThumbnailsInGrid) 1.0f else 1.78f
-            Log.d("FileListAdapter", "Setting thumbnail ratio: $newRatio, isSquareThumbsInGrid: $isSquareThumbnailsInGrid, viewType: $viewType")
+            // Apply square thumbnails in both grid and list view
+            val newRatio = if (isSquareThumbnailsInGrid) 1.0f else getAspectRatioForFile(file)
             thumbnailLayout.ratio = newRatio
         }
 
@@ -299,22 +338,18 @@ class FileListAdapter(
             clickArea.setOnClickListener(null)
             clickArea.setOnLongClickListener(null)
             
-            // Disable any parent interception
-            clickArea.parent?.requestDisallowInterceptTouchEvent(true)
-            
             // Configure the view for better click detection
             clickArea.isClickable = true
             clickArea.isFocusable = true
             
             // Set up the most direct click handler possible
-            clickArea.setOnClickListener(object : View.OnClickListener {
-                override fun onClick(view: View) {
-                    Log.e("FileListAdapter", "THUMBNAIL CLICKED FOR: ${file.path}")
-                    view.performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
-                    // Directly call the listener method
+            clickArea.setOnClickListener {
+                if (selectedFiles.isEmpty()) {
                     listener.openFile(file)
+                } else {
+                    selectFile(file)
                 }
-            })
+            }
         }
 
         // Remove any potentially conflicting click listeners
@@ -345,10 +380,53 @@ class FileListAdapter(
             val shouldLoadThumbnail = supportsThumbnail && !shouldLoadThumbnailIcon
             isVisible = shouldLoadThumbnail
             if (shouldLoadThumbnail) {
-                load(path to attributes) {
+                // Launch coroutine for persistent thumbnail handling
+                adapterScope.launch {
+                    var thumbnailLoaded = false
+                    // 1. Check database for persisted thumbnail path
+                    val persistedPath = metadataRepository.getPersistedThumbnailPath(path)
+                    if (persistedPath != null) {
+                        val persistedFile = File(persistedPath)
+                        if (persistedFile.exists()) {
+                            // Load from persisted file
+                            load(persistedFile) {
                     listener { _, _ ->
+                                    // Hide icon if thumbnail loads
+                                    val iconImage = holder.thumbnailIconImage ?: holder.iconImage
+                                    iconImage?.isVisible = false
+                                }
+                            }
+                            thumbnailLoaded = true
+                        } else {
+                            // Thumbnail file missing, clear DB entry
+                            Log.w("FileListAdapter", "Persisted thumbnail file missing: $persistedPath")
+                            metadataRepository.updateThumbnailPath(path, null)
+                        }
+                    }
+                    
+                    // 2. If not loaded from persisted file, generate and save
+                    if (!thumbnailLoaded) {
+                        load(path to attributes) { // Use Coil to generate thumbnail
+                            allowHardware(false) // Need software bitmap to save
+                            listener(
+                                onSuccess = { _, result ->
+                                    // Hide icon
                         val iconImage = holder.thumbnailIconImage ?: holder.iconImage
                         iconImage?.isVisible = false
+                                    
+                                    // Save the generated bitmap persistently
+                                    val bitmap = (result.drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap
+                                    if (bitmap != null) {
+                                        adapterScope.launch(Dispatchers.IO) { // Save in background
+                                            saveThumbnailToFile(path, bitmap)
+                                        }
+                                    }
+                                },
+                                onError = { _, _ ->
+                                    // Optional: Handle thumbnail generation error
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -403,15 +481,29 @@ class FileListAdapter(
         
         // If it's a video file, try to load and display the duration
         if (file.mimeType.isVideo && file.path.isMediaMetadataRetrieverCompatible) {
-            // Use a tag to avoid duplicate requests
             val viewPosition = holder.bindingAdapterPosition
             if (viewPosition != RecyclerView.NO_POSITION) {
-                VideoMetadataCache.getVideoDuration(file.path) { duration ->
-                    // Make sure the view hasn't been recycled
-                    if (holder.bindingAdapterPosition == viewPosition && duration != null) {
+                // Launch coroutine to get duration from repository
+                adapterScope.launch {
+                    val durationMillis = try {
+                        metadataRepository.getVideoDuration(file.path)
+                    } catch (e: Exception) {
+                        Log.e("FileListAdapter", "Error getting duration for ${file.path}", e)
+                        null
+                    }
+
+                    // Update UI only if the view hasn't been recycled and duration is valid
+                    if (holder.bindingAdapterPosition == viewPosition && durationMillis != null) {
                         val context = holder.descriptionText?.context ?: holder.nameText.context
-                        val formattedDuration = duration.format()
-                        val updatedParts = listOf(formattedDate, size, formattedDuration)
+                        val formattedDuration = Duration.ofMillis(durationMillis).format()
+                        
+                        // Use the same date that was already formatted (modified or creation based on settings)
+                        // Rebuild description parts including the duration and date
+                        val updatedParts = listOfNotNull(
+                            formattedDate, // Use the same formatted date from above
+                            size, 
+                            formattedDuration.takeIf { it.isNotEmpty() } // Only add if not empty
+                        )
                         holder.descriptionText?.text = updatedParts.joinToString(descriptionSeparator)
                     }
                 }
@@ -491,6 +583,9 @@ class FileListAdapter(
                 else -> false
             }
         }
+
+        // Apply the current scale
+        applyItemScale(holder)
     }
 
     private fun updateTagsView(holder: ViewHolder, file: FileItem) {
@@ -504,6 +599,106 @@ class FileListAdapter(
                 }
             } else {
                 visibility = View.GONE
+            }
+        }
+    }
+
+    private fun applyItemScale(holder: ViewHolder) {
+        val scale = itemScale / 100f
+        
+        // Apply the scale - don't use scaleX/scaleY as that could cause overlap issues
+        // Instead, adjust layout parameters
+        
+        // Scale the icon layout
+        holder.iconLayout?.let { layout ->
+            val params = layout.layoutParams
+            // Store original size if not yet stored
+            if (layout.getTag(R.id.tag_original_width) == null) {
+                layout.setTag(R.id.tag_original_width, params.width)
+                layout.setTag(R.id.tag_original_height, params.height)
+            }
+            val originalWidth = layout.getTag(R.id.tag_original_width) as Int
+            val originalHeight = layout.getTag(R.id.tag_original_height) as Int
+            
+            // Apply scale if not WRAP_CONTENT or MATCH_PARENT
+            if (originalWidth > 0) {
+                params.width = (originalWidth * scale).toInt()
+            }
+            if (originalHeight > 0) {
+                params.height = (originalHeight * scale).toInt()
+            }
+            layout.layoutParams = params
+        }
+        
+        // Scale the thumbnail layout - IMPORTANT for thumbnail sizing
+        holder.thumbnailLayout?.let { layout ->
+            val params = layout.layoutParams
+            // Store original height if not yet stored
+            if (layout.getTag(R.id.tag_original_height) == null) {
+                layout.setTag(R.id.tag_original_height, params.height)
+            }
+            val originalHeight = layout.getTag(R.id.tag_original_height) as Int
+            
+            // Apply scale if not WRAP_CONTENT or MATCH_PARENT
+            if (originalHeight > 0) {
+                params.height = (originalHeight * scale).toInt()
+                layout.layoutParams = params
+                
+                // Critical: when scaling in grid view, maintain aspect ratio
+                if (viewType == FileViewType.GRID) {
+                    // Apply the current ratio setting again to force a re-measurement
+                    // that will maintain the aspect ratio with the new height
+                    val ratio = layout.ratio
+                    layout.ratio = ratio
+                }
+            }
+        }
+        
+        // Scale the thumbnail click area as well for consistency
+        holder.thumbnailClickArea?.let { layout ->
+            val params = layout.layoutParams
+            // For thumbnail click area, we only scale height as width is often match_parent
+            if (layout.getTag(R.id.tag_original_height) == null) {
+                layout.setTag(R.id.tag_original_height, params.height)
+            }
+            val originalHeight = layout.getTag(R.id.tag_original_height) as Int
+            
+            // Apply scale if not WRAP_CONTENT or MATCH_PARENT
+            if (originalHeight > 0) {
+                params.height = (originalHeight * scale).toInt()
+                layout.layoutParams = params
+            }
+        }
+        
+        // Scale text sizes
+        holder.nameText.let { textView ->
+            if (textView.getTag(R.id.tag_original_text_size) == null) {
+                textView.setTag(R.id.tag_original_text_size, textView.textSize)
+            }
+            val originalSize = textView.getTag(R.id.tag_original_text_size) as Float
+            textView.textSize = (originalSize * scale) / textView.resources.displayMetrics.density
+        }
+        
+        holder.descriptionText?.let { textView ->
+            if (textView.getTag(R.id.tag_original_text_size) == null) {
+                textView.setTag(R.id.tag_original_text_size, textView.textSize)
+            }
+            val originalSize = textView.getTag(R.id.tag_original_text_size) as Float
+            textView.textSize = (originalSize * scale) / textView.resources.displayMetrics.density
+        }
+        
+        // Scale the entire item layout height for list view
+        if (viewType == FileViewType.LIST) {
+            val params = holder.itemLayout.layoutParams
+            if (holder.itemLayout.getTag(R.id.tag_original_height) == null) {
+                holder.itemLayout.setTag(R.id.tag_original_height, params.height)
+            }
+            val originalHeight = holder.itemLayout.getTag(R.id.tag_original_height) as Int
+            
+            // Only apply if not WRAP_CONTENT or MATCH_PARENT
+            if (originalHeight > 0) {
+                params.height = (originalHeight * scale).toInt()
+                holder.itemLayout.layoutParams = params
             }
         }
     }
@@ -528,12 +723,16 @@ class FileListAdapter(
                 if (rating > 0) rating.toString() else "-"
             }
             FileSortOptions.By.DURATION -> {
-                val duration = VideoMetadataCache.getVideoDurationSync(file.path)
-                if (duration != null && duration > 0) {
-                    duration.format()
-                } else {
-                    "-"
+                var duration: Long? = null
+                // Use runBlocking carefully, okay for potentially quick DB lookup
+                runBlocking {
+                    duration = try {
+                         metadataRepository.getDurationMillis(file.path)
+                    } catch (e: Exception) {
+                        null
+                    }
                 }
+                duration?.format() ?: "-"
             }
         }
     }
@@ -555,10 +754,71 @@ class FileListAdapter(
         }
     }
 
+    private fun getAspectRatioForFile(file: FileItem): Float {
+        // For videos, try to use their stored aspect ratio from metadata cache
+        if (file.mimeType.isVideo && file.path.isMediaMetadataRetrieverCompatible) {
+            // Use a cached value if available - this operation is not suspending so safe to use here
+            // Try to get from DB first, which is very fast
+            try {
+                // Use direct return from runBlocking instead of assigning to a variable
+                val ratio = runBlocking {
+                    metadataRepository.getVideoAspectRatio(file.path)
+                }
+                
+                // If we got a valid ratio from the repository, use it
+                if (ratio != null && ratio > 0f) {
+                    return ratio
+                }
+            } catch (e: Exception) {
+                // Ignore errors and use default ratio
+                Log.d("FileListAdapter", "Error getting aspect ratio, using default", e)
+            }
+        }
+        
+        // Default to 16:9 (1.78) for other files
+        return 1.78f
+    }
+
+    // Cancel coroutine scope when adapter is detached
+    override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) {
+        super.onDetachedFromRecyclerView(recyclerView)
+        adapterScope.cancel() // Cancel running coroutines
+    }
+
+    // Helper function to save bitmap and update DB
+    private suspend fun saveThumbnailToFile(originalPath: Path, bitmap: Bitmap) = withContext(Dispatchers.IO) {
+        val thumbnailFile = getThumbnailFileForPath(originalPath)
+        try {
+            FileOutputStream(thumbnailFile).use { fos ->
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 85, fos) // Save as JPEG
+            }
+            Log.d("FileListAdapter", "Saved thumbnail to ${thumbnailFile.path}")
+            // Update the database with the path to the saved thumbnail
+            metadataRepository.updateThumbnailPath(originalPath, thumbnailFile.absolutePath)
+        } catch (e: Exception) {
+            Log.e("FileListAdapter", "Failed to save thumbnail for $originalPath", e)
+            // Clean up partial file if save failed
+            thumbnailFile.delete()
+            // Optionally clear the thumbnail path in DB if save fails
+            // metadataRepository.updateThumbnailPath(originalPath, null)
+        }
+    }
+
+    // Helper to generate a unique, stable filename for the thumbnail
+    private fun getThumbnailFileForPath(originalPath: Path): File {
+        val pathString = originalPath.pathString
+        // Use SHA-256 hash of the path for a unique filename
+        val digest = MessageDigest.getInstance("SHA-256")
+        val hashBytes = digest.digest(pathString.toByteArray())
+        val fileName = hashBytes.toHex() + ".jpg"
+        return File(thumbnailDir, fileName)
+    }
+
     companion object {
         private val PAYLOAD_STATE_CHANGED = Any()
         private val PAYLOAD_TAGS_CHANGED = Any()
         private val PAYLOAD_SQUARE_THUMBNAILS_CHANGED = Any()
+        private val PAYLOAD_SCALE_CHANGED = Any()
 
         private val CALLBACK = object : DiffUtil.ItemCallback<FileItem>() {
             override fun areItemsTheSame(oldItem: FileItem, newItem: FileItem): Boolean =

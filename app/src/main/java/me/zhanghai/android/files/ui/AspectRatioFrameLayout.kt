@@ -29,7 +29,6 @@ class AspectRatioFrameLayout @JvmOverloads constructor(
         set(value) {
             if (field != value) {
             field = value
-                Log.d("AspectRatioFrameLayout", "Setting ratio to $value")
             requestLayout()
             invalidate()
         }
@@ -40,7 +39,6 @@ class AspectRatioFrameLayout @JvmOverloads constructor(
             attrs, R.styleable.AspectRatioFrameLayout, defStyleAttr, defStyleRes
         ).use { attributes ->
             ratio = attributes.getFloat(R.styleable.AspectRatioFrameLayout_aspectRatio, 1f)
-            Log.d("AspectRatioFrameLayout", "Init with ratio $ratio")
         }
     }
 
@@ -50,18 +48,43 @@ class AspectRatioFrameLayout @JvmOverloads constructor(
         val height = View.MeasureSpec.getSize(heightMeasureSpec)
         val heightMode = View.MeasureSpec.getMode(heightMeasureSpec)
 
-        // For video thumbnails, we want to use the height to calculate width 
-        // to honor the 16:9 aspect ratio
-        if (widthMode == View.MeasureSpec.AT_MOST || widthMode == View.MeasureSpec.UNSPECIFIED) {
-            if (heightMode == View.MeasureSpec.EXACTLY) {
-                // Use height to determine width
-                val calculatedWidth = (height * ratio).roundToInt()
+        // Handle grid layout case - if height is exactly specified, calculate width to maintain aspect ratio
+        // This is critical for proper scaling behavior in grid view
+        if (heightMode == View.MeasureSpec.EXACTLY) {
+            val calculatedWidth = (height * ratio).roundToInt()
+            
+            // If width is also specified exactly, we need to decide how to maintain aspect ratio
+            if (widthMode == View.MeasureSpec.EXACTLY) {
+                // If the width is significantly different from what we'd calculate based on height and ratio,
+                // use the aspect ratio to calculate our dimensions while respecting at least one constraint
+                if (Math.abs(calculatedWidth - width) > width * 0.1) {
+                    // If calculated width would be too large, constrain to available width and adjust height
+                    if (calculatedWidth > width) {
+                        val adjustedHeight = (width / ratio).roundToInt()
+                        super.onMeasure(
+                            widthMeasureSpec,
+                            View.MeasureSpec.makeMeasureSpec(adjustedHeight, View.MeasureSpec.EXACTLY)
+                        )
+                        return
+                    } else {
+                        // Width would be smaller than available - maintain aspect ratio using height as base
+                        super.onMeasure(
+                            View.MeasureSpec.makeMeasureSpec(calculatedWidth, View.MeasureSpec.EXACTLY),
+                            heightMeasureSpec
+                        )
+                        return
+                    }
+                }
+                // If the difference is small, just use the exact dimensions
+                super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+                return
+            } else {
+                // Width is flexible, use height to determine width based on aspect ratio
                 val finalWidth = if (widthMode == View.MeasureSpec.AT_MOST) {
                     min(calculatedWidth, width)
-            } else {
+                } else {
                     calculatedWidth
                 }
-                Log.d("AspectRatioFrameLayout", "onMeasure: height=$height, calculated width=$finalWidth using ratio=$ratio")
                 super.onMeasure(
                     View.MeasureSpec.makeMeasureSpec(finalWidth, View.MeasureSpec.EXACTLY),
                     heightMeasureSpec
@@ -69,25 +92,23 @@ class AspectRatioFrameLayout @JvmOverloads constructor(
                 return
             }
         }
-
-        // Normal flow for other cases
-        if (heightMode == View.MeasureSpec.AT_MOST || heightMode == View.MeasureSpec.UNSPECIFIED) {
-            if (widthMode == View.MeasureSpec.EXACTLY) {
-                val calculatedHeight = (width / ratio).roundToInt()
-                val finalHeight = if (heightMode == View.MeasureSpec.AT_MOST) {
-                    min(calculatedHeight, height)
+        
+        // Width is exactly specified but height is flexible
+        if (widthMode == View.MeasureSpec.EXACTLY) {
+            val calculatedHeight = (width / ratio).roundToInt()
+            val finalHeight = if (heightMode == View.MeasureSpec.AT_MOST) {
+                min(calculatedHeight, height)
         } else {
-                    calculatedHeight
-                }
-                Log.d("AspectRatioFrameLayout", "onMeasure: width=$width, calculated height=$finalHeight using ratio=$ratio")
-                super.onMeasure(
-                    widthMeasureSpec,
-                    View.MeasureSpec.makeMeasureSpec(finalHeight, View.MeasureSpec.EXACTLY)
-                )
-                return
+                calculatedHeight
             }
+            super.onMeasure(
+                widthMeasureSpec,
+                View.MeasureSpec.makeMeasureSpec(finalHeight, View.MeasureSpec.EXACTLY)
+            )
+            return
         }
 
+        // Both dimensions are flexible
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
     }
 }

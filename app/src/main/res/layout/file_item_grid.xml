@@ -13,7 +13,8 @@
     android:layout_height="wrap_content"
     android:foreground="?selectableItemBackground"
     android:gravity="center_vertical"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:paddingBottom="2dp">
 
     <!-- Thumbnail container that guarantees clicks -->
     <FrameLayout
@@ -30,46 +31,47 @@
             android:id="@+id/thumbnailLayout"
             android:layout_width="match_parent"
             android:layout_height="180dp"
-            android:layout_marginStart="@dimen/screen_edge_margin_half"
-            android:layout_marginEnd="@dimen/screen_edge_margin_half"
+            android:layout_marginStart="1dp"
+            android:layout_marginEnd="1dp"
+        android:duplicateParentState="true"
+            android:tag="@id/tag_original_height"
+        app:aspectRatio="1.78">
+
+        <me.zhanghai.android.files.ui.DisabledAlphaImageView
+            android:id="@+id/directoryThumbnailImage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:duplicateParentState="true"
-            app:aspectRatio="1.78">
+            android:scaleType="fitCenter"
+            android:src="@drawable/file_directory_thumbnail" />
 
-            <me.zhanghai.android.files.ui.DisabledAlphaImageView
-                android:id="@+id/directoryThumbnailImage"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:duplicateParentState="true"
-                android:scaleType="fitCenter"
-                android:src="@drawable/file_directory_thumbnail" />
+        <me.zhanghai.android.files.ui.DisabledAlphaImageView
+            android:id="@+id/thumbnailIconImage"
+            android:layout_width="@dimen/large_icon_size"
+            android:layout_height="@dimen/large_icon_size"
+            android:layout_gravity="center"
+            android:duplicateParentState="true"
+            android:scaleType="centerCrop" />
 
-            <me.zhanghai.android.files.ui.DisabledAlphaImageView
-                android:id="@+id/thumbnailIconImage"
-                android:layout_width="@dimen/large_icon_size"
-                android:layout_height="@dimen/large_icon_size"
-                android:layout_gravity="center"
-                android:duplicateParentState="true"
-                android:scaleType="centerCrop" />
+        <!--
+          ~ Can't use ShapeableImageView stroke support due to
+          ~ https://github.com/material-components/material-components-android/issues/1329
+          -->
+        <me.zhanghai.android.files.ui.DisabledAlphaImageView
+            android:id="@+id/thumbnailImage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:duplicateParentState="true"
+            android:scaleType="centerCrop"
+            app:shapeAppearance="?shapeAppearanceSmallComponent" />
 
-            <!--
-              ~ Can't use ShapeableImageView stroke support due to
-              ~ https://github.com/material-components/material-components-android/issues/1329
-              -->
-            <me.zhanghai.android.files.ui.DisabledAlphaImageView
-                android:id="@+id/thumbnailImage"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:duplicateParentState="true"
-                android:scaleType="centerCrop"
-                app:shapeAppearance="?shapeAppearanceSmallComponent" />
-
-            <View
-                android:id="@+id/thumbnailOutlineView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/file_item_grid_thumbnail_outline"
-                android:duplicateParentState="true" />
-        </me.zhanghai.android.files.ui.AspectRatioFrameLayout>
+        <View
+            android:id="@+id/thumbnailOutlineView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/file_item_grid_thumbnail_outline"
+            android:duplicateParentState="true" />
+    </me.zhanghai.android.files.ui.AspectRatioFrameLayout>
     </FrameLayout>
 
     <!-- Info container - can be hidden with a setting -->
@@ -78,13 +80,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:layout_marginBottom="@dimen/screen_edge_margin_minus_12dp">
+        android:layout_marginBottom="1dp">
 
         <!-- First row: Rating + Tags + Menu (all in one line) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="2dp"
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
@@ -93,7 +95,7 @@
                 android:id="@+id/ratingText"
                 android:layout_width="24dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/screen_edge_margin"
+                android:layout_marginStart="1dp"
                 android:minWidth="24dp"
                 android:gravity="center"
                 android:textSize="22sp"
@@ -106,7 +108,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="4dp" />
+                android:layout_marginStart="1dp" />
 
             <!-- Menu button (fixed width) -->
             <me.zhanghai.android.foregroundcompat.ForegroundImageButton
@@ -125,9 +127,9 @@
             android:id="@+id/nameText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/screen_edge_margin"
-            android:layout_marginEnd="@dimen/screen_edge_margin"
-            android:layout_marginTop="4dp"
+            android:layout_marginStart="1dp"
+            android:layout_marginEnd="1dp"
+            android:layout_marginTop="1dp"
             android:duplicateParentState="true"
             android:ellipsize="end"
             android:maxLines="2"

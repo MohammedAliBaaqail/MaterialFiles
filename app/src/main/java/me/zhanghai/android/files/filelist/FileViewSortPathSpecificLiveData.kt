@@ -16,9 +16,14 @@ import me.zhanghai.android.files.util.valueCompat
 class FileViewSortPathSpecificLiveData(pathLiveData: LiveData<Path>) : MediatorLiveData<Boolean>() {
     private lateinit var pathViewTypeLiveData: SettingLiveData<FileViewType?>
     private lateinit var pathSortOptionsLiveData: SettingLiveData<FileSortOptions?>
+    private lateinit var pathSquareThumbnailsInGridLiveData: SettingLiveData<Boolean?>
+    private lateinit var pathItemScaleLiveData: SettingLiveData<Int?>
 
     private fun loadValue() {
-        val value = pathViewTypeLiveData.value != null || pathSortOptionsLiveData.value != null
+        val value = pathViewTypeLiveData.value != null || 
+                   pathSortOptionsLiveData.value != null ||
+                   pathSquareThumbnailsInGridLiveData.value != null ||
+                   pathItemScaleLiveData.value != null
         if (this.value != value) {
             this.value = value
         }
@@ -26,19 +31,15 @@ class FileViewSortPathSpecificLiveData(pathLiveData: LiveData<Path>) : MediatorL
 
     fun putValue(value: Boolean) {
         if (value) {
-            if (pathViewTypeLiveData.value == null) {
                 pathViewTypeLiveData.putValue(Settings.FILE_LIST_VIEW_TYPE.valueCompat)
-            }
-            if (pathSortOptionsLiveData.value == null) {
                 pathSortOptionsLiveData.putValue(Settings.FILE_LIST_SORT_OPTIONS.valueCompat)
-            }
+            pathSquareThumbnailsInGridLiveData.putValue(Settings.FILE_LIST_SQUARE_THUMBNAILS_IN_GRID.valueCompat)
+            pathItemScaleLiveData.putValue(Settings.FILE_LIST_ITEM_SCALE.valueCompat)
         } else {
-            if (pathViewTypeLiveData.value != null) {
                 pathViewTypeLiveData.putValue(null)
-            }
-            if (pathSortOptionsLiveData.value != null) {
                 pathSortOptionsLiveData.putValue(null)
-            }
+            pathSquareThumbnailsInGridLiveData.putValue(null)
+            pathItemScaleLiveData.putValue(null)
         }
     }
 
@@ -50,10 +51,20 @@ class FileViewSortPathSpecificLiveData(pathLiveData: LiveData<Path>) : MediatorL
             if (this::pathSortOptionsLiveData.isInitialized) {
                 removeSource(pathSortOptionsLiveData)
             }
+            if (this::pathSquareThumbnailsInGridLiveData.isInitialized) {
+                removeSource(pathSquareThumbnailsInGridLiveData)
+            }
+            if (this::pathItemScaleLiveData.isInitialized) {
+                removeSource(pathItemScaleLiveData)
+            }
             pathViewTypeLiveData = PathSettings.getFileListViewType(path)
             pathSortOptionsLiveData = PathSettings.getFileListSortOptions(path)
+            pathSquareThumbnailsInGridLiveData = PathSettings.getFileListSquareThumbnailsInGrid(path)
+            pathItemScaleLiveData = PathSettings.getFileListItemScale(path)
             addSource(pathViewTypeLiveData) { loadValue() }
             addSource(pathSortOptionsLiveData) { loadValue() }
+            addSource(pathSquareThumbnailsInGridLiveData) { loadValue() }
+            addSource(pathItemScaleLiveData) { loadValue() }
         }
     }
 }

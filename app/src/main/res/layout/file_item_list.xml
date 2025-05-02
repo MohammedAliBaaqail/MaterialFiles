@@ -27,23 +27,24 @@
         android:focusable="true"
         android:descendantFocusability="beforeDescendants"
         android:background="@android:color/transparent"
-        android:foreground="@drawable/selectable_item_background_oval">
+        android:foreground="@drawable/selectable_item_background_oval"
+        android:tag="@id/tag_original_height">
 
         <FrameLayout
             android:id="@+id/iconLayout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:clipToPadding="false"
-            android:duplicateParentState="true"
-            android:padding="0dp">
+        android:clipToPadding="false"
+        android:duplicateParentState="true"
+        android:padding="0dp">
 
-            <me.zhanghai.android.files.ui.DisabledAlphaImageView
-                android:id="@+id/iconImage"
-                android:layout_width="@dimen/icon_size"
-                android:layout_height="@dimen/icon_size"
-                android:layout_gravity="center"
-                android:duplicateParentState="true"
-                android:scaleType="centerCrop" />
+        <me.zhanghai.android.files.ui.DisabledAlphaImageView
+            android:id="@+id/iconImage"
+            android:layout_width="@dimen/icon_size"
+            android:layout_height="@dimen/icon_size"
+            android:layout_gravity="center"
+            android:duplicateParentState="true"
+            android:scaleType="centerCrop" />
 
             <!-- Force 16:9 aspect with fixed height -->
             <me.zhanghai.android.files.ui.AspectRatioFrameLayout
@@ -52,36 +53,37 @@
                 android:layout_height="match_parent"
                 android:layout_gravity="center"
                 android:duplicateParentState="true"
+                android:tag="@id/tag_original_height"
                 app:aspectRatio="1.78">
 
-                <me.zhanghai.android.files.ui.DisabledAlphaImageView
-                    android:id="@+id/thumbnailImage"
+        <me.zhanghai.android.files.ui.DisabledAlphaImageView
+            android:id="@+id/thumbnailImage"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:duplicateParentState="true"
-                    android:scaleType="centerCrop" />
+            android:duplicateParentState="true"
+            android:scaleType="centerCrop" />
             </me.zhanghai.android.files.ui.AspectRatioFrameLayout>
 
-            <me.zhanghai.android.files.ui.DisabledAlphaImageView
-                android:id="@+id/appIconBadgeImage"
-                android:layout_width="@dimen/badge_size_plus_1dp"
-                android:layout_height="@dimen/badge_size_plus_1dp"
-                android:layout_gravity="end|bottom"
-                android:layout_marginStart="-0.5dp"
-                android:layout_marginEnd="4dp"
-                android:layout_marginTop="-0.5dp"
-                android:layout_marginBottom="4dp"
-                android:duplicateParentState="true" />
+        <me.zhanghai.android.files.ui.DisabledAlphaImageView
+            android:id="@+id/appIconBadgeImage"
+            android:layout_width="@dimen/badge_size_plus_1dp"
+            android:layout_height="@dimen/badge_size_plus_1dp"
+            android:layout_gravity="end|bottom"
+            android:layout_marginStart="-0.5dp"
+            android:layout_marginEnd="4dp"
+            android:layout_marginTop="-0.5dp"
+            android:layout_marginBottom="4dp"
+            android:duplicateParentState="true" />
 
-            <me.zhanghai.android.files.ui.DisabledAlphaImageView
-                android:id="@+id/badgeImage"
-                android:layout_width="@dimen/badge_size"
-                android:layout_height="@dimen/badge_size"
-                android:layout_gravity="end|bottom"
-                android:layout_marginEnd="4dp"
-                android:layout_marginBottom="4dp"
-                android:background="@drawable/badge_background_18dp"
-                android:duplicateParentState="true" />
+        <me.zhanghai.android.files.ui.DisabledAlphaImageView
+            android:id="@+id/badgeImage"
+            android:layout_width="@dimen/badge_size"
+            android:layout_height="@dimen/badge_size"
+            android:layout_gravity="end|bottom"
+            android:layout_marginEnd="4dp"
+            android:layout_marginBottom="4dp"
+            android:background="@drawable/badge_background_18dp"
+            android:duplicateParentState="true" />
         </FrameLayout>
     </FrameLayout>
 

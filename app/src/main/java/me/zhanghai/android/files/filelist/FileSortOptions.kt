@@ -13,7 +13,9 @@ import me.zhanghai.android.files.file.FileItem
 import me.zhanghai.android.files.file.FileRatingManager
 import me.zhanghai.android.files.util.ParcelableParceler
 import me.zhanghai.android.files.util.hash
-import me.zhanghai.android.files.util.VideoMetadataCache
+import me.zhanghai.android.files.app.application
+import me.zhanghai.android.files.provider.common.VideoMetadataRepository
+import kotlinx.coroutines.runBlocking
 
 @Parcelize
 data class FileSortOptions(
@@ -35,8 +37,12 @@ data class FileSortOptions(
         DESCENDING
     }
 
+    private val metadataRepository: VideoMetadataRepository by lazy {
+        VideoMetadataRepository(application)
+    }
+
     fun createComparator(): Comparator<FileItem> {
-        var comparator: Comparator<FileItem> = ByComparator(by)
+        var comparator: Comparator<FileItem> = ByComparator(by, metadataRepository)
         if (order == Order.DESCENDING) {
             comparator = comparator.reversed()
         }
@@ -60,7 +66,10 @@ data class FileSortOptions(
         }
     }
 
-    private class ByComparator(private val by: By) : Comparator<FileItem> {
+    private class ByComparator(
+        private val by: By,
+        private val repository: VideoMetadataRepository
+    ) : Comparator<FileItem> {
         override fun compare(file1: FileItem, file2: FileItem): Int =
             when (by) {
                 By.NAME -> compareByName(file1, file2)
@@ -150,12 +159,11 @@ data class FileSortOptions(
                 1
             } else {
                 try {
-                    val duration1 = VideoMetadataCache.getVideoDurationSync(file1.path) ?: 0L
-                    val duration2 = VideoMetadataCache.getVideoDurationSync(file2.path) ?: 0L
+                    val duration1 = runBlocking { repository.getVideoDuration(file1.path) } ?: 0L
+                    val duration2 = runBlocking { repository.getVideoDuration(file2.path) } ?: 0L
                     val result = duration1.compareTo(duration2)
                     if (result != 0) result else compareByName(file1, file2)
                 } catch (e: Exception) {
-                    // If any exception occurs, fall back to comparing by name
                     compareByName(file1, file2)
                 }
             }
