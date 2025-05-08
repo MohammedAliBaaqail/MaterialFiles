@@ -256,4 +256,10 @@ dependencies {
     ksp "androidx.room:room-compiler:$room_version"
     // optional - Kotlin Extensions and Coroutines support for Room
     implementation "androidx.room:room-ktx:$room_version"
+
+    // ExoPlayer for improved video handling
+    def exoplayer_version = '2.18.7'
+    implementation "com.google.android.exoplayer:exoplayer-core:$exoplayer_version"
+    implementation "com.google.android.exoplayer:exoplayer-ui:$exoplayer_version"
+    implementation "com.google.android.exoplayer:exoplayer:$exoplayer_version"
 }

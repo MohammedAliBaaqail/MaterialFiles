@@ -140,6 +140,16 @@ class FileListViewModel : ViewModel() {
             _squareThumbnailsInGridLiveData.putValue(value)
         }
 
+    private val _portraitModeInGridLiveData =
+        FilePortraitModeInGridLiveData(currentPathLiveData)
+    val portraitModeInGridLiveData: LiveData<Boolean>
+        get() = _portraitModeInGridLiveData
+    var isPortraitModeInGrid: Boolean
+        get() = _portraitModeInGridLiveData.valueCompat
+        set(value) {
+            _portraitModeInGridLiveData.putValue(value)
+        }
+
     private val _itemScaleLiveData = FileItemScaleLiveData(currentPathLiveData)
     val itemScaleLiveData: LiveData<Int>
         get() = _itemScaleLiveData

@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [VideoMetadata::class], version = 2, exportSchema = false)
+@Database(entities = [VideoMetadata::class], version = 4, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun videoMetadataDao(): VideoMetadataDao
@@ -33,8 +33,12 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "material_files_database" // Database file name
                 )
-                // Add migration to handle schema changes
+                // Add only the known working migrations
                 .addMigrations(MIGRATION_1_2)
+                // Use destructive migration when downgrading from version 3 to any lower version
+                .fallbackToDestructiveMigrationFrom(3)
+                // Also use destructive migration for any other version mismatches
+                .fallbackToDestructiveMigration()
                 .build()
                 INSTANCE = instance
                 instance

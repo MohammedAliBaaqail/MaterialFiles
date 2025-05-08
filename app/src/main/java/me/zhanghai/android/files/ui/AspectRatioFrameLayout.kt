@@ -48,67 +48,65 @@ class AspectRatioFrameLayout @JvmOverloads constructor(
         val height = View.MeasureSpec.getSize(heightMeasureSpec)
         val heightMode = View.MeasureSpec.getMode(heightMeasureSpec)
 
-        // Handle grid layout case - if height is exactly specified, calculate width to maintain aspect ratio
-        // This is critical for proper scaling behavior in grid view
-        if (heightMode == View.MeasureSpec.EXACTLY) {
-            val calculatedWidth = (height * ratio).roundToInt()
-            
-            // If width is also specified exactly, we need to decide how to maintain aspect ratio
-            if (widthMode == View.MeasureSpec.EXACTLY) {
-                // If the width is significantly different from what we'd calculate based on height and ratio,
-                // use the aspect ratio to calculate our dimensions while respecting at least one constraint
-                if (Math.abs(calculatedWidth - width) > width * 0.1) {
-                    // If calculated width would be too large, constrain to available width and adjust height
-                    if (calculatedWidth > width) {
-                        val adjustedHeight = (width / ratio).roundToInt()
-                        super.onMeasure(
-                            widthMeasureSpec,
-                            View.MeasureSpec.makeMeasureSpec(adjustedHeight, View.MeasureSpec.EXACTLY)
-                        )
-                        return
-                    } else {
-                        // Width would be smaller than available - maintain aspect ratio using height as base
-                        super.onMeasure(
-                            View.MeasureSpec.makeMeasureSpec(calculatedWidth, View.MeasureSpec.EXACTLY),
-                            heightMeasureSpec
-                        )
-                        return
-                    }
-                }
-                // If the difference is small, just use the exact dimensions
-                super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-                return
-            } else {
-                // Width is flexible, use height to determine width based on aspect ratio
-                val finalWidth = if (widthMode == View.MeasureSpec.AT_MOST) {
-                    min(calculatedWidth, width)
-                } else {
-                    calculatedWidth
-                }
-                super.onMeasure(
-                    View.MeasureSpec.makeMeasureSpec(finalWidth, View.MeasureSpec.EXACTLY),
-                    heightMeasureSpec
-                )
-                return
-            }
+        // If ratio is 0 or negative, let the content determine its natural size
+        if (ratio <= 0) {
+            super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+            return
+        }
+
+        // If both dimensions are fixed, just use the available space
+        if (widthMode == View.MeasureSpec.EXACTLY && heightMode == View.MeasureSpec.EXACTLY) {
+            // Both dimensions are fixed - just accept it and don't log warnings
+            super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+            return
         }
         
-        // Width is exactly specified but height is flexible
+        // If width is exactly specified, calculate height based on ratio
         if (widthMode == View.MeasureSpec.EXACTLY) {
-            val calculatedHeight = (width / ratio).roundToInt()
-            val finalHeight = if (heightMode == View.MeasureSpec.AT_MOST) {
-                min(calculatedHeight, height)
-        } else {
-                calculatedHeight
+            val desiredHeight = (width / ratio).roundToInt()
+            
+            // Check if we're constrained by max height
+            val finalHeight = if (heightMode == View.MeasureSpec.AT_MOST && desiredHeight > height) {
+                // We're constrained by maximum height
+                height
+            } else {
+                desiredHeight
             }
+            
             super.onMeasure(
                 widthMeasureSpec,
                 View.MeasureSpec.makeMeasureSpec(finalHeight, View.MeasureSpec.EXACTLY)
             )
             return
         }
+        
+        // If height is exactly specified, calculate width based on ratio
+        if (heightMode == View.MeasureSpec.EXACTLY) {
+            val desiredWidth = (height * ratio).roundToInt()
+            
+            // Check if we're constrained by max width
+            val finalWidth = if (widthMode == View.MeasureSpec.AT_MOST && desiredWidth > width) {
+                // We're constrained by maximum width
+                width
+            } else {
+                desiredWidth
+            }
+            
+            super.onMeasure(
+                View.MeasureSpec.makeMeasureSpec(finalWidth, View.MeasureSpec.EXACTLY),
+                heightMeasureSpec
+            )
+            return
+        }
 
-        // Both dimensions are flexible
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        // Both dimensions are flexible, use a reasonable default size while maintaining ratio
+        val defaultSize = max(width, 100)
+        super.onMeasure(
+            if (widthMode == View.MeasureSpec.AT_MOST) 
+                View.MeasureSpec.makeMeasureSpec(min(defaultSize, width), View.MeasureSpec.EXACTLY)
+            else 
+                View.MeasureSpec.makeMeasureSpec(defaultSize, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec((defaultSize / ratio).roundToInt(), View.MeasureSpec.EXACTLY)
+        )
     }
 }

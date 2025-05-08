@@ -1173,6 +1173,20 @@ private fun FileJob.moveAtomically(source: Path, target: Path) {
     source.moveTo(target, LinkOption.NOFOLLOW_LINKS, StandardCopyOption.ATOMIC_MOVE)
     // Preserve tags when moving files
     me.zhanghai.android.files.file.FileTagManager.updatePathForFile(source, target)
+    // Preserve ratings when moving files
+    me.zhanghai.android.files.file.FileRatingManager.updatePathForFile(source, target)
+    // Update folder item counts when moving files
+    me.zhanghai.android.files.file.FolderItemCountManager.updatePathForFolder(source, target)
+    // Preserve video thumbnails when moving files
+    val isVideo = target.toString().lowercase().matches(".+\\.(mp4|mkv|avi|mov|wmv|flv|webm|m4v|mpg|mpeg|3gp|ts)$".toRegex())
+    if (isVideo) {
+        runCatching {
+            val repository = me.zhanghai.android.files.provider.common.VideoMetadataRepository(me.zhanghai.android.files.app.application)
+            kotlinx.coroutines.runBlocking {
+                repository.updatePathForFile(source, target)
+            }
+        }
+    }
 }
 
 @Throws(IOException::class)
@@ -1186,6 +1200,20 @@ private fun FileJob.moveByCopy(
     // Preserve tags when moving files by copy
     if (result) {
         me.zhanghai.android.files.file.FileTagManager.updatePathForFile(source, target)
+        // Preserve ratings when moving files by copy
+        me.zhanghai.android.files.file.FileRatingManager.updatePathForFile(source, target)
+        // Update folder item counts when moving files by copy
+        me.zhanghai.android.files.file.FolderItemCountManager.updatePathForFolder(source, target)
+        // Preserve video thumbnails when moving files by copy
+        val isVideo = target.toString().lowercase().matches(".+\\.(mp4|mkv|avi|mov|wmv|flv|webm|m4v|mpg|mpeg|3gp|ts)$".toRegex())
+        if (isVideo) {
+            runCatching {
+                val repository = me.zhanghai.android.files.provider.common.VideoMetadataRepository(me.zhanghai.android.files.app.application)
+                kotlinx.coroutines.runBlocking {
+                    repository.updatePathForFile(source, target)
+                }
+            }
+        }
     }
     return result
 }
@@ -1552,6 +1580,10 @@ class RenameFileJob(private val path: Path, private val newName: String) : FileJ
         rename(path, newPath)
         // Preserve tags when renaming files
         me.zhanghai.android.files.file.FileTagManager.updatePathForFile(path, newPath)
+        // Preserve ratings when renaming files
+        me.zhanghai.android.files.file.FileRatingManager.updatePathForFile(path, newPath)
+        // Update folder item counts when renaming files
+        me.zhanghai.android.files.file.FolderItemCountManager.updatePathForFolder(path, newPath)
     }
 }
 

@@ -32,3 +32,5 @@ class FileItemSet() : LinkedMapSet<Path, FileItem>(FileItem::path), Parcelable {
 }
 
 fun fileItemSetOf(vararg files: FileItem) = FileItemSet().apply { addAll(files) }
+
+fun FileItemSet.toFileItemSet(): FileItemSet = FileItemSet().apply { addAll(this@toFileItemSet) }

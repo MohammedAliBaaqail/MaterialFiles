@@ -834,6 +834,30 @@
     <string name="tags_import_success">Tags imported successfully</string>
     <string name="tags_import_error">Failed to import tags</string>
 
+    <!-- Folder item counts backup strings -->
+    <string name="settings_folder_counts_backup_title">Folder Counts Backup &amp; Restore</string>
+    <string name="settings_folder_counts_backup_summary">Import or export folder item count data</string>
+    <string name="folder_counts_backup_title">Folder Counts Backup &amp; Restore</string>
+    <string name="folder_counts_backup_export">Export folder counts</string>
+    <string name="folder_counts_backup_import">Import folder counts</string>
+    <string name="folder_counts_export_success">Folder counts exported successfully</string>
+    <string name="folder_counts_export_error">Failed to export folder counts</string>
+    <string name="folder_counts_import_success">Folder counts imported successfully</string>
+    <string name="folder_counts_import_error">Failed to import folder counts</string>
+    
+    <!-- Video thumbnail management strings -->
+    <string name="video_thumbnail_management_use_16_9_ratio">Use 16:9 ratio</string>
+    <string name="video_thumbnail_management_image_mode">Image mode</string>
+    <string name="video_thumbnail_management_video_mode">Video mode</string>
+    <string name="video_thumbnail_management_use_current_position">Use current position</string>
+    <string name="video_thumbnail_management_choose_custom_image">Choose custom image</string>
+    <string name="video_thumbnail_management_saved">Thumbnail saved successfully</string>
+    <string name="video_thumbnail_management_no_thumbnail">No thumbnail available to save</string>
+    <string name="video_thumbnail_management_error_loading">Error loading video: %1$s</string>
+    <string name="video_thumbnail_management_error_loading_frame">Error loading video frame</string>
+    <string name="video_thumbnail_management_error_loading_image_detailed">Error loading image: %1$s</string>
+    <string name="video_thumbnail_management_error_saving_detailed">Error saving thumbnail: %1$s</string>
+
     <string name="settings_file_list_hide_info_in_grid_title">Hide file info in grid view</string>
     <string name="settings_file_list_hide_info_in_grid_summary">Show only icon and name in grid view</string>
     <string name="file_list_action_use_square_thumbnails">Use square thumbnails</string>
@@ -854,6 +878,43 @@
     <!-- Added missing string resources -->
     <string name="settings_hide_breadcrumb_path_title">Hide breadcrumb path</string>
     <string name="settings_hide_breadcrumb_path_summary">Hide the navigation path above the file list</string>
+
+    <string name="file_list_action_hide_info_in_grid">Hide file info in grid</string>
+    <string name="file_list_action_use_portrait_mode_in_grid">Portrait orientation (9:16)</string>
+
+    <!-- Video thumbnail management -->
+    <string name="video_thumbnail_management_title">Video Thumbnail</string>
+    <string name="video_thumbnail_management_preview">Preview</string>
+    <string name="video_thumbnail_management_video_position">Position in video</string>
+    <string name="video_thumbnail_management_regenerate">Regenerate</string>
+    <string name="video_thumbnail_management_use_current_time">Use current position</string>
+    <string name="video_thumbnail_management_choose_custom">Custom position</string>
+    <string name="file_item_action_manage_thumbnail">Manage thumbnail</string>
+    <string name="settings_thumbnail_backup_title">Thumbnail Management</string>
+    <string name="settings_thumbnail_backup_summary">Backup and restore video thumbnails</string>
+
+    <!-- Item count format -->
+    <plurals name="file_list_item_count_format">
+        <item quantity="one">%1$,d item</item>
+        <item quantity="other">%1$,d items</item>
+    </plurals>
+    
+    <!-- Thumbnail management errors and messages -->
+    <string name="video_thumbnail_management_error_loading_simple">Error loading video</string>
+    <string name="video_thumbnail_management_error_loading_frame_simple">Error loading video frame</string>
+    <string name="video_thumbnail_management_error_loading_image_simple">Error loading thumbnail image</string>
+    <string name="video_thumbnail_management_error_saving_simple">Error saving thumbnail</string>
+    <string name="video_thumbnail_management_saved_simple">Thumbnail saved</string>
+    <string name="video_thumbnail_management_no_thumbnail_simple">No thumbnail available</string>
+    
+    <!-- Thumbnail backup strings -->
+    <string name="thumbnail_backup_title">Video Thumbnail Backup</string>
+    <string name="thumbnail_backup_export">Export thumbnails</string>
+    <string name="thumbnail_backup_import">Import thumbnails</string>
+    <string name="thumbnail_export_success">Thumbnails exported successfully</string>
+    <string name="thumbnail_export_error">Failed to export thumbnails</string>
+    <string name="thumbnail_import_success">Thumbnails imported successfully</string>
+    <string name="thumbnail_import_error">Failed to import thumbnails</string>
 </resources>
 
 

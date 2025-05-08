@@ -30,17 +30,17 @@
         <me.zhanghai.android.files.ui.AspectRatioFrameLayout
             android:id="@+id/thumbnailLayout"
             android:layout_width="match_parent"
-            android:layout_height="180dp"
+            android:layout_height="wrap_content"
             android:layout_marginStart="1dp"
             android:layout_marginEnd="1dp"
-        android:duplicateParentState="true"
+            android:duplicateParentState="true"
             android:tag="@id/tag_original_height"
-        app:aspectRatio="1.78">
+            app:aspectRatio="1.778">
 
         <me.zhanghai.android.files.ui.DisabledAlphaImageView
             android:id="@+id/directoryThumbnailImage"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:duplicateParentState="true"
             android:scaleType="fitCenter"
             android:src="@drawable/file_directory_thumbnail" />
@@ -68,7 +68,7 @@
         <View
             android:id="@+id/thumbnailOutlineView"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:background="@drawable/file_item_grid_thumbnail_outline"
             android:duplicateParentState="true" />
     </me.zhanghai.android.files.ui.AspectRatioFrameLayout>

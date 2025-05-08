@@ -25,9 +25,9 @@
         android:minWidth="@dimen/list_thumbnail_container_size"
         android:clickable="true"
         android:focusable="true"
+        android:longClickable="true"
         android:descendantFocusability="beforeDescendants"
-        android:background="@android:color/transparent"
-        android:foreground="@drawable/selectable_item_background_oval"
+        android:foreground="?selectableItemBackground"
         android:tag="@id/tag_original_height">
 
         <FrameLayout
@@ -36,6 +36,7 @@
             android:layout_height="match_parent"
         android:clipToPadding="false"
         android:duplicateParentState="true"
+            android:clickable="false"
         android:padding="0dp">
 
         <me.zhanghai.android.files.ui.DisabledAlphaImageView
@@ -53,15 +54,20 @@
                 android:layout_height="match_parent"
                 android:layout_gravity="center"
                 android:duplicateParentState="true"
+                android:clickable="false"
                 android:tag="@id/tag_original_height"
                 app:aspectRatio="1.78">
 
-        <me.zhanghai.android.files.ui.DisabledAlphaImageView
-            android:id="@+id/thumbnailImage"
+                <me.zhanghai.android.files.ui.DisabledAlphaImageView
+                    android:id="@+id/thumbnailImage"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-            android:duplicateParentState="true"
-            android:scaleType="centerCrop" />
+                    android:layout_gravity="center"
+                    android:clickable="true"
+                    android:duplicateParentState="true"
+                    android:focusable="true"
+                    android:longClickable="true"
+                    android:scaleType="fitCenter" />
             </me.zhanghai.android.files.ui.AspectRatioFrameLayout>
 
         <me.zhanghai.android.files.ui.DisabledAlphaImageView

@@ -7,6 +7,7 @@ package me.zhanghai.android.files.settings
 
 import android.os.Build
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 import me.zhanghai.android.files.R
 import me.zhanghai.android.files.theme.custom.CustomThemeHelper
 import me.zhanghai.android.files.theme.custom.ThemeColor
@@ -17,6 +18,8 @@ import me.zhanghai.android.files.ui.PreferenceFragmentCompat
 class SettingsPreferenceFragment : PreferenceFragmentCompat() {
     private lateinit var localePreference: LocalePreference
     private lateinit var tagBackupPreference: TagBackupPreference
+    private lateinit var folderItemCountBackupPreference: FolderItemCountBackupPreference
+    private lateinit var videoMetadataBackupPreference: VideoMetadataBackupPreference
 
     override fun onCreatePreferencesFix(savedInstanceState: Bundle?, rootKey: String?) {
         addPreferencesFromResource(R.xml.settings)
@@ -31,6 +34,15 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
         
         // Initialize the tag backup preference
         tagBackupPreference = preferenceScreen.findPreference("file_tags_backup")!!
+        tagBackupPreference.registerForActivityResult(requireActivity() as AppCompatActivity)
+        
+        // Initialize the folder item count backup preference
+        folderItemCountBackupPreference = preferenceScreen.findPreference("folder_item_counts_backup")!!
+        folderItemCountBackupPreference.registerForActivityResult(requireActivity() as AppCompatActivity)
+        
+        // Initialize the video metadata backup preference
+        videoMetadataBackupPreference = preferenceScreen.findPreference("video_thumbnails_backup")!!
+        videoMetadataBackupPreference.registerForActivityResult(requireActivity() as AppCompatActivity)
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -39,6 +51,8 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
         val activity = requireActivity() as SettingsActivity
         // Register the tag backup preference for activity results
         tagBackupPreference.registerForActivityResult(activity)
+        // Register the folder item count backup preference for activity results
+        folderItemCountBackupPreference.registerForActivityResult(activity)
 
         val viewLifecycleOwner = viewLifecycleOwner
         // The following may end up passing the same lambda instance to the observer because it has

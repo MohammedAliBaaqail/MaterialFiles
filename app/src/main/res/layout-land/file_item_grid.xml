@@ -29,11 +29,10 @@
         <me.zhanghai.android.files.ui.AspectRatioFrameLayout
             android:id="@+id/thumbnailLayout"
             android:layout_width="match_parent"
-            android:layout_height="180dp"
+            android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/screen_edge_margin_half"
             android:layout_marginEnd="@dimen/screen_edge_margin_half"
-            android:duplicateParentState="true"
-            app:aspectRatio="1.778">
+            android:duplicateParentState="true">
 
             <me.zhanghai.android.files.ui.DisabledAlphaImageView
                 android:id="@+id/directoryThumbnailImage"

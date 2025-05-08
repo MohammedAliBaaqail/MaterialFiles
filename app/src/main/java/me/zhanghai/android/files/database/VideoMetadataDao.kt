@@ -26,4 +26,8 @@ interface VideoMetadataDao {
     // Query to specifically update the thumbnail path for an existing entry
     @Query("UPDATE video_metadata SET thumbnail_path = :thumbnailPath, last_modified = :lastModified WHERE path = :path")
     suspend fun updateThumbnailPath(path: String, thumbnailPath: String?, lastModified: Long)
+
+    // Get all metadata entries for export/backup purposes
+    @Query("SELECT * FROM video_metadata")
+    suspend fun getAll(): List<VideoMetadata>
 } 

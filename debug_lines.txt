@@ -1,0 +1,10 @@
+                                        }
+                                    }
+                                    
+                                    // Cache the count if we completed successfully
+                                    if (isActive) {
+                                        DirectoryItemCountManager.setItemCount(directory, fileCount, lastModified)
+                                    }
+                                } catch (e: Exception) {
+                                    Log.e("FileListAdapter", "Error counting files in ${file.path}", e)
+                                }

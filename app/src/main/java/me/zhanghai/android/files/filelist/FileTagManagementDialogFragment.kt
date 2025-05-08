@@ -28,6 +28,8 @@ import me.zhanghai.android.files.util.show
 import android.util.Log
 import androidx.core.content.ContextCompat
 import java.util.Collections
+import me.zhanghai.android.files.util.ColorUtils
+import android.graphics.drawable.GradientDrawable
 
 class FileTagManagementDialogFragment : DialogFragment() {
     private lateinit var files: List<FileItem>
@@ -148,6 +150,33 @@ class FileTagManagementDialogFragment : DialogFragment() {
         itemTouchHelper = ItemTouchHelper(touchHelperCallback)
         itemTouchHelper.attachToRecyclerView(recyclerView)
     }
+    
+    private fun updateTagsView(tagContainer: View, tag: FileTag) {
+        val tagText = tagContainer.findViewById<TextView>(R.id.tagText)
+        tagText.text = tag.name
+        
+        // Apply background color from tag
+        val backgroundColor = tag.color
+        
+        // Get contrasting text color with ~85% opacity (217/255)
+        val textColor = ColorUtils.getContrastingTextColor(backgroundColor, 217)
+        tagText.setTextColor(textColor)
+        
+        // Create a drawable with border that matches text color
+        val borderColor = ColorUtils.getBorderColorFromText(textColor)
+        
+        // Apply the background with border
+        val backgroundDrawable = ContextCompat.getDrawable(
+            tagContainer.context, R.drawable.tag_background_with_border
+        )?.mutate() as GradientDrawable
+        
+        backgroundDrawable.setColor(backgroundColor)
+        backgroundDrawable.setStroke(
+            tagContainer.context.resources.getDimensionPixelSize(R.dimen.tag_border_width), 
+            borderColor
+        )
+        tagContainer.background = backgroundDrawable
+    }
 
     private fun notifyTagsChanged() {
         Log.d("FileTagManager", "Notifying tags changed to parent fragment: $parentFragment")
@@ -189,6 +218,60 @@ class FileTagManagementDialogFragment : DialogFragment() {
         }
 
         dialog.show()
+    }
+    
+    private fun showEditTagDialog(tag: FileTag) {
+        val context = requireContext()
+        val view = LayoutInflater.from(context).inflate(R.layout.file_tag_add_dialog, null)
+        val nameEdit = view.findViewById<EditText>(R.id.nameEdit)
+        var selectedColor = tag.color
+        val colorButton = view.findViewById<ImageButton>(R.id.colorButton)
+        
+        // Pre-fill with existing tag data
+        nameEdit.setText(tag.name)
+        colorButton.setBackgroundColor(selectedColor)
+        
+        val dialog = MaterialAlertDialogBuilder(context)
+            .setTitle(R.string.file_tag_management_title)
+            .setView(view)
+            .setPositiveButton(R.string.save) { _, _ ->
+                val name = nameEdit.text.toString().trim()
+                if (name.isNotEmpty()) {
+                    val updatedTag = tag.copy(name = name, color = selectedColor)
+                    FileTagManager.updateTag(updatedTag)
+                    adapter.updateTag(updatedTag)
+                    notifyTagsChanged()
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .setNeutralButton(R.string.delete) { _, _ ->
+                showDeleteConfirmationDialog(tag)
+            }
+            .create()
+
+        colorButton.setOnClickListener {
+            (context as? FragmentActivity)?.supportFragmentManager?.fragments?.firstOrNull()?.let { fragment ->
+                ColorPickerDialog.show(fragment) { color ->
+                    selectedColor = color
+                    colorButton.setBackgroundColor(color)
+                }
+            }
+        }
+
+        dialog.show()
+    }
+
+    private fun showDeleteConfirmationDialog(tag: FileTag) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.delete)
+            .setMessage(R.string.file_tag_delete_message)
+            .setPositiveButton(R.string.delete) { _, _ ->
+                FileTagManager.deleteTag(tag.id)
+                adapter.removeTag(tag)
+                notifyTagsChanged()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     companion object {
@@ -315,70 +398,14 @@ class FileTagManagementDialogFragment : DialogFragment() {
                 }
 
                 itemView.setOnLongClickListener {
-                    if (files.size == 1 && isChecked) {
-                        itemTouchHelper.startDrag(this)
-                    } else {
-                        showEditTagDialog(tag)
-                    }
+                    // Always show edit dialog on long press
+                    showEditTagDialog(tag)
                     true
                 }
 
                 tagContainer.setOnClickListener {
                     showEditTagDialog(tag)
                 }
-            }
-
-            private fun showEditTagDialog(tag: FileTag) {
-                val context = itemView.context
-                val view = LayoutInflater.from(context).inflate(R.layout.file_tag_add_dialog, null)
-                val nameEdit = view.findViewById<EditText>(R.id.nameEdit)
-                var selectedColor = tag.color
-                val colorButton = view.findViewById<ImageButton>(R.id.colorButton)
-                
-                nameEdit.setText(tag.name)
-                colorButton.setBackgroundColor(selectedColor)
-
-                val dialog = MaterialAlertDialogBuilder(context)
-                    .setTitle(R.string.file_tag_management_title)
-                    .setView(view)
-                    .setPositiveButton(R.string.save) { _, _ ->
-                        val name = nameEdit.text.toString().trim()
-                        if (name.isNotEmpty()) {
-                            val updatedTag = tag.copy(name = name, color = selectedColor)
-                            FileTagManager.updateTag(updatedTag)
-                            adapter.updateTag(updatedTag)
-                            this@FileTagManagementDialogFragment.notifyTagsChanged()
-                        }
-                    }
-                    .setNegativeButton(android.R.string.cancel, null)
-                    .setNeutralButton(R.string.delete) { _, _ ->
-                        showDeleteConfirmationDialog(tag)
-                    }
-                    .create()
-
-                colorButton.setOnClickListener {
-                    (context as? FragmentActivity)?.supportFragmentManager?.fragments?.firstOrNull()?.let { fragment ->
-                        ColorPickerDialog.show(fragment) { color ->
-                            selectedColor = color
-                            colorButton.setBackgroundColor(color)
-                        }
-                    }
-                }
-
-                dialog.show()
-            }
-
-            private fun showDeleteConfirmationDialog(tag: FileTag) {
-                MaterialAlertDialogBuilder(itemView.context)
-                    .setTitle(R.string.delete)
-                    .setMessage(R.string.file_tag_delete_message)
-                    .setPositiveButton(R.string.delete) { _, _ ->
-                        FileTagManager.deleteTag(tag.id)
-                        adapter.removeTag(tag)
-                        this@FileTagManagementDialogFragment.notifyTagsChanged()
-                    }
-                    .setNegativeButton(android.R.string.cancel, null)
-                    .show()
             }
         }
     }

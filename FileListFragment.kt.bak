@@ -140,7 +140,6 @@ import me.zhanghai.android.files.util.valueCompat
 import me.zhanghai.android.files.util.viewModels
 import me.zhanghai.android.files.util.withChooser
 import me.zhanghai.android.files.viewer.image.ImageViewerActivity
-import me.zhanghai.android.files.filelist.VideoMetadataCache
 import me.zhanghai.android.files.file.FileRatingManager
 import java8.nio.file.attribute.BasicFileAttributes
 import java8.nio.file.attribute.FileTime
@@ -170,7 +169,6 @@ class FileListFragment : Fragment(),
     FileItemScaleDialogFragment.Listener,
     FileTagFilterDialog.Listener,
     FileTagManagementDialogFragment.Listener,
-    VideoThumbnailManagementDialogFragment.Listener,
     MenuProvider {
     private val requestAllFilesAccessLauncher = registerForActivityResult(
         RequestAllFilesAccessContract(), this::onRequestAllFilesAccessResult
@@ -276,10 +274,6 @@ class FileListFragment : Fragment(),
         layoutManager = GridLayoutManager(activity, 1)
         binding.recyclerView.layoutManager = layoutManager
         adapter = FileListAdapter(this)
-        adapter.isSquareThumbnailsInGrid = viewModel.isSquareThumbnailsInGrid
-        adapter.isPortraitModeInGrid = viewModel.isPortraitModeInGrid
-        adapter.itemScale = viewModel.itemScale
-        adapter.selectionMode = SelectionMode.INDEPENDENT
         binding.recyclerView.adapter = adapter
         val fastScroller = ThemedFastScroller.create(binding.recyclerView)
         binding.recyclerView.setOnApplyWindowInsetsListener(
@@ -402,12 +396,7 @@ class FileListFragment : Fragment(),
         viewModel.squareThumbnailsInGridLiveData.observe(viewLifecycleOwner) {
             onSquareThumbnailsInGridChanged(it)
         }
-        viewModel.portraitModeInGridLiveData.observe(viewLifecycleOwner) {
-            onPortraitModeInGridChanged(it)
-        }
-        viewModel.itemScaleLiveData.observe(viewLifecycleOwner) {
-            updateItemScale(it)
-        }
+        viewModel.itemScaleLiveData.observe(viewLifecycleOwner) { updateItemScale(it) }
         viewModel.pickOptionsLiveData.observe(viewLifecycleOwner) { onPickOptionsChanged(it) }
         viewModel.selectedFilesLiveData.observe(viewLifecycleOwner) { onSelectedFilesChanged(it) }
         viewModel.pasteStateLiveData.observe(viewLifecycleOwner) { onPasteStateChanged(it) }
@@ -652,7 +641,9 @@ class FileListFragment : Fragment(),
                 true
             }
             R.id.action_use_square_thumbnails -> {
-                viewModel.isSquareThumbnailsInGrid = !menuBinding.useSquareThumbnailsItem.isChecked
+                item.isChecked = !item.isChecked
+                viewModel.isSquareThumbnailsInGrid = item.isChecked
+                adapter.notifyDataSetChanged()
                 true
             }
             R.id.action_square_thumbnails_in_grid -> {
@@ -663,10 +654,6 @@ class FileListFragment : Fragment(),
             }
             R.id.action_item_scale -> {
                 showItemScaleDialog()
-                true
-            }
-            R.id.action_use_portrait_mode_in_grid -> {
-                viewModel.isPortraitModeInGrid = !menuBinding.usePortraitModeInGridItem.isChecked
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -825,12 +812,6 @@ class FileListFragment : Fragment(),
         adapter.isSquareThumbnailsInGrid = squareThumbnailsInGrid
         updateViewSortMenuItems()
     }
-    
-    private fun onPortraitModeInGridChanged(portraitModeInGrid: Boolean) {
-        // Update the adapter to apply the portrait mode
-        adapter.isPortraitModeInGrid = portraitModeInGrid
-        updateViewSortMenuItems()
-    }
 
     private fun updateItemScale(scale: Int) {
         // Implementation for updating scale internally
@@ -887,11 +868,6 @@ class FileListFragment : Fragment(),
         menuBinding.useSquareThumbnailsItem.isVisible = true
         menuBinding.squareThumbnailsInGridItem.isVisible = false
         menuBinding.useSquareThumbnailsItem.isChecked = squareThumbnailsInGrid
-        
-        // Show portrait mode option only in grid view
-        val portraitModeInGrid = viewModel.isPortraitModeInGrid
-        menuBinding.usePortraitModeInGridItem.isVisible = viewType == FileViewType.GRID
-        menuBinding.usePortraitModeInGridItem.isChecked = portraitModeInGrid
     }
 
     private fun updateSquareThumbnailsInGridMenuItem() {
@@ -1456,7 +1432,7 @@ class FileListFragment : Fragment(),
                 if (java8.nio.file.Files.isDirectory(path)) {
                     navigate(path)
             return
-        }
+                }
                 
                 // Otherwise treat the symlink like a regular file
                 path
@@ -1472,7 +1448,7 @@ class FileListFragment : Fragment(),
         // Open the file with the effective path
         openFile(effectivePath, effectivePath, file.mimeType)
     }
-
+    
     override fun manageVideoThumbnail(file: FileItem) {
         VideoThumbnailManagementDialogFragment.show(file.path, this)
     }
@@ -2113,8 +2089,7 @@ class FileListFragment : Fragment(),
         val showDateTypeItem: MenuItem,
         val hideInfoInGridItem: MenuItem,
         val useSquareThumbnailsItem: MenuItem,
-        val squareThumbnailsInGridItem: MenuItem,
-        val usePortraitModeInGridItem: MenuItem
+        val squareThumbnailsInGridItem: MenuItem
     ) {
         companion object {
             fun inflate(menu: Menu, inflater: MenuInflater): MenuBinding {
@@ -2138,8 +2113,7 @@ class FileListFragment : Fragment(),
                     menu.findItem(R.id.action_show_date_type),
                     menu.findItem(R.id.action_hide_info_in_grid),
                     menu.findItem(R.id.action_use_square_thumbnails),
-                    menu.findItem(R.id.action_square_thumbnails_in_grid),
-                    menu.findItem(R.id.action_use_portrait_mode_in_grid)
+                    menu.findItem(R.id.action_square_thumbnails_in_grid)
                 )
             }
         }
@@ -2214,7 +2188,7 @@ class FileListFragment : Fragment(),
         val currentScale = viewModel.itemScale
         val progress = currentScale - 50
         scaleSlider.progress = progress
-        scaleValueText.text = getString(R.string. file_list_action_item_scale_value, currentScale)
+        scaleValueText.text = getString(R.string.file_list_action_item_scale_value, currentScale)
         
         // Apply the scale immediately when slider changes
         scaleSlider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {

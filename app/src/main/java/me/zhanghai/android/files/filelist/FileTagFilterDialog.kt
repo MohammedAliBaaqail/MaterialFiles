@@ -1,6 +1,7 @@
 package me.zhanghai.android.files.filelist
 
 import android.app.Dialog
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -9,6 +10,7 @@ import android.widget.CheckBox
 import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -17,6 +19,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import me.zhanghai.android.files.R
 import me.zhanghai.android.files.file.FileTag
 import me.zhanghai.android.files.file.FileTagManager
+import me.zhanghai.android.files.util.ColorUtils
 import me.zhanghai.android.files.util.show
 
 class FileTagFilterDialog : DialogFragment() {
@@ -32,8 +35,8 @@ class FileTagFilterDialog : DialogFragment() {
 
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(context)
-        adapter = TagAdapter(FileTagManager.getAllTags(), selectedTags) { tag, isChecked ->
-            if (isChecked) {
+        adapter = TagAdapter(FileTagManager.getAllTags()) { tag, checked ->
+            if (checked) {
                 selectedTags.add(tag)
             } else {
                 selectedTags.remove(tag)
@@ -41,18 +44,18 @@ class FileTagFilterDialog : DialogFragment() {
         }
         recyclerView.adapter = adapter
         
-        // Set up filter mode radio buttons
-        val filterModeGroup = view.findViewById<RadioGroup>(R.id.filterModeGroup)
-        val filterModeAny = view.findViewById<RadioButton>(R.id.filterModeAny)
-        val filterModeAll = view.findViewById<RadioButton>(R.id.filterModeAll)
+        // Setup filter mode radio buttons
+        val radioGroup = view.findViewById<RadioGroup>(R.id.filterModeGroup)
+        val matchAllRadio = view.findViewById<RadioButton>(R.id.filterModeAll)
+        val matchAnyRadio = view.findViewById<RadioButton>(R.id.filterModeAny)
         
         if (isMatchAll) {
-            filterModeAll.isChecked = true
+            matchAllRadio.isChecked = true
         } else {
-            filterModeAny.isChecked = true
+            matchAnyRadio.isChecked = true
         }
         
-        filterModeGroup.setOnCheckedChangeListener { _, checkedId ->
+        radioGroup.setOnCheckedChangeListener { _, checkedId ->
             isMatchAll = checkedId == R.id.filterModeAll
         }
 
@@ -68,7 +71,6 @@ class FileTagFilterDialog : DialogFragment() {
 
     private inner class TagAdapter(
         private val allTags: List<FileTag>,
-        private val selectedTags: Set<FileTag>,
         private val onTagCheckedChange: (FileTag, Boolean) -> Unit
     ) : RecyclerView.Adapter<TagAdapter.ViewHolder>() {
 
@@ -93,7 +95,28 @@ class FileTagFilterDialog : DialogFragment() {
             fun bind(tag: FileTag, isChecked: Boolean) {
                 tagText.text = tag.name
                 checkBox.isChecked = isChecked
-                tagContainer.setBackgroundColor(tag.color)
+
+                // Apply background color from tag
+                val backgroundColor = tag.color
+                
+                // Get contrasting text color with ~85% opacity (217/255)
+                val textColor = ColorUtils.getContrastingTextColor(backgroundColor, 217)
+                tagText.setTextColor(textColor)
+                
+                // Create a drawable with border that matches text color
+                val borderColor = ColorUtils.getBorderColorFromText(textColor)
+                
+                // Apply the background with border
+                val backgroundDrawable = ContextCompat.getDrawable(
+                    tagContainer.context, R.drawable.tag_background_with_border
+                )?.mutate() as GradientDrawable
+                
+                backgroundDrawable.setColor(backgroundColor)
+                backgroundDrawable.setStroke(
+                    tagContainer.context.resources.getDimensionPixelSize(R.dimen.tag_border_width), 
+                    borderColor
+                )
+                tagContainer.background = backgroundDrawable
 
                 checkBox.setOnCheckedChangeListener { _, checked ->
                     onTagCheckedChange(tag, checked)

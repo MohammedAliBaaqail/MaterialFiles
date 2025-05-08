@@ -31,6 +31,11 @@ object PathSettings {
             NAME_SUFFIX, R.string.pref_key_file_list_square_thumbnails_in_grid, path.toString(), null
         )
 
+    fun getFileListUsePortraitModeInGrid(path: Path): SettingLiveData<Boolean?> =
+        ParcelValueSettingLiveData(
+            NAME_SUFFIX, R.string.pref_key_file_list_use_portrait_mode_in_grid, path.toString(), null
+        )
+
     fun getFileListItemScale(path: Path): SettingLiveData<Int?> =
         ParcelValueSettingLiveData(
             NAME_SUFFIX, R.string.pref_key_file_list_item_scale, path.toString(), null

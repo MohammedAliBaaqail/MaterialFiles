@@ -53,4 +53,6 @@
 
     <!-- Reduce fast scroll thumb touch target size because we have the popup menu beside it. -->
     <dimen name="afs_min_touch_target_size">24dp</dimen>
+
+    <dimen name="tag_border_width">1dp</dimen>
 </resources>

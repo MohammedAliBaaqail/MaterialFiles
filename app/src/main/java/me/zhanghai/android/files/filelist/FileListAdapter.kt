@@ -5,7 +5,13 @@
 
 package me.zhanghai.android.files.filelist
 
+import android.graphics.Bitmap
+import android.media.MediaMetadataRetriever
 import android.text.TextUtils
+import android.util.Log
+import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
@@ -16,12 +22,27 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import android.view.LayoutInflater
 import coil.dispose
 import coil.load
+import coil.size.Scale
 import java8.nio.file.Path
+import java.io.File
+import java.io.FileOutputStream
+import java.security.MessageDigest
+import java.time.Duration
+import java.util.Locale
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import me.zhanghai.android.fastscroll.PopupTextProvider
 import me.zhanghai.android.files.R
+import me.zhanghai.android.files.app.application
 import me.zhanghai.android.files.coil.AppIconPackageName
 import me.zhanghai.android.files.compat.foregroundCompat
 import me.zhanghai.android.files.compat.getDrawableCompat
@@ -29,40 +50,31 @@ import me.zhanghai.android.files.compat.isSingleLineCompat
 import me.zhanghai.android.files.databinding.FileItemGridBinding
 import me.zhanghai.android.files.databinding.FileItemListBinding
 import me.zhanghai.android.files.file.FileItem
+import me.zhanghai.android.files.file.FileRatingManager
 import me.zhanghai.android.files.file.FileTag
 import me.zhanghai.android.files.file.FileTagManager
 import me.zhanghai.android.files.file.fileSize
+import me.zhanghai.android.files.file.format
 import me.zhanghai.android.files.file.formatShort
 import me.zhanghai.android.files.file.iconRes
 import me.zhanghai.android.files.file.isApk
 import me.zhanghai.android.files.file.isVideo
-import me.zhanghai.android.files.file.format
 import me.zhanghai.android.files.provider.archive.isArchivePath
+import me.zhanghai.android.files.provider.common.VideoMetadataRepository
 import me.zhanghai.android.files.provider.common.isEncrypted
 import me.zhanghai.android.files.settings.Settings
 import me.zhanghai.android.files.ui.AnimatedListAdapter
+import me.zhanghai.android.files.ui.AspectRatioFrameLayout
 import me.zhanghai.android.files.ui.CheckableForegroundLinearLayout
 import me.zhanghai.android.files.ui.CheckableItemBackground
 import me.zhanghai.android.files.ui.TagsView
+import me.zhanghai.android.files.util.getQuantityString
+import me.zhanghai.android.files.util.isMediaMetadataRetrieverCompatible
 import me.zhanghai.android.files.util.isMaterial3Theme
 import me.zhanghai.android.files.util.layoutInflater
-import me.zhanghai.android.files.util.valueCompat
-import me.zhanghai.android.files.util.isMediaMetadataRetrieverCompatible
-import java.util.Locale
-import android.util.Log
-import me.zhanghai.android.files.file.FileRatingManager
-import me.zhanghai.android.files.ui.AspectRatioFrameLayout
-import android.media.MediaMetadataRetriever
-import me.zhanghai.android.files.provider.common.VideoMetadataRepository
-import kotlinx.coroutines.*
-import me.zhanghai.android.files.app.application
-import android.graphics.Bitmap
-import java.io.File
-import java.io.FileOutputStream
-import java.security.MessageDigest
-import me.zhanghai.android.files.util.toHex
 import me.zhanghai.android.files.util.pathString
-import java.time.Duration
+import me.zhanghai.android.files.util.toHex
+import me.zhanghai.android.files.util.valueCompat
 
 class FileListAdapter(
     private val listener: Listener
@@ -100,6 +112,9 @@ class FileListAdapter(
 
     private val selectedFiles = fileItemSetOf()
 
+    val selectedFileItems: FileItemSet
+        get() = selectedFiles.toFileItemSet()
+
     private val filePositionMap = mutableMapOf<Path, Int>()
 
     private lateinit var _nameEllipsize: TextUtils.TruncateAt
@@ -122,6 +137,18 @@ class FileListAdapter(
             notifyItemRangeChanged(0, itemCount, PAYLOAD_SQUARE_THUMBNAILS_CHANGED)
         }
         
+    private var _isPortraitModeInGrid: Boolean = false
+    var isPortraitModeInGrid: Boolean
+        get() = _isPortraitModeInGrid
+        set(value) {
+            if (_isPortraitModeInGrid == value) {
+                return
+            }
+            _isPortraitModeInGrid = value
+            // Force a complete redraw of all items
+            notifyItemRangeChanged(0, itemCount, PAYLOAD_PORTRAIT_MODE_CHANGED)
+        }
+        
     private var _itemScale: Int = 100
     var itemScale: Int
         get() = _itemScale
@@ -132,6 +159,16 @@ class FileListAdapter(
             _itemScale = value
             // Force a complete redraw of all items
             notifyItemRangeChanged(0, itemCount, PAYLOAD_SCALE_CHANGED)
+        }
+
+    private var _selectionMode: SelectionMode = SelectionMode.NONE
+    var selectionMode: SelectionMode
+        get() = _selectionMode
+        set(value) {
+            if (_selectionMode == value) {
+                return
+            }
+            _selectionMode = value
         }
 
     // Initialize repository lazily
@@ -248,7 +285,7 @@ class FileListAdapter(
                 }
             }
             popupMenu = PopupMenu(menuButton.context, menuButton)
-                .apply { inflate(R.menu.file_item) }
+                .apply { menuInflater.inflate(R.menu.file_item, menu) }
             menuButton.setOnClickListener { popupMenu.show() }
         }
     }
@@ -295,9 +332,14 @@ class FileListAdapter(
         }
         
         // If this is just for square thumbnails, just update that
-        if (payloads.contains(PAYLOAD_SQUARE_THUMBNAILS_CHANGED)) {
+        if (payloads.contains(PAYLOAD_SQUARE_THUMBNAILS_CHANGED) || 
+            payloads.contains(PAYLOAD_PORTRAIT_MODE_CHANGED)) {
             holder.thumbnailLayout?.let { thumbnailLayout ->
-                val newRatio = if (isSquareThumbnailsInGrid) 1.0f else getAspectRatioForFile(file)
+                val newRatio = when {
+                    isSquareThumbnailsInGrid -> 1.0f
+                    isPortraitModeInGrid -> 0.5625f  // 9:16 ratio (portrait mode)
+                    else -> getAspectRatioForFile(file)
+                }
                 thumbnailLayout.ratio = newRatio
             }
             return
@@ -341,14 +383,56 @@ class FileListAdapter(
             // Configure the view for better click detection
             clickArea.isClickable = true
             clickArea.isFocusable = true
+            clickArea.isLongClickable = true
             
-            // Set up the most direct click handler possible
-            clickArea.setOnClickListener {
+            // Set up the most direct click handler possible - using the same behavior as the main layout
+            clickArea.setOnClickListener { view ->
+                Log.d("FileListAdapter", "Thumbnail area clicked for file: ${file.name}")
                 if (selectedFiles.isEmpty()) {
                     listener.openFile(file)
                 } else {
                     selectFile(file)
                 }
+            }
+            
+            // Add robust long-click handler that matches main item behavior
+            clickArea.setOnLongClickListener { view ->
+                Log.d("FileListAdapter", "Thumbnail area long-clicked for file: ${file.name}")
+                if (selectedFiles.isEmpty()) {
+                    selectFile(file)
+                } else {
+                    listener.openFile(file)
+                }
+                // Return true to indicate the long-click was handled and shouldn't propagate
+                true
+            }
+        }
+
+        // Force thumbnail clickable state by also setting listener on the image itself as a fallback
+        holder.thumbnailImage.let { thumbnailImage ->
+            thumbnailImage.isClickable = true
+            thumbnailImage.isFocusable = true
+            thumbnailImage.isLongClickable = true
+            
+            thumbnailImage.setOnClickListener { view ->
+                Log.d("FileListAdapter", "Thumbnail image directly clicked for file: ${file.name}")
+                if (selectedFiles.isEmpty()) {
+                    listener.openFile(file)
+                } else {
+                    selectFile(file)
+                }
+            }
+            
+            // Also add a long-click listener directly to the image
+            thumbnailImage.setOnLongClickListener { view ->
+                Log.d("FileListAdapter", "Thumbnail image directly long-clicked for file: ${file.name}")
+                if (selectedFiles.isEmpty()) {
+                    selectFile(file)
+                } else {
+                    listener.openFile(file)
+                }
+                // Return true to consume the event
+                true
             }
         }
 
@@ -357,10 +441,22 @@ class FileListAdapter(
 
         val iconRes = file.mimeType.iconRes
         holder.iconImage?.apply {
-            isVisible = true
+            isVisible = viewType != FileViewType.GRID || isDirectory
             setImageResource(iconRes)
         }
+        holder.iconImage?.isEnabled = isEnabled
         holder.directoryThumbnailImage?.isVisible = isDirectory
+        
+        // Configure thumbnail layout aspect ratio based on mode
+        holder.thumbnailLayout?.let { thumbnailLayout ->
+            val ratio = when {
+                isSquareThumbnailsInGrid -> 1.0f
+                isPortraitModeInGrid -> 0.5625f  // 9:16 ratio (portrait mode)
+                else -> getAspectRatioForFile(file)
+            }
+            thumbnailLayout.ratio = ratio
+        }
+
         holder.thumbnailOutlineView?.isVisible = !isDirectory
         val supportsThumbnail = file.supportsThumbnail
         val shouldLoadThumbnailIcon = supportsThumbnail && holder.thumbnailIconImage != null &&
@@ -377,20 +473,33 @@ class FileListAdapter(
         holder.thumbnailImage.apply {
             dispose()
             setImageDrawable(null)
+            
+            // Set the appropriate scaleType based on mode
+            if (viewType == FileViewType.GRID && isPortraitModeInGrid) {
+                // In portrait mode, use CENTER_CROP to ensure it fills the entire space
+                scaleType = ImageView.ScaleType.CENTER_CROP
+            } else if (viewType == FileViewType.GRID && isSquareThumbnailsInGrid) {
+                // For square thumbnails, also use CENTER_CROP
+                scaleType = ImageView.ScaleType.CENTER_CROP
+            } else {
+                // For regular thumbnails, use FIT_CENTER which preserves aspect ratio
+                scaleType = ImageView.ScaleType.CENTER_CROP
+            }
+            
             val shouldLoadThumbnail = supportsThumbnail && !shouldLoadThumbnailIcon
             isVisible = shouldLoadThumbnail
             if (shouldLoadThumbnail) {
                 // Launch coroutine for persistent thumbnail handling
                 adapterScope.launch {
                     var thumbnailLoaded = false
-                    // 1. Check database for persisted thumbnail path
+                    // 1. Check database for persisted thumbnail path - this is fast
                     val persistedPath = metadataRepository.getPersistedThumbnailPath(path)
                     if (persistedPath != null) {
                         val persistedFile = File(persistedPath)
                         if (persistedFile.exists()) {
                             // Load from persisted file
                             load(persistedFile) {
-                    listener { _, _ ->
+                                listener { _, _ ->
                                     // Hide icon if thumbnail loads
                                     val iconImage = holder.thumbnailIconImage ?: holder.iconImage
                                     iconImage?.isVisible = false
@@ -404,28 +513,25 @@ class FileListAdapter(
                         }
                     }
                     
-                    // 2. If not loaded from persisted file, generate and save
+                    // 2. If not loaded from persisted file and it's a video, delay generation
+                    // until user stops scrolling to avoid lag
                     if (!thumbnailLoaded) {
-                        load(path to attributes) { // Use Coil to generate thumbnail
-                            allowHardware(false) // Need software bitmap to save
-                            listener(
-                                onSuccess = { _, result ->
-                                    // Hide icon
-                        val iconImage = holder.thumbnailIconImage ?: holder.iconImage
-                        iconImage?.isVisible = false
-                                    
-                                    // Save the generated bitmap persistently
-                                    val bitmap = (result.drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap
-                                    if (bitmap != null) {
-                                        adapterScope.launch(Dispatchers.IO) { // Save in background
-                                            saveThumbnailToFile(path, bitmap)
-                                        }
-                                    }
-                                },
-                                onError = { _, _ ->
-                                    // Optional: Handle thumbnail generation error
+                        // For images, load immediately
+                        if (!file.mimeType.isVideo) {
+                            generateAndSaveThumbnail(path, attributes, this@apply)
+                        } else {
+                            // For videos, show a placeholder icon and load thumbnail after a delay
+                            // to avoid frame drops during scrolling
+                            val iconImage = holder.thumbnailIconImage ?: holder.iconImage
+                            iconImage?.isVisible = true
+                            
+                            // Load with a delay to avoid jank during scrolling
+                            withContext(Dispatchers.Main) {
+                                delay(500) // Short delay to let scrolling finish
+                                if (isActive && holder.bindingAdapterPosition != RecyclerView.NO_POSITION) {
+                                    generateAndSaveThumbnail(path, attributes, this@apply)
                                 }
-                            )
+                            }
                         }
                     }
                 }
@@ -468,43 +574,54 @@ class FileListAdapter(
             attributes.lastModifiedTime().toInstant()
         }
         val formattedDate = dateTime.formatShort(holder.descriptionText?.context ?: holder.nameText.context)
-        val size = attributes.fileSize.formatHumanReadable(
-            holder.descriptionText?.context ?: holder.nameText.context
-        )
-        val descriptionSeparator = holder.descriptionText?.context?.getString(
-            R.string.file_item_description_separator
-        ) ?: holder.nameText.context.getString(R.string.file_item_description_separator)
+        
+        // Show file count for folders instead of size
+        val context = holder.descriptionText?.context ?: holder.nameText.context
+        val size = if (file.attributes.isDirectory) {
+            // For directories, display item count instead of size
+            context.getQuantityString(R.plurals.file_list_item_count_format, 0, 0)
+        } else {
+            // For files, use the regular file size format
+            attributes.fileSize.formatHumanReadable(context)
+        }
+        
+        val descriptionSeparator = context.getString(R.string.file_item_description_separator)
         
         // Set the initial description
         val descriptionParts = mutableListOf(formattedDate, size)
         holder.descriptionText?.text = descriptionParts.joinToString(descriptionSeparator)
         
-        // If it's a video file, try to load and display the duration
-        if (file.mimeType.isVideo && file.path.isMediaMetadataRetrieverCompatible) {
+        // For folders, start a coroutine to count files and update the display
+        if (file.attributes.isDirectory) {
             val viewPosition = holder.bindingAdapterPosition
             if (viewPosition != RecyclerView.NO_POSITION) {
-                // Launch coroutine to get duration from repository
                 adapterScope.launch {
-                    val durationMillis = try {
-                        metadataRepository.getVideoDuration(file.path)
-                    } catch (e: Exception) {
-                        Log.e("FileListAdapter", "Error getting duration for ${file.path}", e)
-                        null
-                    }
-
-                    // Update UI only if the view hasn't been recycled and duration is valid
-                    if (holder.bindingAdapterPosition == viewPosition && durationMillis != null) {
-                        val context = holder.descriptionText?.context ?: holder.nameText.context
-                        val formattedDuration = Duration.ofMillis(durationMillis).format()
+                    try {
+                        // Count files in the directory without following links
+                        var fileCount = 0
+                        withContext(Dispatchers.IO) {
+                            val directory = file.path
+                            try {
+                                java8.nio.file.Files.newDirectoryStream(directory).use { directoryStream ->
+                                    for (path in directoryStream) {
+                                        fileCount++
+                                        // Check if we should cancel counting (e.g., view recycled)
+                                        if (!isActive) break
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                Log.e("FileListAdapter", "Error counting files in ${file.path}", e)
+                            }
+                        }
                         
-                        // Use the same date that was already formatted (modified or creation based on settings)
-                        // Rebuild description parts including the duration and date
-                        val updatedParts = listOfNotNull(
-                            formattedDate, // Use the same formatted date from above
-                            size, 
-                            formattedDuration.takeIf { it.isNotEmpty() } // Only add if not empty
-                        )
+                        // Update UI only if view hasn't been recycled
+                        if (holder.bindingAdapterPosition == viewPosition) {
+                            val updatedSize = context.getQuantityString(R.plurals.file_list_item_count_format, fileCount, fileCount)
+                            val updatedParts = listOfNotNull(formattedDate, updatedSize)
                         holder.descriptionText?.text = updatedParts.joinToString(descriptionSeparator)
+                        }
+                    } catch (e: Exception) {
+                        Log.e("FileListAdapter", "Error getting file count", e)
                     }
                 }
             }
@@ -530,8 +647,8 @@ class FileListAdapter(
         updateTagsView(holder, file)
         
         // Set up popup menu click listener
-        holder.popupMenu.setOnMenuItemClickListener {
-            when (it.itemId) {
+        holder.popupMenu.setOnMenuItemClickListener { menuItem ->
+            when (menuItem.itemId) {
                 R.id.action_open_with -> {
                     listener.openFileWith(file)
                     true
@@ -580,12 +697,61 @@ class FileListAdapter(
                     listener.showPropertiesDialog(file)
                     true
                 }
+                R.id.action_manage_thumbnail -> {
+                    listener.manageVideoThumbnail(file)
+                    true
+                }
                 else -> false
             }
         }
 
         // Apply the current scale
         applyItemScale(holder)
+
+        // Make sure all view elements in the thumbnail hierarchy are properly set up for long-clicks
+        holder.iconLayout?.isLongClickable = false
+        
+        holder.iconImage?.isLongClickable = false
+        
+        holder.thumbnailLayout?.isLongClickable = false
+        
+        // This prevents other elements from intercepting the long-click
+        // and ensures the click area's long-click handler is called
+        holder.badgeImage?.isLongClickable = false
+        holder.appIconBadgeImage?.isLongClickable = false
+
+        // Only show "Manage Video Thumbnail" for video files
+        menu.findItem(R.id.action_manage_thumbnail).isVisible = file.mimeType.isVideo
+
+        // If it's a video file, try to load and display the duration
+        if (file.mimeType.isVideo && file.path.isMediaMetadataRetrieverCompatible) {
+            val viewPosition = holder.bindingAdapterPosition
+            if (viewPosition != RecyclerView.NO_POSITION) {
+                // Launch coroutine to get duration from repository
+                adapterScope.launch {
+                    val durationMillis = try {
+                        metadataRepository.getVideoDuration(file.path)
+                    } catch (e: Exception) {
+                        Log.e("FileListAdapter", "Error getting duration for ${file.path}", e)
+                        null
+                    }
+
+                    // Update UI only if the view hasn't been recycled and duration is valid
+                    if (holder.bindingAdapterPosition == viewPosition && durationMillis != null) {
+                        val formattedDuration = Duration.ofMillis(durationMillis).format()
+                        
+                        // Use the same date that was already formatted (modified or creation based on settings)
+                        // Rebuild description parts including the duration and date
+                        val updatedParts = listOfNotNull(
+                            formattedDate, // Use the same formatted date from above
+                            size, 
+                            formattedDuration.takeIf { it.isNotEmpty() } // Only add if not empty
+                        )
+                        holder.descriptionText?.text = updatedParts.joinToString(descriptionSeparator)
+                    }
+                }
+            }
+        }
     }
 
     private fun updateTagsView(holder: ViewHolder, file: FileItem) {
@@ -755,28 +921,50 @@ class FileListAdapter(
     }
 
     private fun getAspectRatioForFile(file: FileItem): Float {
-        // For videos, try to use their stored aspect ratio from metadata cache
-        if (file.mimeType.isVideo && file.path.isMediaMetadataRetrieverCompatible) {
-            // Use a cached value if available - this operation is not suspending so safe to use here
-            // Try to get from DB first, which is very fast
-            try {
-                // Use direct return from runBlocking instead of assigning to a variable
-                val ratio = runBlocking {
-                    metadataRepository.getVideoAspectRatio(file.path)
-                }
-                
-                // If we got a valid ratio from the repository, use it
-                if (ratio != null && ratio > 0f) {
-                    return ratio
-                }
-            } catch (e: Exception) {
-                // Ignore errors and use default ratio
-                Log.d("FileListAdapter", "Error getting aspect ratio, using default", e)
-            }
+        // Use predefined aspect ratios instead of calculating dimensions
+        return when {
+            isSquareThumbnailsInGrid -> 1.0f  // Square
+            isPortraitModeInGrid -> 0.5625f  // 9:16 portrait mode (0.5625 = 9/16)
+            else -> 1.778f  // 16:9 landscape (default)
         }
-        
-        // Default to 16:9 (1.78) for other files
-        return 1.78f
+    }
+    
+    private fun generateAndSaveThumbnail(path: Path, attributes: java8.nio.file.attribute.BasicFileAttributes, imageView: ImageView) {
+        imageView.load(path to attributes) { 
+            allowHardware(false) // Need software bitmap to save
+            
+            // Configure scaling based on view mode
+            if (viewType == FileViewType.GRID) {
+                if (isPortraitModeInGrid) {
+                    // In portrait mode, use scale type only
+                    scale(Scale.FILL) // This ensures the image fills the entire target
+                } else if (isSquareThumbnailsInGrid) {
+                    // For square thumbnails, also use scale type only
+                    scale(Scale.FILL)
+                }
+            }
+            
+            listener(
+                onSuccess = { _, result ->
+                    // Hide icon when thumbnail loads
+                    val parent = imageView.parent.parent as? ViewGroup
+                    val iconImage = parent?.findViewById<ImageView?>(R.id.thumbnailIconImage)
+                        ?: parent?.findViewById<ImageView?>(R.id.iconImage)
+                    iconImage?.isVisible = false
+                    
+                    // Save the generated bitmap persistently
+                    val bitmap = (result.drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap
+                    if (bitmap != null) {
+                        adapterScope.launch(Dispatchers.IO) { // Save in background
+                            saveThumbnailToFile(path, bitmap)
+                        }
+                    }
+                },
+                onError = { _, _ ->
+                    // On error, keep the icon visible
+                }
+            )
+        }
     }
 
     // Cancel coroutine scope when adapter is detached
@@ -790,7 +978,8 @@ class FileListAdapter(
         val thumbnailFile = getThumbnailFileForPath(originalPath)
         try {
             FileOutputStream(thumbnailFile).use { fos ->
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 85, fos) // Save as JPEG
+                // Increase quality from 85 to 95 for higher quality thumbnails
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 95, fos)
             }
             Log.d("FileListAdapter", "Saved thumbnail to ${thumbnailFile.path}")
             // Update the database with the path to the saved thumbnail
@@ -799,8 +988,6 @@ class FileListAdapter(
             Log.e("FileListAdapter", "Failed to save thumbnail for $originalPath", e)
             // Clean up partial file if save failed
             thumbnailFile.delete()
-            // Optionally clear the thumbnail path in DB if save fails
-            // metadataRepository.updateThumbnailPath(originalPath, null)
         }
     }
 
@@ -818,6 +1005,7 @@ class FileListAdapter(
         private val PAYLOAD_STATE_CHANGED = Any()
         private val PAYLOAD_TAGS_CHANGED = Any()
         private val PAYLOAD_SQUARE_THUMBNAILS_CHANGED = Any()
+        private val PAYLOAD_PORTRAIT_MODE_CHANGED = Any()
         private val PAYLOAD_SCALE_CHANGED = Any()
 
         private val CALLBACK = object : DiffUtil.ItemCallback<FileItem>() {
@@ -912,5 +1100,6 @@ class FileListAdapter(
         fun createShortcut(file: FileItem)
         fun showPropertiesDialog(file: FileItem)
         fun onTagClick(tag: FileTag)
+        fun manageVideoThumbnail(file: FileItem)
     }
 }

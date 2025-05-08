@@ -75,6 +75,12 @@ object Settings {
             R.bool.pref_default_value_file_list_use_square_thumbnails
         )
 
+    val FILE_LIST_USE_PORTRAIT_MODE_IN_GRID: SettingLiveData<Boolean> =
+        BooleanSettingLiveData(
+            R.string.pref_key_file_list_use_portrait_mode_in_grid,
+            R.bool.pref_default_value_file_list_use_portrait_mode_in_grid
+        )
+
     val FILE_LIST_SQUARE_THUMBNAILS_IN_GRID: SettingLiveData<Boolean> =
         BooleanSettingLiveData(
             R.string.pref_key_file_list_square_thumbnails_in_grid,

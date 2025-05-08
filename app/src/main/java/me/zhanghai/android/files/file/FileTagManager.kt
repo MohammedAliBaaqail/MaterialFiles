@@ -246,6 +246,12 @@ object FileTagManager {
                 jsonObject.put(key, ratingsJson.get(key))
             }
             
+            // Include folder item counts data 
+            val folderItemCountsJson = FolderItemCountManager.exportItemCountsToJson()
+            for (key in folderItemCountsJson.keys()) {
+                jsonObject.put(key, folderItemCountsJson.get(key))
+            }
+            
             // Write to file
             file.writeText(jsonObject.toString(2)) // Use indented format
             true
@@ -328,6 +334,9 @@ object FileTagManager {
             
             // Import ratings data
             FileRatingManager.importRatingsFromJson(jsonObject)
+            
+            // Import folder item counts from the same file
+            FolderItemCountManager.importItemCountsFromJson(jsonObject)
             
             true
         } catch (e: Exception) {

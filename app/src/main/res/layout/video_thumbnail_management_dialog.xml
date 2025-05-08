@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/video_thumbnail_management_title"
+        android:textAppearance="?textAppearanceHeadline6"
+        android:layout_marginBottom="16dp" />
+
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/progress_indicator"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:indeterminate="true"
+        android:visibility="gone" />
+
+    <FrameLayout
+        android:id="@+id/preview_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="2dp"
+            android:layout_marginBottom="16dp">
+
+            <!-- Fixed size container to maintain dimensions -->
+            <FrameLayout
+                android:id="@+id/media_container"
+                android:layout_width="match_parent"
+                android:layout_height="250dp"
+                android:background="@android:color/black">
+
+                <!-- This ViewSwitcher will switch between image preview and video player -->
+                <ViewSwitcher
+                    android:id="@+id/media_view_switcher"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <!-- Image view for thumbnail preview -->
+                    <ImageView
+                        android:id="@+id/thumbnail_image"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="fitCenter"
+                        android:adjustViewBounds="true"
+                        android:contentDescription="@string/video_thumbnail_management_preview" />
+
+                    <!-- Wrap player in a fixed FrameLayout to prevent dimension changes -->
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:clipChildren="true"
+                        android:clipToPadding="true"
+                        android:descendantFocusability="afterDescendants">
+
+                        <com.google.android.exoplayer2.ui.PlayerView
+                            android:id="@+id/player_view"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_gravity="center"
+                            app:use_controller="true"
+                            app:show_buffering="when_playing"
+                            app:resize_mode="fit"
+                            app:controller_layout_id="@layout/custom_minimal_player_controls"
+                            app:show_timeout="3000"
+                            app:surface_type="texture_view"
+                            app:keep_content_on_player_reset="true" />
+                    </FrameLayout>
+                </ViewSwitcher>
+
+                <!-- Crop overlay for 16:9 ratio (initially invisible) -->
+                <View
+                    android:id="@+id/crop_overlay"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:visibility="gone"
+                    android:elevation="5dp" />
+            </FrameLayout>
+        </androidx.cardview.widget.CardView>
+    </FrameLayout>
+
+    <!-- 16:9 Aspect Ratio option -->
+    <com.google.android.material.switchmaterial.SwitchMaterial
+        android:id="@+id/aspect_ratio_switch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/video_thumbnail_management_use_16_9_ratio"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/video_thumbnail_management_video_position"
+        android:textAppearance="?textAppearanceBody1"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="16dp">
+
+        <SeekBar
+            android:id="@+id/time_seek_bar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:max="100" />
+
+        <TextView
+            android:id="@+id/current_time_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="60dp"
+            android:gravity="end"
+            android:layout_marginStart="8dp"
+            android:text="00:00"
+            android:textAppearance="?textAppearanceBody2" />
+    </LinearLayout>
+
+    <com.google.android.material.button.MaterialButtonToggleGroup
+        android:id="@+id/player_mode_toggle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:singleSelection="true"
+        app:selectionRequired="true"
+        android:layout_marginBottom="16dp">
+        
+        <Button
+            android:id="@+id/mode_image"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/video_thumbnail_management_image_mode"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+            
+        <Button
+            android:id="@+id/mode_video"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" 
+            android:text="@string/video_thumbnail_management_video_mode"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+    </com.google.android.material.button.MaterialButtonToggleGroup>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="16dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/regenerate_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:text="@string/video_thumbnail_management_regenerate"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/use_current_time_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/video_thumbnail_management_use_current_position"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+    </LinearLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/choose_custom_image_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/video_thumbnail_management_choose_custom_image"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_marginBottom="16dp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/save_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/save" />
+
+</LinearLayout> 

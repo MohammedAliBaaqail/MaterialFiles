@@ -74,8 +74,9 @@ class PathAttributesFetcher(
         val (path, attributes) = data
         val (width, height) = options.size
         // @see android.provider.MediaStore.ThumbnailConstants.MINI_SIZE
-        val isThumbnail = width is Dimension.Pixels && width.px <= 512
-            && height is Dimension.Pixels && height.px <= 384
+        // Increased from 512x384 to 1024x768 for higher quality thumbnails
+        val isThumbnail = width is Dimension.Pixels && width.px <= 1024
+            && height is Dimension.Pixels && height.px <= 768
         if (isThumbnail) {
             width as Dimension.Pixels
             height as Dimension.Pixels

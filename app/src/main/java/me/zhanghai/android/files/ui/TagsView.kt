@@ -1,6 +1,7 @@
 package me.zhanghai.android.files.ui
 
 import android.content.Context
+import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
@@ -8,8 +9,10 @@ import android.widget.HorizontalScrollView
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import me.zhanghai.android.files.R
 import me.zhanghai.android.files.file.FileTag
+import me.zhanghai.android.files.util.ColorUtils
 
 /**
  * A view that displays file tags in a horizontal scrollable container.
@@ -58,8 +61,27 @@ class TagsView @JvmOverloads constructor(
                 val tagView = LayoutInflater.from(context)
                     .inflate(R.layout.filter_tag_item, container, false)
                 
-                tagView.findViewById<TextView>(R.id.tagText).text = tag.name
-                tagView.setBackgroundColor(tag.color)
+                val tagText = tagView.findViewById<TextView>(R.id.tagText)
+                tagText.text = tag.name
+                
+                // Set tag background color
+                val backgroundColor = tag.color
+                
+                // Get contrasting text color with 40% opacity (102/255)
+                val textColor = ColorUtils.getContrastingTextColor(backgroundColor, 180) // ~85% opacity
+                tagText.setTextColor(textColor)
+                
+                // Create a drawable with border that matches text color
+                val borderColor = ColorUtils.getBorderColorFromText(textColor)
+                
+                // Apply the background with border
+                val backgroundDrawable = ContextCompat.getDrawable(
+                    context, R.drawable.tag_background_with_border
+                )?.mutate() as GradientDrawable
+                
+                backgroundDrawable.setColor(backgroundColor)
+                backgroundDrawable.setStroke(context.resources.getDimensionPixelSize(R.dimen.tag_border_width), borderColor)
+                tagView.background = backgroundDrawable
                 
                 // Set clickable on entire view
                 tagView.isClickable = true
@@ -81,7 +103,25 @@ class TagsView @JvmOverloads constructor(
                     .inflate(R.layout.tag_item, container, false) as TextView
                 
                 tagView.text = tag.name
-                tagView.setBackgroundColor(tag.color)
+                
+                // Set tag background color
+                val backgroundColor = tag.color
+                
+                // Get contrasting text color with ~85% opacity (217/255)
+                val textColor = ColorUtils.getContrastingTextColor(backgroundColor, 180)
+                tagView.setTextColor(textColor)
+                
+                // Create a drawable with border that matches text color
+                val borderColor = ColorUtils.getBorderColorFromText(textColor)
+                
+                // Apply the background with border
+                val backgroundDrawable = ContextCompat.getDrawable(
+                    context, R.drawable.tag_background_with_border
+                )?.mutate() as GradientDrawable
+                
+                backgroundDrawable.setColor(backgroundColor)
+                backgroundDrawable.setStroke(context.resources.getDimensionPixelSize(R.dimen.tag_border_width), borderColor)
+                tagView.background = backgroundDrawable
                 
                 // Make tag clickable
                 tagView.isClickable = true

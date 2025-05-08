@@ -127,6 +127,12 @@ object FileRatingManager {
             }
             
             jsonObject.put(KEY_RATINGS, ratingsArray)
+            
+            // Include folder item counts data
+            val folderItemCountsJson = FolderItemCountManager.exportItemCountsToJson()
+            for (key in folderItemCountsJson.keys()) {
+                jsonObject.put(key, folderItemCountsJson.get(key))
+            }
         }
         
         return jsonObject
@@ -154,6 +160,10 @@ object FileRatingManager {
                     saveRatings()
                     _ratingChangedLiveData.value = Unit
                 }
+                
+                // Import folder item counts from the same file
+                FolderItemCountManager.importItemCountsFromJson(jsonObject)
+                
                 true
             }
         } catch (e: Exception) {

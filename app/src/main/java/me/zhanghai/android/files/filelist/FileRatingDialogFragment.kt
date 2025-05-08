@@ -84,6 +84,10 @@ class FileRatingDialogFragment : AppCompatDialogFragment() {
         if (rating > 0) {
             requireContext().showToast(R.string.rating_set_success)
         }
+        
+        // Notify listener that rating was set
+        val listener = parentFragment as? Listener ?: activity as? Listener
+        listener?.onRatingSet()
     }
 
     companion object {
@@ -94,4 +98,8 @@ class FileRatingDialogFragment : AppCompatDialogFragment() {
 
     @Parcelize
     class Args(val files: List<FileItem>) : ParcelableArgs
+
+    interface Listener {
+        fun onRatingSet()
+    }
 } 

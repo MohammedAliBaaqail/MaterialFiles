@@ -85,6 +85,16 @@
             android:title="@string/settings_tags_backup_title"
             android:summary="@string/settings_tags_backup_summary" />
 
+        <me.zhanghai.android.files.settings.FolderItemCountBackupPreference
+            android:key="folder_item_counts_backup"
+            android:title="@string/settings_folder_counts_backup_title"
+            android:summary="@string/settings_folder_counts_backup_summary" />
+
+        <me.zhanghai.android.files.settings.VideoMetadataBackupPreference
+            android:key="video_thumbnails_backup"
+            android:title="@string/settings_thumbnail_backup_title"
+            android:summary="@string/settings_thumbnail_backup_summary" />
+
         <me.zhanghai.android.files.settings.RootStrategyPreference
             android:key="@string/pref_key_root_strategy"
             android:title="@string/settings_root_strategy_title"
