@@ -882,9 +882,40 @@
     <string name="file_list_action_hide_info_in_grid">Hide file info in grid</string>
     <string name="file_list_action_use_portrait_mode_in_grid">Portrait orientation (9:16)</string>
 
+    <!-- Folder thumbnail management -->
+    <string name="folder_thumbnail_removed">Thumbnail removed</string>
+    <string name="folder_thumbnail_remove_error">Failed to remove thumbnail</string>
+    <string name="folder_thumbnail_load_error">Failed to load thumbnail</string>
+    <string name="folder_thumbnail_load_image_error">Failed to load image</string>
+    <string name="folder_thumbnail_saved">Thumbnail saved</string>
+    <string name="folder_thumbnail_save_error">Failed to save thumbnail</string>
+    <string name="folder_thumbnail_save_error_detailed">Failed to save thumbnail: %1$s</string>
+    
     <!-- Video thumbnail management -->
     <string name="video_thumbnail_management_title">Video Thumbnail</string>
     <string name="video_thumbnail_management_preview">Preview</string>
+    
+    <!-- Missing string resources -->
+    <string name="set_display_interval">Set display interval</string>
+    <string name="interval_seconds">Interval (seconds)</string>
+    <string name="folder_thumbnail_dialog_title">Folder Thumbnail</string>
+    <string name="folder_thumbnail_preview">Preview</string>
+    <string name="choose_image">Choose image</string>
+    <string name="remove_thumbnail">Remove thumbnail</string>
+    <string name="video_thumbnails_title">Video Thumbnails</string>
+    <string name="back">Back</string>
+    <string name="current_thumbnails">Current thumbnails</string>
+    <string name="no_thumbnails">No thumbnails</string>
+    <string name="slideshow_settings">Slideshow settings</string>
+    <string name="enable_slideshow">Enable slideshow</string>
+    <string name="slideshow_interval_hint">Slideshow interval</string>
+    <string name="slideshow_interval_help">Time in seconds between slides</string>
+    <string name="add_thumbnail">Add thumbnail</string>
+    <string name="default_thumbnail">Default thumbnail</string>
+    <string name="more_options">More options</string>
+    <string name="video_thumbnail">Video thumbnail</string>
+    <string name="set_interval">Set interval</string>
+    <string name="set_as_default">Set as default</string>
     <string name="video_thumbnail_management_video_position">Position in video</string>
     <string name="video_thumbnail_management_regenerate">Regenerate</string>
     <string name="video_thumbnail_management_use_current_time">Use current position</string>

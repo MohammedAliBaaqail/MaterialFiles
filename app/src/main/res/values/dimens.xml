@@ -48,6 +48,10 @@
     <dimen name="badge_size_plus_1dp">19dp</dimen>
 
     <dimen name="file_list_toolbar_padding_start">8dp</dimen>
+    
+    <!-- Missing dimension resources -->
+    <dimen name="fab_margin">16dp</dimen>
+    <dimen name="card_margin">8dp</dimen>
     <dimen name="file_list_toolbar_padding_end_no_overflow">14dp</dimen>
     <dimen name="file_list_toolbar_padding_end_with_overflow">10dp</dimen>
 

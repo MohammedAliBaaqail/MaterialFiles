@@ -1,0 +1,5 @@
+[versions]
+room = "2.7.2"
+ksp = "1.9.24-1.0.20"
+
+[libraries] 

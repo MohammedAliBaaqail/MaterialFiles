@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/video_thumbnails_nav"
+    app:startDestination="@id/videoThumbnailsFragment">
+
+    <fragment
+        android:id="@+id/videoThumbnailsFragment"
+        android:name="me.zhanghai.android.files.ui.videothumbnails.VideoThumbnailsFragment"
+        android:label="@string/video_thumbnails_title"
+        tools:layout="@layout/fragment_video_thumbnails">
+        <argument
+            android:name="videoPath"
+            app:argType="string"
+            android:defaultValue=""
+            android:required="false" />
+
+        <action
+            android:id="@+id/action_videoThumbnailsFragment_self"
+            app:destination="@id/videoThumbnailsFragment"
+            app:popUpTo="@id/videoThumbnailsFragment"
+            app:popUpToInclusive="true"
+            app:launchSingleTop="true" />
+    </fragment>
+
+</navigation>

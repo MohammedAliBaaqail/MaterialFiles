@@ -14,6 +14,7 @@ plugins {
     id 'kotlin-parcelize'
     id 'org.jetbrains.kotlin.plugin.serialization'
     id 'com.google.devtools.ksp'
+    id 'androidx.navigation.safeargs.kotlin'
     //#ifdef NONFREE
     id 'com.google.gms.google-services'
     id 'com.google.firebase.crashlytics'
@@ -262,4 +263,13 @@ dependencies {
     implementation "com.google.android.exoplayer:exoplayer-core:$exoplayer_version"
     implementation "com.google.android.exoplayer:exoplayer-ui:$exoplayer_version"
     implementation "com.google.android.exoplayer:exoplayer:$exoplayer_version"
+    
+    // Navigation Component
+    def nav_version = "2.6.0"  // Match version from root build.gradle
+    implementation "androidx.navigation:navigation-fragment-ktx:$nav_version"
+    implementation "androidx.navigation:navigation-ui-ktx:$nav_version"
+    
+    // Glide for image loading
+    implementation 'com.github.bumptech.glide:glide:4.16.0'
+    ksp 'com.github.bumptech.glide:ksp:4.16.0'
 }
