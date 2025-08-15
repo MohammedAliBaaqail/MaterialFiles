@@ -25,6 +25,8 @@ import androidx.recyclerview.widget.RecyclerView
 import coil.dispose
 import coil.load
 import coil.size.Scale
+import coil.size.ViewSizeResolver
+import coil.size.Precision
 import java8.nio.file.Path
 import java.io.File
 import java.io.FileOutputStream
@@ -510,6 +512,10 @@ class FileListAdapter(
                     Log.d("FileListAdapter", "Attempting to load custom thumbnail: ${customThumbnail.absolutePath}")
                     load(customThumbnail) {
                         crossfade(true)
+                        // Load at view size with exact precision and FIT scale for smoother animated WebP
+                        size(ViewSizeResolver(this@apply))
+                        precision(Precision.EXACT)
+                        scale(Scale.FIT)
                         listener(
                             onSuccess = { _, _ ->
                                 Log.d("FileListAdapter", "Custom thumbnail loaded successfully for ${customThumbnail.absolutePath}")
@@ -561,6 +567,10 @@ class FileListAdapter(
                         if (persistedFile.exists()) {
                             // Load from persisted file
                             load(persistedFile) {
+                                // Load at view size with exact precision and FIT scale for smoother animated WebP
+                                size(ViewSizeResolver(this@apply))
+                                precision(Precision.EXACT)
+                                scale(Scale.FIT)
                                 listener { _, _ ->
                                     // Hide icon if thumbnail loads
                                     val iconImage = holder.thumbnailIconImage ?: holder.iconImage
@@ -1001,14 +1011,18 @@ class FileListAdapter(
     private fun generateAndSaveThumbnail(path: Path, attributes: java8.nio.file.attribute.BasicFileAttributes, imageView: ImageView) {
         imageView.load(path to attributes) { 
             allowHardware(false) // Need software bitmap to save
+            // Decode at the target view size with exact precision for smoother scaling
+            size(ViewSizeResolver(imageView))
+            precision(Precision.EXACT)
+            scale(Scale.FIT)
             
-            // Configure scaling based on view mode
+            // Configure scaling overrides based on grid mode
             if (viewType == FileViewType.GRID) {
                 if (isPortraitModeInGrid) {
-                    // In portrait mode, use scale type only
-                    scale(Scale.FILL) // This ensures the image fills the entire target
+                    // In portrait mode, fill to match the aspect ratio box
+                    scale(Scale.FILL)
                 } else if (isSquareThumbnailsInGrid) {
-                    // For square thumbnails, also use scale type only
+                    // For square thumbnails, also fill
                     scale(Scale.FILL)
                 }
             }

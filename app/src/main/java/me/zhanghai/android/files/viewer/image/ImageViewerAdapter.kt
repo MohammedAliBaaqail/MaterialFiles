@@ -5,8 +5,10 @@
 
 package me.zhanghai.android.files.viewer.image
 
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.view.View
+import android.widget.ImageView
 import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.lifecycle.LifecycleOwner
@@ -15,6 +17,9 @@ import androidx.recyclerview.widget.RecyclerView
 import coil.dispose
 import coil.load
 import coil.size.Size
+import coil.size.ViewSizeResolver
+import coil.size.Precision
+import coil.size.Scale
 import com.davemorrissey.labs.subscaleview.ImageSource
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView.DefaultOnImageEventListener
@@ -102,9 +107,18 @@ class ImageViewerAdapter(
     ) {
         if (!imageInfo.shouldUseLargeImageView) {
             binding.image.apply {
+                // Prefer smooth upscaling by rendering at the target view size instead of ORIGINAL
+                // and use FIT scaling with EXACT precision.
+                scaleType = ImageView.ScaleType.FIT_CENTER
+                adjustViewBounds = true
                 isVisible = true
                 load(path to imageInfo.attributes) {
-                    size(Size.ORIGINAL)
+                    size(ViewSizeResolver(this@apply))
+                    precision(Precision.EXACT)
+                    scale(Scale.FIT)
+                    // Better quality for animated images and scaling
+                    allowHardware(false)
+                    bitmapConfig(Bitmap.Config.ARGB_8888)
                     fadeIn(context.shortAnimTime)
                     listener(
                         onSuccess = { _, _ -> binding.progress.fadeOutUnsafe() },
