@@ -48,6 +48,7 @@ import androidx.core.view.MenuProvider
 import androidx.core.view.isVisible
 import androidx.core.view.updatePaddingRelative
 import androidx.drawerlayout.widget.DrawerLayout
+import me.zhanghai.android.files.filelist.FolderThumbnailManagementDialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.lifecycle.LifecycleOwner
@@ -295,6 +296,18 @@ class FileListFragment : Fragment(),
             //return false
             binding.speedDialView.close()
             true
+        }
+        
+        // Listen for folder thumbnail management results
+        childFragmentManager.setFragmentResultListener(
+            FolderThumbnailManagementDialogFragment.REQUEST_KEY,
+            this
+        ) { _, bundle ->
+            val path = bundle.getString(FolderThumbnailManagementDialogFragment.KEY_PATH)
+            if (path != null) {
+                // Refresh the file list to show the updated thumbnail
+                updateFileList()
+            }
         }
 
         val viewLifecycleOwner = viewLifecycleOwner
@@ -1475,6 +1488,10 @@ class FileListFragment : Fragment(),
 
     override fun manageVideoThumbnail(file: FileItem) {
         VideoThumbnailManagementDialogFragment.show(file.path, this)
+    }
+
+    override fun manageFolderThumbnail(file: FileItem) {
+        FolderThumbnailManagementDialogFragment.show(file.path, this)
     }
 
     private fun pickFile(file: FileItem, pickOptions: PickOptions) {

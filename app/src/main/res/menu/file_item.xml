@@ -56,6 +56,10 @@
         android:title="@string/file_item_action_manage_thumbnail" />
 
     <item
+        android:id="@+id/action_manage_folder_thumbnail"
+        android:title="@string/file_item_action_manage_thumbnail" />
+
+    <item
         android:id="@+id/action_properties"
         android:title="@string/file_item_action_properties" />
 </menu>

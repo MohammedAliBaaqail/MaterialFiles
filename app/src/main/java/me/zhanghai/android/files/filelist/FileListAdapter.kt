@@ -28,6 +28,7 @@ import coil.size.Scale
 import java8.nio.file.Path
 import java.io.File
 import java.io.FileOutputStream
+import me.zhanghai.android.files.filelist.FolderThumbnailManager
 import java.security.MessageDigest
 import java.time.Duration
 import java.util.Locale
@@ -348,6 +349,7 @@ class FileListAdapter(
         if (payloads.isNotEmpty()) {
             return
         }
+
         
         holder.itemLayout.apply {
             setOnClickListener {
@@ -486,8 +488,68 @@ class FileListAdapter(
                 scaleType = ImageView.ScaleType.CENTER_CROP
             }
             
-            val shouldLoadThumbnail = supportsThumbnail && !shouldLoadThumbnailIcon
-            isVisible = shouldLoadThumbnail
+            // Check for custom folder thumbnail first
+            var shouldLoadThumbnail = supportsThumbnail && !shouldLoadThumbnailIcon
+            if (isDirectory) {
+                Log.d("FileListAdapter", "Folder path: ${path}")
+                Log.d("FileListAdapter", "Folder path toString: ${path.toString()}")
+                val context = holder.thumbnailImage.context
+                val customThumbnail = FolderThumbnailManager.getFolderThumbnail(context, File(path.toString()))
+                Log.d("FileListAdapter", "Checking for custom thumbnail for folder: ${path} - found: ${customThumbnail != null}")
+                if (customThumbnail != null) {
+                    Log.d("FileListAdapter", "Loading custom thumbnail: ${customThumbnail.absolutePath}")
+                    Log.d("FileListAdapter", "Custom thumbnail exists: ${customThumbnail.exists()}")
+                    Log.d("FileListAdapter", "Custom thumbnail length: ${customThumbnail.length()}")
+                    
+                    // Check if file is readable
+                    if (!customThumbnail.canRead()) {
+                        Log.e("FileListAdapter", "Custom thumbnail file is not readable")
+                    }
+                    
+                    // Load custom folder thumbnail
+                    Log.d("FileListAdapter", "Attempting to load custom thumbnail: ${customThumbnail.absolutePath}")
+                    load(customThumbnail) {
+                        crossfade(true)
+                        listener(
+                            onSuccess = { _, _ ->
+                                Log.d("FileListAdapter", "Custom thumbnail loaded successfully for ${customThumbnail.absolutePath}")
+                                // Check if the view is still valid
+                                if (holder.thumbnailImage.isAttachedToWindow) {
+                                    // Hide icon if thumbnail loads
+                                    val iconImage = holder.thumbnailIconImage ?: holder.iconImage
+                                    iconImage?.isVisible = false
+                                    // Make sure the thumbnail image is visible
+                                    holder.thumbnailImage.isVisible = true
+                                } else {
+                                    Log.d("FileListAdapter", "ViewHolder recycled before thumbnail load completed for ${customThumbnail.absolutePath}")
+                                }
+                            },
+                            onError = { request, errorResult ->
+                                Log.e("FileListAdapter", "Error loading custom thumbnail for ${customThumbnail.absolutePath}", errorResult.throwable)
+                                Log.e("FileListAdapter", "Error request: $request")
+                                Log.e("FileListAdapter", "Error result: $errorResult")
+                                // Check if the view is still valid
+                                if (holder.thumbnailImage.isAttachedToWindow) {
+                                    // Try to show the default folder icon if custom thumbnail fails
+                                    val iconImage = holder.thumbnailIconImage ?: holder.iconImage
+                                    iconImage?.isVisible = true
+                                    iconImage?.setImageResource(R.drawable.ic_folder_white_24dp)
+                                } else {
+                                    Log.d("FileListAdapter", "ViewHolder recycled before thumbnail load error for ${customThumbnail.absolutePath}")
+                                }
+                            }
+                        )
+                    }
+                    shouldLoadThumbnail = false
+                    // For custom thumbnails, we still want the thumbnail image to be visible
+                    // but we don't want to load a thumbnail from the regular thumbnail handling code
+                    isVisible = true
+                }
+            }
+            
+            if (isVisible != (shouldLoadThumbnail || isDirectory)) {
+                isVisible = shouldLoadThumbnail
+            }
             if (shouldLoadThumbnail) {
                 // Launch coroutine for persistent thumbnail handling
                 adapterScope.launch {
@@ -701,6 +763,10 @@ class FileListAdapter(
                     listener.manageVideoThumbnail(file)
                     true
                 }
+                R.id.action_manage_folder_thumbnail -> {
+                    listener.manageFolderThumbnail(file)
+                    true
+                }
                 else -> false
             }
         }
@@ -722,6 +788,9 @@ class FileListAdapter(
 
         // Only show "Manage Video Thumbnail" for video files
         menu.findItem(R.id.action_manage_thumbnail).isVisible = file.mimeType.isVideo
+        
+        // Only show "Manage Folder Thumbnail" for directories
+        menu.findItem(R.id.action_manage_folder_thumbnail).isVisible = file.attributes.isDirectory
 
         // If it's a video file, try to load and display the duration
         if (file.mimeType.isVideo && file.path.isMediaMetadataRetrieverCompatible) {
@@ -1101,5 +1170,6 @@ class FileListAdapter(
         fun showPropertiesDialog(file: FileItem)
         fun onTagClick(tag: FileTag)
         fun manageVideoThumbnail(file: FileItem)
+        fun manageFolderThumbnail(file: FileItem)
     }
 }

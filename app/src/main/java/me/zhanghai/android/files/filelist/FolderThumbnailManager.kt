@@ -13,6 +13,10 @@ object FolderThumbnailManager {
             .joinToString("") { "%02x".format(it) }
         val thumbnailDir = File(context.filesDir, THUMBNAIL_DIR)
         val thumbnailFile = File(thumbnailDir, "$hash.jpg")
+        android.util.Log.d("FolderThumbnailManager", "Looking for thumbnail for folder: ${folderPath.absolutePath}")
+        android.util.Log.d("FolderThumbnailManager", "Thumbnail dir: ${thumbnailDir.absolutePath}")
+        android.util.Log.d("FolderThumbnailManager", "Thumbnail path: ${thumbnailFile.absolutePath}")
+        android.util.Log.d("FolderThumbnailManager", "Thumbnail exists: ${thumbnailFile.exists()}")
         return if (thumbnailFile.exists()) thumbnailFile else null
     }
 }
