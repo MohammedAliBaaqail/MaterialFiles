@@ -63,8 +63,11 @@ object FileTagManager {
         tags.removeAll { it.id == tagId }
         
         // Remove this tag from all files
-        fileTagsMap.forEach { (_, tagIds) ->
-            tagIds.remove(tagId)
+        val affectedPaths = mutableListOf<Path>()
+        fileTagsMap.forEach { (pathStr, tagIds) ->
+            if (tagIds.remove(tagId)) {
+                affectedPaths.add(java8.nio.file.Paths.get(pathStr))
+            }
         }
         
         // Remove this tag from all order maps
@@ -75,6 +78,8 @@ object FileTagManager {
         saveTags()
         saveFileTags()
         saveTagOrders()
+        // Invalidate caches for affected files
+        FileTagCache.invalidate(affectedPaths)
     }
     
     fun getTagsForFile(path: Path): List<FileTag> {
@@ -102,6 +107,7 @@ object FileTagManager {
             }
             saveFileTags()
             saveTagOrders()
+            FileTagCache.invalidate(path)
         }
     }
     
@@ -118,6 +124,7 @@ object FileTagManager {
             }
             saveFileTags()
             saveTagOrders()
+            FileTagCache.invalidate(path)
         }
     }
 
@@ -137,6 +144,7 @@ object FileTagManager {
         }
         saveFileTags()
         saveTagOrders()
+        FileTagCache.invalidate(paths)
     }
 
     /**
@@ -157,6 +165,7 @@ object FileTagManager {
         }
         saveFileTags()
         saveTagOrders()
+        FileTagCache.invalidate(paths)
     }
     
     fun setTagsForFile(tagIds: Set<String>, path: Path) {
@@ -184,6 +193,7 @@ object FileTagManager {
         }
         saveFileTags()
         saveTagOrders()
+        FileTagCache.invalidate(path)
     }
     
     fun hasTag(path: Path, tagId: String): Boolean {
@@ -227,6 +237,8 @@ object FileTagManager {
             
             saveFileTags()
             saveTagOrders()
+            FileTagCache.invalidate(oldPath)
+            FileTagCache.invalidate(newPath)
         }
     }
     

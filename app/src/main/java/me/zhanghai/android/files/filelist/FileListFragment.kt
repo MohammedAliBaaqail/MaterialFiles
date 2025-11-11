@@ -799,6 +799,13 @@ class FileListFragment : Fragment(),
     }
 
     private fun getSubtitle(files: List<FileItem>): String {
+        // Prefer cached total item count for current folder if available, to avoid fluctuation
+        me.zhanghai.android.files.file.FolderItemCountManager
+            .getItemCountIfPresent(viewModel.currentPath)
+            ?.let { total ->
+                return getQuantityString(R.plurals.file_list_item_count_format, total, total)
+            }
+
         val directoryCount = files.count { it.attributes.isDirectory }
         val fileCount = files.size - directoryCount
         val directoryCountText = if (directoryCount > 0) {

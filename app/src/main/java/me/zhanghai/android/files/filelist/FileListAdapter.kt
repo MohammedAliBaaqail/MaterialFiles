@@ -849,12 +849,26 @@ class FileListAdapter(
     }
 
     private fun updateTagsView(holder: ViewHolder, file: FileItem) {
-        // Avoid heavy work on UI: fetch tags asynchronously and update if still bound
+        // Use in-memory tag cache first for instant UI, then refresh in background if needed
+        val cached = me.zhanghai.android.files.file.FileTagCache.get(file.path)
+        if (cached != null) {
+            holder.tagsView?.apply {
+                if (cached.isNotEmpty()) {
+                    visibility = View.VISIBLE
+                    setTags(cached)
+                    setOnTagClickListener { tag -> listener.onTagClick(tag) }
+                } else {
+                    visibility = View.GONE
+                }
+            }
+            return
+        }
         holder.tagsView?.visibility = View.GONE
         val viewPosition = holder.bindingAdapterPosition
         if (viewPosition == RecyclerView.NO_POSITION) return
         adapterScope.launch(kotlinx.coroutines.Dispatchers.Default) {
             val tags = FileTagManager.getTagsForFile(file.path)
+            me.zhanghai.android.files.file.FileTagCache.put(file.path, tags)
             withContext(kotlinx.coroutines.Dispatchers.Main) {
                 if (holder.bindingAdapterPosition == viewPosition) {
                     holder.tagsView?.apply {

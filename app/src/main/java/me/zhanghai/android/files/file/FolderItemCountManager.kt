@@ -75,6 +75,16 @@ object FolderItemCountManager {
             return itemCount.count
         }
     }
+
+    /**
+     * Returns the cached item count if present, without staleness checking.
+     * Useful for fast UI display where exact freshness is not critical.
+     */
+    fun getItemCountIfPresent(path: Path): Int? {
+        lock.read {
+            return itemCountMap[path.toString()]?.count
+        }
+    }
     
     /**
      * Updates the item count for a folder
