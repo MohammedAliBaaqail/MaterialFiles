@@ -52,6 +52,7 @@ import me.zhanghai.android.files.filelist.FolderThumbnailManagementDialogFragmen
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -149,6 +150,10 @@ import java.text.CollationKey
 import kotlin.math.roundToInt
 import kotlin.math.max
 import java.io.IOException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class FileListFragment : Fragment(),
     BreadcrumbLayout.Listener,
@@ -225,6 +230,7 @@ class FileListFragment : Fragment(),
 
     private var currentTagFilter: Set<FileTag> = emptySet()
     private var isMatchAllTags: Boolean = false
+    private var filterJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -682,6 +688,10 @@ class FileListFragment : Fragment(),
                 viewModel.isPortraitModeInGrid = !menuBinding.usePortraitModeInGridItem.isChecked
                 true
             }
+            R.id.action_regenerate_thumbnails -> {
+                regenerateAllThumbnailsInCurrentFolder()
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -706,6 +716,27 @@ class FileListFragment : Fragment(),
             }
         }
         return false
+    }
+
+    private fun regenerateAllThumbnailsInCurrentFolder() {
+        val files = viewModel.fileListStateful.value ?: return
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val repo = me.zhanghai.android.files.provider.common.VideoMetadataRepository(requireContext())
+                for (file in files) {
+                    if (file.attributes.isDirectory) continue
+                    try {
+                        repo.updateThumbnailPath(file.path, null)
+                    } catch (_: Exception) {
+                    }
+                }
+            } finally {
+                withContext(Dispatchers.Main) {
+                    adapter.notifyDataSetChanged()
+                    showToast(R.string.refresh)
+                }
+            }
+        }
     }
 
     private fun onPersistentDrawerOpenChanged(open: Boolean) {
@@ -944,14 +975,51 @@ class FileListFragment : Fragment(),
     }
 
     private fun updateFileList() {
-        var files = viewModel.fileListStateful.value ?: return
-        if (!Settings.FILE_LIST_SHOW_HIDDEN_FILES.valueCompat) {
-            files = files.filterNot { it.isHidden }
+        val allFiles = viewModel.fileListStateful.value ?: return
+        val isSearching = viewModel.searchState.isSearching
+        val base = if (Settings.FILE_LIST_SHOW_HIDDEN_FILES.valueCompat) {
+            allFiles
+        } else {
+            allFiles.filterNot { it.isHidden }
         }
-        if (currentTagFilter.isNotEmpty()) {
-            files = files.filter { shouldShowFile(it) }
+        if (currentTagFilter.isEmpty()) {
+            adapter.replaceListAndIsSearching(base, isSearching)
+            return
         }
-        adapter.replaceListAndIsSearching(files, viewModel.searchState.isSearching)
+        // Progressive filtering in background to avoid blocking UI for large folders.
+        // Render an initial chunk once, then replace with the full filtered list once to avoid flicker.
+        filterJob?.cancel()
+        val initialChunkSize = 200
+        filterJob = viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Default) {
+            val initial = ArrayList<FileItem>(initialChunkSize)
+            val rest = ArrayList<FileItem>(base.size)
+            var collected = 0
+            val it = base.iterator()
+            while (it.hasNext() && collected < initialChunkSize) {
+                val f = it.next()
+                if (shouldShowFile(f)) {
+                    initial.add(f)
+                    collected++
+                }
+            }
+            withContext(Dispatchers.Main) {
+                adapter.replaceListAndIsSearching(initial, isSearching)
+                updateFilterTagsHeaderCount()
+            }
+            while (it.hasNext()) {
+                val f = it.next()
+                if (shouldShowFile(f)) {
+                    rest.add(f)
+                }
+            }
+            val full = ArrayList<FileItem>(initial.size + rest.size).apply {
+                addAll(initial); addAll(rest)
+            }
+            withContext(Dispatchers.Main) {
+                adapter.replaceListAndIsSearching(full, isSearching)
+                updateFilterTagsHeaderCount()
+            }
+        }
     }
 
     private fun updateTitle() {
@@ -1868,13 +1936,19 @@ class FileListFragment : Fragment(),
     }
 
     private fun showFileTagFilterDialog() {
-        FileTagFilterDialog.show(this, currentTagFilter, isMatchAllTags)
+        FileTagFilterDialog.show(
+            this,
+            currentTagFilter,
+            isMatchAllTags,
+            viewModel.fileListStateful.value ?: emptyList(),
+            viewModel.currentPath
+        )
     }
 
     override fun onTagFilterChanged(selectedTags: Set<FileTag>, matchAll: Boolean) {
         currentTagFilter = selectedTags
         isMatchAllTags = matchAll
-        viewModel.reload()
+        updateFileList()
         updateFilterTagsView()
     }
 
@@ -1920,7 +1994,9 @@ class FileListFragment : Fragment(),
                         if (isChecked) R.string.file_tag_filter_mode_all 
                         else R.string.file_tag_filter_mode_any
                     )
-                    viewModel.reload()
+                    updateFileList()
+                    // Immediately update header count to reflect new mode
+                    updateFilterTagsHeaderCount()
                 }
             }
         }
@@ -1931,6 +2007,21 @@ class FileListFragment : Fragment(),
         tagsView.setOnTagClickListener { tag ->
             removeTagFromFilter(tag)
         }
+
+        updateFilterTagsHeaderCount()
+    }
+
+    private fun updateFilterTagsHeaderCount() {
+        // Update filtered file count next to selected tags
+        val allFiles = viewModel.fileListStateful.value ?: emptyList()
+        val filteredCount = allFiles.count { shouldShowFile(it) }
+        val countText = resources.getQuantityString(
+            R.plurals.file_list_item_count_format,
+            filteredCount,
+            filteredCount
+        )
+        val countTextView = requireView().findViewById<TextView>(R.id.filterCountText)
+        countTextView.text = countText
     }
 
     private fun removeTagFromFilter(tag: FileTag) {

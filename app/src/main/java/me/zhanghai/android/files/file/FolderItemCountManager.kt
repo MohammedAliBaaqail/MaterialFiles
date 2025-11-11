@@ -198,7 +198,8 @@ object FolderItemCountManager {
                     itemCountMap.clear()
                     itemCountMap.putAll(newItemCountMap)
                     saveItemCounts()
-                    _countChangedLiveData.value = Unit
+                    // Notify observers from background thread
+                    _countChangedLiveData.postValue(Unit)
                 }
                 true
             }

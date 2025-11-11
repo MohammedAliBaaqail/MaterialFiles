@@ -66,6 +66,7 @@ class FolderThumbnailManagementDialogFragment : AppCompatDialogFragment() {
         val chooseImageButton = view.findViewById<MaterialButton>(R.id.choose_image_button)
         val removeThumbnailButton = view.findViewById<MaterialButton>(R.id.remove_thumbnail_button)
         val saveButton = view.findViewById<MaterialButton>(R.id.save_button)
+        val regenerateButton = view.findViewById<MaterialButton>(R.id.regenerate_button)
         val progressIndicator = view.findViewById<LinearProgressIndicator>(R.id.progress_indicator)
         
         // Load current thumbnail if it exists
@@ -116,6 +117,11 @@ class FolderThumbnailManagementDialogFragment : AppCompatDialogFragment() {
         saveButton.setOnClickListener {
             saveThumbnail(thumbnailImageView, progressIndicator)
         }
+
+        // Regenerate a high-quality thumbnail based on the first suitable image in the folder
+        regenerateButton.setOnClickListener {
+            regenerateHighQualityThumbnail(thumbnailImageView, progressIndicator)
+        }
     }
     
     private fun loadCurrentThumbnail(imageView: ImageView, progressIndicator: LinearProgressIndicator) {
@@ -141,6 +147,68 @@ class FolderThumbnailManagementDialogFragment : AppCompatDialogFragment() {
                     Toast.LENGTH_SHORT
                 ).show()
                 imageView.setImageResource(R.drawable.ic_folder_white_24dp)
+            } finally {
+                progressIndicator.isVisible = false
+            }
+        }
+    }
+
+    private fun regenerateHighQualityThumbnail(
+        imageView: ImageView,
+        progressIndicator: LinearProgressIndicator
+    ) {
+        progressIndicator.isVisible = true
+        lifecycleScope.launch {
+            try {
+                val hqBitmap = withContext(Dispatchers.IO) {
+                    // Heuristic: pick the largest image file in this folder, decode with a high target size
+                    val imageFiles = path.listFiles()?.filter {
+                        val name = it.name.lowercase()
+                        it.isFile && (name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".png") || name.endsWith(".webp"))
+                    }.orEmpty()
+                    val candidate = imageFiles.maxByOrNull { it.length() }
+                    if (candidate != null) {
+                        // Decode with higher bounds; 2048px on the larger side for quality
+                        val opts = android.graphics.BitmapFactory.Options().apply {
+                            inPreferredConfig = android.graphics.Bitmap.Config.ARGB_8888
+                        }
+                        context?.contentResolver?.openInputStream(Uri.fromFile(candidate))?.use { input ->
+                            android.graphics.BitmapFactory.decodeStream(input, null, opts)
+                        }
+                    } else null
+                }
+
+                if (hqBitmap != null) {
+                    // Preview
+                    imageView.setImageBitmap(hqBitmap)
+
+                    // Persist with higher JPEG quality
+                    withContext(Dispatchers.IO) {
+                        val hash = java.security.MessageDigest.getInstance("SHA-256")
+                            .digest(path.absolutePath.toByteArray())
+                            .joinToString("") { "%02x".format(it) }
+                        val thumbnailDir = java.io.File(requireContext().filesDir, FolderThumbnailManager.THUMBNAIL_DIR)
+                        thumbnailDir.mkdirs()
+                        val thumbnailFile = java.io.File(thumbnailDir, "$hash.jpg")
+                        java.io.FileOutputStream(thumbnailFile).use { out ->
+                            hqBitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 96, out)
+                        }
+                    }
+
+                    Toast.makeText(requireContext(), R.string.folder_thumbnail_saved, Toast.LENGTH_SHORT).show()
+                    parentFragmentManager.setFragmentResult(
+                        REQUEST_KEY, Bundle().apply { putString(KEY_PATH, path.absolutePath) }
+                    )
+                    dismiss()
+                } else {
+                    Toast.makeText(requireContext(), R.string.folder_thumbnail_save_error, Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.folder_thumbnail_save_error_detailed, e.message),
+                    Toast.LENGTH_LONG
+                ).show()
             } finally {
                 progressIndicator.isVisible = false
             }

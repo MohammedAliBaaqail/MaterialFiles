@@ -59,14 +59,30 @@ class FileTagManagementDialogFragment : DialogFragment() {
             FileTagManager.getAllTags().toMutableList(),
             selectedTags
         ) { tag, isChecked ->
-            files.forEach { file ->
-                if (isChecked) {
-                    FileTagManager.addTagToFile(tag.id, file.path)
-                } else {
-                    FileTagManager.removeTagFromFile(tag.id, file.path)
+            // Show a simple non-cancelable loading dialog
+            val loading = MaterialAlertDialogBuilder(context)
+                .setView(layoutInflater.inflate(R.layout.progress_indeterminate, null))
+                .setCancelable(false)
+                .create()
+            loading.show()
+
+            // Perform bulk operation off the main thread
+            Thread {
+                try {
+                    val paths = files.map { it.path }
+                    if (isChecked) {
+                        FileTagManager.addTagToFiles(tag.id, paths)
+                    } else {
+                        FileTagManager.removeTagFromFiles(tag.id, paths)
+                    }
+                } finally {
+                    // Dismiss loading and notify on main thread
+                    requireActivity().runOnUiThread {
+                        if (loading.isShowing) loading.dismiss()
+                        notifyTagsChanged()
+                    }
                 }
-            }
-            notifyTagsChanged()
+            }.start()
         }
         recyclerView.adapter = adapter
         

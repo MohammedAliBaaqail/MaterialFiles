@@ -7,6 +7,7 @@ package me.zhanghai.android.files.settings
 
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import me.zhanghai.android.files.R
 import me.zhanghai.android.files.theme.custom.CustomThemeHelper
@@ -20,6 +21,9 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
     private lateinit var tagBackupPreference: TagBackupPreference
     private lateinit var folderItemCountBackupPreference: FolderItemCountBackupPreference
     private lateinit var videoMetadataBackupPreference: VideoMetadataBackupPreference
+    private lateinit var fullDataBackupPreference: FullDataBackupPreference
+
+    private val logTag = "SettingsPrefFragment"
 
     override fun onCreatePreferencesFix(savedInstanceState: Bundle?, rootKey: String?) {
         addPreferencesFromResource(R.xml.settings)
@@ -34,15 +38,27 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
         
         // Initialize the tag backup preference
         tagBackupPreference = preferenceScreen.findPreference("file_tags_backup")!!
+        Log.d(logTag, "Found TagBackupPreference by key 'file_tags_backup': $tagBackupPreference")
         tagBackupPreference.registerForActivityResult(requireActivity() as AppCompatActivity)
+        Log.d(logTag, "Registered TagBackupPreference for activity results (onCreatePreferencesFix)")
         
         // Initialize the folder item count backup preference
         folderItemCountBackupPreference = preferenceScreen.findPreference("folder_item_counts_backup")!!
+        Log.d(logTag, "Found FolderItemCountBackupPreference by key 'folder_item_counts_backup': $folderItemCountBackupPreference")
         folderItemCountBackupPreference.registerForActivityResult(requireActivity() as AppCompatActivity)
+        Log.d(logTag, "Registered FolderItemCountBackupPreference for activity results (onCreatePreferencesFix)")
         
         // Initialize the video metadata backup preference
         videoMetadataBackupPreference = preferenceScreen.findPreference("video_thumbnails_backup")!!
+        Log.d(logTag, "Found VideoMetadataBackupPreference by key 'video_thumbnails_backup': $videoMetadataBackupPreference")
         videoMetadataBackupPreference.registerForActivityResult(requireActivity() as AppCompatActivity)
+        Log.d(logTag, "Registered VideoMetadataBackupPreference for activity results (onCreatePreferencesFix)")
+
+        // Initialize full data backup preference
+        fullDataBackupPreference = preferenceScreen.findPreference("full_data_backup")!!
+        Log.d(logTag, "Found FullDataBackupPreference by key 'full_data_backup': $fullDataBackupPreference")
+        fullDataBackupPreference.registerForActivityResult(requireActivity() as AppCompatActivity)
+        Log.d(logTag, "Registered FullDataBackupPreference for activity results (onCreatePreferencesFix)")
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -51,8 +67,13 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
         val activity = requireActivity() as SettingsActivity
         // Register the tag backup preference for activity results
         tagBackupPreference.registerForActivityResult(activity)
+        Log.d(logTag, "Registered TagBackupPreference for activity results (onActivityCreated)")
         // Register the folder item count backup preference for activity results
         folderItemCountBackupPreference.registerForActivityResult(activity)
+        Log.d(logTag, "Registered FolderItemCountBackupPreference for activity results (onActivityCreated)")
+        // Register the full data backup preference for activity results
+        fullDataBackupPreference.registerForActivityResult(activity)
+        Log.d(logTag, "Registered FullDataBackupPreference for activity results (onActivityCreated)")
 
         val viewLifecycleOwner = viewLifecycleOwner
         // The following may end up passing the same lambda instance to the observer because it has

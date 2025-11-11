@@ -158,7 +158,8 @@ object FileRatingManager {
                     ratingMap.clear()
                     ratingMap.putAll(newRatingMap)
                     saveRatings()
-                    _ratingChangedLiveData.value = Unit
+                    // Notify observers from background thread
+                    _ratingChangedLiveData.postValue(Unit)
                 }
                 
                 // Import folder item counts from the same file

@@ -78,6 +78,9 @@ import me.zhanghai.android.files.util.layoutInflater
 import me.zhanghai.android.files.util.pathString
 import me.zhanghai.android.files.util.toHex
 import me.zhanghai.android.files.util.valueCompat
+import me.zhanghai.android.files.file.FolderItemCountManager
+import kotlinx.coroutines.asCoroutineDispatcher
+import java.util.concurrent.Executors
 
 class FileListAdapter(
     private val listener: Listener
@@ -119,6 +122,9 @@ class FileListAdapter(
         get() = selectedFiles.toFileItemSet()
 
     private val filePositionMap = mutableMapOf<Path, Int>()
+
+    // Limit concurrent folder item count computations to avoid flooding on large folders
+    private val folderCountDispatcher = Executors.newFixedThreadPool(2).asCoroutineDispatcher()
 
     private lateinit var _nameEllipsize: TextUtils.TruncateAt
     var nameEllipsize: TextUtils.TruncateAt
@@ -669,20 +675,29 @@ class FileListAdapter(
             if (viewPosition != RecyclerView.NO_POSITION) {
                 adapterScope.launch {
                     try {
-                        // Count files in the directory without following links
-                        var fileCount = 0
-                        withContext(Dispatchers.IO) {
-                            val directory = file.path
-                            try {
-                                java8.nio.file.Files.newDirectoryStream(directory).use { directoryStream ->
-                                    for (path in directoryStream) {
-                                        fileCount++
-                                        // Check if we should cancel counting (e.g., view recycled)
-                                        if (!isActive) break
+                        // Try cached count first
+                        val lastModified = file.attributes.lastModifiedTime().toMillis()
+                        var fileCount = FolderItemCountManager.getItemCount(file.path, lastModified)
+                            ?: -1
+                        if (fileCount < 0) {
+                            // Count with limited concurrency to reduce contention
+                            fileCount = withContext(folderCountDispatcher) {
+                                var count = 0
+                                try {
+                                    java8.nio.file.Files.newDirectoryStream(file.path).use { ds ->
+                                        for (p in ds) {
+                                            count++
+                                            if (!isActive) break
+                                        }
                                     }
+                                } catch (e: Exception) {
+                                    Log.e("FileListAdapter", "Error counting files in ${file.path}", e)
                                 }
-                            } catch (e: Exception) {
-                                Log.e("FileListAdapter", "Error counting files in ${file.path}", e)
+                                count
+                            }
+                            // Persist count for future sessions
+                            if (fileCount >= 0) {
+                                FolderItemCountManager.setItemCount(file.path, fileCount, lastModified)
                             }
                         }
                         
@@ -834,16 +849,24 @@ class FileListAdapter(
     }
 
     private fun updateTagsView(holder: ViewHolder, file: FileItem) {
-        val tags = FileTagManager.getTagsForFile(file.path)
-        holder.tagsView?.apply {
-            if (tags.isNotEmpty()) {
-                visibility = View.VISIBLE
-                setTags(tags)
-                setOnTagClickListener { tag ->
-                    listener.onTagClick(tag)
+        // Avoid heavy work on UI: fetch tags asynchronously and update if still bound
+        holder.tagsView?.visibility = View.GONE
+        val viewPosition = holder.bindingAdapterPosition
+        if (viewPosition == RecyclerView.NO_POSITION) return
+        adapterScope.launch(kotlinx.coroutines.Dispatchers.Default) {
+            val tags = FileTagManager.getTagsForFile(file.path)
+            withContext(kotlinx.coroutines.Dispatchers.Main) {
+                if (holder.bindingAdapterPosition == viewPosition) {
+                    holder.tagsView?.apply {
+                        if (tags.isNotEmpty()) {
+                            visibility = View.VISIBLE
+                            setTags(tags)
+                            setOnTagClickListener { tag -> listener.onTagClick(tag) }
+                        } else {
+                            visibility = View.GONE
+                        }
+                    }
                 }
-            } else {
-                visibility = View.GONE
             }
         }
     }

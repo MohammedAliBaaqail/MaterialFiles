@@ -50,7 +50,7 @@ fun Path.loadFileItem(): FileItem {
     val attributes = readAttributes(BasicFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS)
     val isHidden = isHidden
     if (!attributes.isSymbolicLink) {
-        val mimeType = AndroidFileTypeDetector.getMimeType(this, attributes).asMimeType()
+        val mimeType = MimeTypeCache.getOrDetect(this, attributes)
         return FileItem(this, nameCollationKey, attributes, null, null, isHidden, mimeType)
     }
     val symbolicLinkTarget = readSymbolicLinkByteString().toString()
@@ -60,9 +60,7 @@ fun Path.loadFileItem(): FileItem {
         e.printStackTrace()
         null
     }
-    val mimeType = AndroidFileTypeDetector.getMimeType(
-        this, symbolicLinkTargetAttributes ?: attributes
-    ).asMimeType()
+    val mimeType = MimeTypeCache.getOrDetect(this, symbolicLinkTargetAttributes ?: attributes)
     return FileItem(
         this, nameCollationKey, attributes, symbolicLinkTarget, symbolicLinkTargetAttributes,
         isHidden, mimeType

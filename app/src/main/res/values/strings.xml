@@ -881,6 +881,7 @@
 
     <string name="file_list_action_hide_info_in_grid">Hide file info in grid</string>
     <string name="file_list_action_use_portrait_mode_in_grid">Portrait orientation (9:16)</string>
+    <string name="file_list_action_regenerate_thumbnails">Regenerate thumbnails</string>
 
     <!-- Folder thumbnail management -->
     <string name="folder_thumbnail_removed">Thumbnail removed</string>
@@ -946,6 +947,16 @@
     <string name="thumbnail_export_error">Failed to export thumbnails</string>
     <string name="thumbnail_import_success">Thumbnails imported successfully</string>
     <string name="thumbnail_import_error">Failed to import thumbnails</string>
+
+    <!-- Full data backup -->
+    <string name="settings_full_backup_title">Full app data backup</string>
+    <string name="settings_full_backup_summary">Export/import all app data (preferences, databases, files, caches)</string>
+    <string name="full_backup_export">Export full backup</string>
+    <string name="full_backup_import">Import full backup</string>
+    <string name="full_backup_export_success">Backup exported</string>
+    <string name="full_backup_export_error">Failed to export backup</string>
+    <string name="full_backup_import_success">Backup imported</string>
+    <string name="full_backup_import_error">Failed to import backup</string>
 </resources>
 
 

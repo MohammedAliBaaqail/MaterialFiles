@@ -120,6 +120,44 @@ object FileTagManager {
             saveTagOrders()
         }
     }
+
+    /**
+     * Adds a tag to multiple files and saves once at the end.
+     */
+    fun addTagToFiles(tagId: String, paths: List<Path>) {
+        for (path in paths) {
+            val pathKey = path.toString()
+            val tagIds = fileTagsMap.getOrPut(pathKey) { mutableSetOf() }
+            if (tagIds.add(tagId)) {
+                val orderMap = tagOrderMap.getOrPut(pathKey) { mutableMapOf() }
+                if (!orderMap.containsKey(tagId)) {
+                    orderMap[tagId] = orderMap.values.maxOrNull()?.plus(1) ?: 0
+                }
+            }
+        }
+        saveFileTags()
+        saveTagOrders()
+    }
+
+    /**
+     * Removes a tag from multiple files and saves once at the end.
+     */
+    fun removeTagFromFiles(tagId: String, paths: List<Path>) {
+        for (path in paths) {
+            val pathKey = path.toString()
+            val tagIds = fileTagsMap[pathKey] ?: continue
+            if (tagIds.remove(tagId)) {
+                if (tagIds.isEmpty()) {
+                    fileTagsMap.remove(pathKey)
+                    tagOrderMap.remove(pathKey)
+                } else {
+                    tagOrderMap[pathKey]?.remove(tagId)
+                }
+            }
+        }
+        saveFileTags()
+        saveTagOrders()
+    }
     
     fun setTagsForFile(tagIds: Set<String>, path: Path) {
         val pathKey = path.toString()
@@ -269,8 +307,11 @@ object FileTagManager {
      */
     fun importTags(file: File): Boolean {
         return try {
+            Log.d(TAG, "Import start from file=${file.absolutePath}, length=${file.length()}")
             val jsonString = file.readText()
+            Log.d(TAG, "Import readText length=${jsonString.length}")
             val jsonObject = JSONObject(jsonString)
+            Log.d(TAG, "Import parsed JSON keys=${jsonObject.keys().asSequence().toList()}")
             
             // Import tags
             if (jsonObject.has(KEY_TAGS)) {
@@ -290,6 +331,7 @@ object FileTagManager {
                 
                 tags = newTags
                 saveTags()
+                Log.d(TAG, "Import tags: count=${tags.size}")
             }
             
             // Import file-tag associations
@@ -310,6 +352,7 @@ object FileTagManager {
                 
                 fileTagsMap = newFileTagsMap
                 saveFileTags()
+                Log.d(TAG, "Import file-tags: paths=${fileTagsMap.size}")
             }
             
             // Import tag orders
@@ -330,14 +373,26 @@ object FileTagManager {
                 
                 tagOrderMap = newTagOrderMap
                 saveTagOrders()
+                Log.d(TAG, "Import tag orders: paths=${tagOrderMap.size}")
             }
             
             // Import ratings data
-            FileRatingManager.importRatingsFromJson(jsonObject)
+            try {
+                FileRatingManager.importRatingsFromJson(jsonObject)
+                Log.d(TAG, "Import ratings: done")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error importing ratings", e)
+            }
             
             // Import folder item counts from the same file
-            FolderItemCountManager.importItemCountsFromJson(jsonObject)
+            try {
+                FolderItemCountManager.importItemCountsFromJson(jsonObject)
+                Log.d(TAG, "Import folder item counts: done")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error importing folder item counts", e)
+            }
             
+            Log.d(TAG, "Import completed successfully")
             true
         } catch (e: Exception) {
             Log.e(TAG, "Error importing tags", e)

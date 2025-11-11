@@ -95,6 +95,9 @@
                 <item
                     android:id="@+id/action_item_scale"
                     android:title="@string/file_list_action_item_scale" />
+                <item
+                    android:id="@+id/action_regenerate_thumbnails"
+                    android:title="@string/file_list_action_regenerate_thumbnails" />
             </group>
             <item
                 android:id="@+id/action_view_sort_path_specific"

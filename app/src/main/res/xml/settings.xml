@@ -95,6 +95,11 @@
             android:title="@string/settings_thumbnail_backup_title"
             android:summary="@string/settings_thumbnail_backup_summary" />
 
+        <me.zhanghai.android.files.settings.FullDataBackupPreference
+            android:key="full_data_backup"
+            android:title="@string/settings_full_backup_title"
+            android:summary="@string/settings_full_backup_summary" />
+
         <me.zhanghai.android.files.settings.RootStrategyPreference
             android:key="@string/pref_key_root_strategy"
             android:title="@string/settings_root_strategy_title"

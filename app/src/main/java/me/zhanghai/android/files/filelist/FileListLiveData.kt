@@ -38,26 +38,31 @@ class FileListLiveData(private val path: Path) : CloseableLiveData<Stateful<List
         future?.cancel(true)
         value = Loading(value?.value)
         future = (AsyncTask.THREAD_POOL_EXECUTOR as ExecutorService).submit<Unit> {
-            val value = try {
+            try {
                 path.newDirectoryStream().use { directoryStream ->
                     val fileList = mutableListOf<FileItem>()
-                    for (path in directoryStream) {
+                    val batchSize = 200
+                    var lastEmitted = 0
+                    for (childPath in directoryStream) {
                         try {
-                            fileList.add(path.loadFileItem())
+                            fileList.add(childPath.loadFileItem())
                         } catch (e: DirectoryIteratorException) {
-                            // TODO: Ignoring such a file can be misleading and we need to support
-                            //  files without information.
                             e.printStackTrace()
                         } catch (e: IOException) {
                             e.printStackTrace()
                         }
+                        if (fileList.size - lastEmitted >= batchSize) {
+                            // Emit partial results to render progressively
+                            postValue(Success(fileList.toList()))
+                            lastEmitted = fileList.size
+                        }
                     }
-                    Success(fileList as List<FileItem>)
+                    // Final full result
+                    postValue(Success(fileList as List<FileItem>))
                 }
             } catch (e: Exception) {
-                Failure(valueCompat.value, e)
+                postValue(Failure(valueCompat.value, e))
             }
-            postValue(value)
         }
     }
 

@@ -28,6 +28,9 @@ class FileTagFilterDialog : DialogFragment() {
     private lateinit var adapter: TagAdapter
     private var selectedTags = mutableSetOf<FileTag>()
     private var isMatchAll = false
+    private var currentFiles: List<me.zhanghai.android.files.file.FileItem> = emptyList()
+    private lateinit var currentDirectory: java8.nio.file.Path
+    private val tagIdToCount = mutableMapOf<String, Int>()
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val context = requireContext()
@@ -43,6 +46,23 @@ class FileTagFilterDialog : DialogFragment() {
             }
         }
         recyclerView.adapter = adapter
+        // Use cached counts if available; otherwise compute asynchronously without blocking UI
+        val cached = TagCountCache.get(currentDirectory)
+        if (cached != null) {
+            tagIdToCount.clear()
+            tagIdToCount.putAll(cached)
+            adapter.notifyDataSetChanged()
+        } else {
+            TagCountCache.computeAsync(currentDirectory, currentFiles) { counts ->
+                if (isAdded) {
+                    requireActivity().runOnUiThread {
+                        tagIdToCount.clear()
+                        tagIdToCount.putAll(counts)
+                        adapter.notifyDataSetChanged()
+                    }
+                }
+            }
+        }
         
         // Setup filter mode radio buttons
         val radioGroup = view.findViewById<RadioGroup>(R.id.filterModeGroup)
@@ -93,7 +113,12 @@ class FileTagFilterDialog : DialogFragment() {
             private val tagContainer: View = itemView.findViewById(R.id.tagContainer)
 
             fun bind(tag: FileTag, isChecked: Boolean) {
-                tagText.text = tag.name
+                val count = tagIdToCount[tag.id] ?: 0
+                tagText.text = if (count > 0) {
+                    "${tag.name} ($count)"
+                } else {
+                    tag.name
+                }
                 checkBox.isChecked = isChecked
 
                 // Apply background color from tag
@@ -134,11 +159,19 @@ class FileTagFilterDialog : DialogFragment() {
     }
 
     companion object {
-        fun show(fragment: Fragment, currentTags: Set<FileTag>, isMatchAll: Boolean) {
+        fun show(
+            fragment: Fragment,
+            currentTags: Set<FileTag>,
+            isMatchAll: Boolean,
+            currentFiles: List<me.zhanghai.android.files.file.FileItem>,
+            currentDirectory: java8.nio.file.Path
+        ) {
             FileTagFilterDialog().apply {
                 listener = fragment as Listener
                 selectedTags.addAll(currentTags)
                 this.isMatchAll = isMatchAll
+                this.currentFiles = currentFiles
+                this.currentDirectory = currentDirectory
             }.show(fragment)
         }
     }
