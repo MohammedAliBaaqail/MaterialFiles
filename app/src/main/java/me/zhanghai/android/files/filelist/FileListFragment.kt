@@ -1008,7 +1008,7 @@ class FileListFragment : Fragment(),
                     initial.add(f)
                     collected++
                 }
-            }
+        }
             withContext(Dispatchers.Main) {
                 adapter.replaceListAndIsSearching(initial, isSearching)
                 updateFilterTagsHeaderCount()

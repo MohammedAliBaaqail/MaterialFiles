@@ -683,15 +683,15 @@ class FileListAdapter(
                             // Count with limited concurrency to reduce contention
                             fileCount = withContext(folderCountDispatcher) {
                                 var count = 0
-                                try {
+                            try {
                                     java8.nio.file.Files.newDirectoryStream(file.path).use { ds ->
                                         for (p in ds) {
                                             count++
-                                            if (!isActive) break
-                                        }
+                                        if (!isActive) break
                                     }
-                                } catch (e: Exception) {
-                                    Log.e("FileListAdapter", "Error counting files in ${file.path}", e)
+                                }
+                            } catch (e: Exception) {
+                                Log.e("FileListAdapter", "Error counting files in ${file.path}", e)
                                 }
                                 count
                             }
@@ -867,17 +867,17 @@ class FileListAdapter(
         val viewPosition = holder.bindingAdapterPosition
         if (viewPosition == RecyclerView.NO_POSITION) return
         adapterScope.launch(kotlinx.coroutines.Dispatchers.Default) {
-            val tags = FileTagManager.getTagsForFile(file.path)
+        val tags = FileTagManager.getTagsForFile(file.path)
             me.zhanghai.android.files.file.FileTagCache.put(file.path, tags)
             withContext(kotlinx.coroutines.Dispatchers.Main) {
                 if (holder.bindingAdapterPosition == viewPosition) {
-                    holder.tagsView?.apply {
-                        if (tags.isNotEmpty()) {
-                            visibility = View.VISIBLE
-                            setTags(tags)
+        holder.tagsView?.apply {
+            if (tags.isNotEmpty()) {
+                visibility = View.VISIBLE
+                setTags(tags)
                             setOnTagClickListener { tag -> listener.onTagClick(tag) }
-                        } else {
-                            visibility = View.GONE
+            } else {
+                visibility = View.GONE
                         }
                     }
                 }

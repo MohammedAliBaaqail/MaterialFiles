@@ -390,7 +390,7 @@ object FileTagManager {
             
             // Import ratings data
             try {
-                FileRatingManager.importRatingsFromJson(jsonObject)
+            FileRatingManager.importRatingsFromJson(jsonObject)
                 Log.d(TAG, "Import ratings: done")
             } catch (e: Exception) {
                 Log.e(TAG, "Error importing ratings", e)
@@ -398,7 +398,7 @@ object FileTagManager {
             
             // Import folder item counts from the same file
             try {
-                FolderItemCountManager.importItemCountsFromJson(jsonObject)
+            FolderItemCountManager.importItemCountsFromJson(jsonObject)
                 Log.d(TAG, "Import folder item counts: done")
             } catch (e: Exception) {
                 Log.e(TAG, "Error importing folder item counts", e)

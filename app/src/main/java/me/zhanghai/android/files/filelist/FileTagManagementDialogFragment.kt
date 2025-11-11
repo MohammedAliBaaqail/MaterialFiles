@@ -70,11 +70,11 @@ class FileTagManagementDialogFragment : DialogFragment() {
             Thread {
                 try {
                     val paths = files.map { it.path }
-                    if (isChecked) {
+                if (isChecked) {
                         FileTagManager.addTagToFiles(tag.id, paths)
-                    } else {
+                } else {
                         FileTagManager.removeTagFromFiles(tag.id, paths)
-                    }
+                }
                 } finally {
                     // Dismiss loading and notify on main thread
                     requireActivity().runOnUiThread {
