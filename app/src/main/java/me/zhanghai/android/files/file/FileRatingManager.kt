@@ -65,7 +65,7 @@ object FileRatingManager {
                 ratingMap[path.toString()] = rating
             }
             saveRatings()
-            _ratingChangedLiveData.value = Unit
+            notifyRatingChanged()
         }
     }
     
@@ -81,7 +81,7 @@ object FileRatingManager {
                 }
             }
             saveRatings()
-            _ratingChangedLiveData.value = Unit
+            notifyRatingChanged()
         }
     }
     
@@ -209,6 +209,14 @@ object FileRatingManager {
             } catch (e: Exception) {
                 Log.e(TAG, "Error saving ratings", e)
             }
+        }
+    }
+
+    private fun notifyRatingChanged() {
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+            _ratingChangedLiveData.value = Unit
+        } else {
+            _ratingChangedLiveData.postValue(Unit)
         }
     }
 } 

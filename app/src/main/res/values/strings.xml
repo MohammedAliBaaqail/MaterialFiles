@@ -957,6 +957,12 @@
     <string name="full_backup_export_error">Failed to export backup</string>
     <string name="full_backup_import_success">Backup imported</string>
     <string name="full_backup_import_error">Failed to import backup</string>
+
+    <!-- Selection UI settings -->
+    <string name="settings_selection_rating_slider_title">Show rating slider during selection</string>
+    <string name="settings_selection_rating_slider_summary">Display a rating slider in the selection toolbar</string>
+    <string name="settings_selection_quick_tags_title">Show quick tag bar during selection</string>
+    <string name="settings_selection_quick_tags_summary">Display tags below the toolbar for quick add or remove</string>
 </resources>
 
 

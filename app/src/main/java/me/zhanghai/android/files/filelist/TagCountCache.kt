@@ -41,6 +41,16 @@ object TagCountCache {
 		dirPathToCounts[directoryPath.toString()] = counts
 	}
 
+	fun invalidate(directoryPath: Path?) {
+		if (directoryPath != null) {
+			dirPathToCounts.remove(directoryPath.toString())
+		}
+	}
+
+	fun invalidateDirectories(paths: Iterable<Path>) {
+		paths.forEach { invalidate(it) }
+	}
+
 	fun clear() {
 		dirPathToCounts.clear()
 	}

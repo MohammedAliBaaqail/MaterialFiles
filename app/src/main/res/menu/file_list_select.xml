@@ -30,6 +30,12 @@
         app:showAsAction="ifRoom" />
 
     <item
+        android:id="@+id/action_rating_slider"
+        android:title="@string/file_list_action_set_rating"
+        app:actionLayout="@layout/menu_selection_rating_slider"
+        app:showAsAction="always" />
+
+    <item
         android:id="@+id/action_set_rating"
         android:icon="@drawable/star_icon_control_normal_24dp"
         android:title="@string/file_list_action_set_rating"

@@ -381,6 +381,8 @@ class FileTagManagementDialogFragment : DialogFragment() {
 
             fun bind(tag: FileTag, isChecked: Boolean) {
                 tagText.text = tag.name
+                // Prevent recycling from triggering listener when updating checked state
+                checkBox.setOnCheckedChangeListener(null)
                 checkBox.isChecked = isChecked
                 tagContainer.setBackgroundColor(tag.color)
                 

@@ -100,6 +100,18 @@
             android:title="@string/settings_full_backup_title"
             android:summary="@string/settings_full_backup_summary" />
 
+        <SwitchPreferenceCompat
+            android:key="@string/pref_key_show_selection_rating_slider"
+            android:title="@string/settings_selection_rating_slider_title"
+            android:summary="@string/settings_selection_rating_slider_summary"
+            android:defaultValue="@bool/pref_default_value_show_selection_rating_slider" />
+
+        <SwitchPreferenceCompat
+            android:key="@string/pref_key_show_selection_quick_tags"
+            android:title="@string/settings_selection_quick_tags_title"
+            android:summary="@string/settings_selection_quick_tags_summary"
+            android:defaultValue="@bool/pref_default_value_show_selection_quick_tags" />
+
         <me.zhanghai.android.files.settings.RootStrategyPreference
             android:key="@string/pref_key_root_strategy"
             android:title="@string/settings_root_strategy_title"

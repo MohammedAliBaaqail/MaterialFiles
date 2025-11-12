@@ -98,5 +98,23 @@
             </LinearLayout>
         </LinearLayout>
 
+        <HorizontalScrollView
+            android:id="@+id/selectionQuickTagsBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="@dimen/content_start_margin"
+            android:paddingEnd="@dimen/screen_edge_margin"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:visibility="gone"
+            android:overScrollMode="never">
+
+            <LinearLayout
+                android:id="@+id/selectionQuickTagsContainer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
     </me.zhanghai.android.files.ui.CoordinatorAppBarLayout>
 </merge>

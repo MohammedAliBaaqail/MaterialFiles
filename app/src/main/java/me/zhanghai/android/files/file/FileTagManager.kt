@@ -38,6 +38,17 @@ object FileTagManager {
     private var tags: MutableList<FileTag> = loadTags()
     private var fileTagsMap: MutableMap<String, MutableSet<String>> = loadFileTags()
     private var tagOrderMap: MutableMap<String, MutableMap<String, Int>> = loadTagOrders()
+
+    private fun invalidateCaches(path: Path) {
+        FileTagCache.invalidate(path)
+        me.zhanghai.android.files.filelist.TagCountCache.invalidate(path.parent)
+    }
+
+    private fun invalidateCaches(paths: Iterable<Path>) {
+        FileTagCache.invalidate(paths)
+        val parents = paths.mapNotNull { it.parent }
+        me.zhanghai.android.files.filelist.TagCountCache.invalidateDirectories(parents)
+    }
     
     fun getAllTags(): List<FileTag> = tags.toList()
     
@@ -79,7 +90,7 @@ object FileTagManager {
         saveFileTags()
         saveTagOrders()
         // Invalidate caches for affected files
-        FileTagCache.invalidate(affectedPaths)
+        invalidateCaches(affectedPaths)
     }
     
     fun getTagsForFile(path: Path): List<FileTag> {
@@ -107,7 +118,7 @@ object FileTagManager {
             }
             saveFileTags()
             saveTagOrders()
-            FileTagCache.invalidate(path)
+            invalidateCaches(path)
         }
     }
     
@@ -124,7 +135,7 @@ object FileTagManager {
             }
             saveFileTags()
             saveTagOrders()
-            FileTagCache.invalidate(path)
+            invalidateCaches(path)
         }
     }
 
@@ -144,7 +155,7 @@ object FileTagManager {
         }
         saveFileTags()
         saveTagOrders()
-        FileTagCache.invalidate(paths)
+        invalidateCaches(paths)
     }
 
     /**
@@ -165,7 +176,7 @@ object FileTagManager {
         }
         saveFileTags()
         saveTagOrders()
-        FileTagCache.invalidate(paths)
+        invalidateCaches(paths)
     }
     
     fun setTagsForFile(tagIds: Set<String>, path: Path) {
@@ -193,7 +204,7 @@ object FileTagManager {
         }
         saveFileTags()
         saveTagOrders()
-        FileTagCache.invalidate(path)
+        invalidateCaches(path)
     }
     
     fun hasTag(path: Path, tagId: String): Boolean {
@@ -237,8 +248,7 @@ object FileTagManager {
             
             saveFileTags()
             saveTagOrders()
-            FileTagCache.invalidate(oldPath)
-            FileTagCache.invalidate(newPath)
+            invalidateCaches(listOf(oldPath, newPath))
         }
     }
     

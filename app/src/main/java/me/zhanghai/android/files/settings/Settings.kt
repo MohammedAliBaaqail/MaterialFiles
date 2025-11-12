@@ -68,6 +68,16 @@ object Settings {
             R.string.pref_key_file_list_hide_info_in_grid,
             R.bool.pref_default_value_file_list_hide_info_in_grid
         )
+    val SHOW_SELECTION_RATING_SLIDER: SettingLiveData<Boolean> =
+        BooleanSettingLiveData(
+            R.string.pref_key_show_selection_rating_slider,
+            R.bool.pref_default_value_show_selection_rating_slider
+        )
+    val SHOW_SELECTION_QUICK_TAGS: SettingLiveData<Boolean> =
+        BooleanSettingLiveData(
+            R.string.pref_key_show_selection_quick_tags,
+            R.bool.pref_default_value_show_selection_quick_tags
+        )
 
     val FILE_LIST_USE_SQUARE_THUMBNAILS: SettingLiveData<Boolean> =
         BooleanSettingLiveData(

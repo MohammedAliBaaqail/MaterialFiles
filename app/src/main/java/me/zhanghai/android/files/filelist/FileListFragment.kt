@@ -10,6 +10,7 @@ import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -26,6 +27,8 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.HorizontalScrollView
+import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.SeekBar
 import android.widget.TextView
@@ -43,6 +46,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.core.view.MenuProvider
 import androidx.core.view.isVisible
@@ -137,6 +141,7 @@ import me.zhanghai.android.files.util.setOnEditorConfirmActionListener
 import me.zhanghai.android.files.util.showToast
 import me.zhanghai.android.files.util.startActivitySafe
 import me.zhanghai.android.files.util.supportsExternalStorageManager
+import me.zhanghai.android.files.util.ColorUtils
 import me.zhanghai.android.files.util.takeIfNotEmpty
 import me.zhanghai.android.files.util.valueCompat
 import me.zhanghai.android.files.util.viewModels
@@ -231,6 +236,10 @@ class FileListFragment : Fragment(),
     private var currentTagFilter: Set<FileTag> = emptySet()
     private var isMatchAllTags: Boolean = false
     private var filterJob: Job? = null
+    private var showSelectionRatingSlider = Settings.SHOW_SELECTION_RATING_SLIDER.valueCompat
+    private var showSelectionQuickTags = Settings.SHOW_SELECTION_QUICK_TAGS.valueCompat
+    private var selectionRatingSeekBar: SeekBar? = null
+    private var selectionQuickTagsJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -436,6 +445,16 @@ class FileListFragment : Fragment(),
             onShowHiddenFilesChanged(it)
         }
         Settings.FILE_LIST_SHOW_CREATION_DATE.observe(viewLifecycleOwner, this::onShowDateTypeChanged)
+        Settings.SHOW_SELECTION_RATING_SLIDER.observe(viewLifecycleOwner) { value ->
+            showSelectionRatingSlider = value
+            if (overlayActionMode.isActive) {
+                updateOverlayToolbar()
+            }
+        }
+        Settings.SHOW_SELECTION_QUICK_TAGS.observe(viewLifecycleOwner) { value ->
+            showSelectionQuickTags = value
+            updateSelectionQuickTagsBar()
+        }
         
         // Initialize filter tags view
         updateFilterTagsView()
@@ -443,6 +462,7 @@ class FileListFragment : Fragment(),
         // Observe rating changes
         FileRatingManager.ratingChangedLiveData.observe(viewLifecycleOwner) {
             adapter.notifyDataSetChanged()
+            refreshSelectionRatingSliderProgress()
         }
         
         // Observe the hide breadcrumb path setting
@@ -1136,6 +1156,8 @@ class FileListFragment : Fragment(),
     private fun onSelectedFilesChanged(files: FileItemSet) {
         updateOverlayToolbar()
         adapter.replaceSelectedFiles(files)
+        refreshSelectionRatingSliderProgress()
+        updateSelectionQuickTagsBar()
     }
 
     private fun updateOverlayToolbar() {
@@ -1186,6 +1208,8 @@ class FileListFragment : Fragment(),
             val isCurrentPathReadOnly = viewModel.currentPath.fileSystem.isReadOnly
             menu.findItem(R.id.action_archive).isVisible = !isCurrentPathReadOnly
         }
+        configureSelectionRatingSlider(overlayActionMode.menu)
+        updateSelectionQuickTagsBar()
         if (!overlayActionMode.isActive) {
             binding.appBarLayout.setExpanded(true)
             binding.appBarLayout.addOnOffsetChangedListener(
@@ -1202,6 +1226,197 @@ class FileListFragment : Fragment(),
                 }
             })
         }
+    }
+
+    private fun configureSelectionRatingSlider(menu: Menu) {
+        val sliderItem = menu.findItem(R.id.action_rating_slider)
+        val sliderView = sliderItem?.actionView?.findViewById<SeekBar>(R.id.selectionRatingSeekBar)
+        val labelView = sliderItem?.actionView?.findViewById<TextView>(R.id.selectionRatingLabel)
+        selectionRatingSeekBar = null
+        val shouldShow = showSelectionRatingSlider && viewModel.selectedFiles.isNotEmpty()
+        sliderItem?.isVisible = shouldShow
+        menu.findItem(R.id.action_set_rating)?.isVisible = !showSelectionRatingSlider
+        if (!shouldShow || sliderView == null) {
+            return
+        }
+        selectionRatingSeekBar = sliderView
+        sliderView.max = 9
+        sliderView.setOnSeekBarChangeListener(null)
+        val progress = computeSelectionRatingProgress()
+        sliderView.progress = progress
+        labelView?.text = progress.toString()
+        sliderView.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
+                labelView?.text = progress.toString()
+                if (!fromUser) {
+                    return
+                }
+                val selectedFiles = viewModel.selectedFiles
+                if (selectedFiles.isEmpty()) {
+                    return
+                }
+                val paths = selectedFiles.map { it.path }
+                viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Default) {
+                    FileRatingManager.setRatingForFiles(paths, progress)
+                }
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar) {}
+
+            override fun onStopTrackingTouch(seekBar: SeekBar) {}
+        })
+    }
+
+    private fun computeSelectionRatingProgress(): Int {
+        val iterator = viewModel.selectedFiles.iterator()
+        if (!iterator.hasNext()) {
+            return 0
+        }
+        val firstRating = FileRatingManager.getRating(iterator.next().path)
+        while (iterator.hasNext()) {
+            val rating = FileRatingManager.getRating(iterator.next().path)
+            if (rating != firstRating) {
+                return 0
+            }
+        }
+        return firstRating
+    }
+
+    private fun refreshSelectionRatingSliderProgress() {
+        if (overlayActionMode.isActive) {
+            configureSelectionRatingSlider(overlayActionMode.menu)
+        } else {
+            selectionRatingSeekBar = null
+        }
+    }
+
+    private fun updateSelectionQuickTagsBar() {
+        val shouldShow = showSelectionQuickTags && overlayActionMode.isActive &&
+            viewModel.selectedFiles.isNotEmpty()
+        val bar = binding.selectionQuickTagsBar
+        if (!shouldShow) {
+            selectionQuickTagsJob?.cancel()
+            selectionQuickTagsJob = null
+            bar.isVisible = false
+            return
+        }
+        bar.isVisible = true
+        val container = binding.selectionQuickTagsContainer
+        val selectedFiles = viewModel.selectedFiles.toList()
+        val total = selectedFiles.size
+        selectionQuickTagsJob?.cancel()
+        selectionQuickTagsJob = viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Default) {
+            val tagCounts = mutableMapOf<String, Int>()
+            for (file in selectedFiles) {
+                val tags = FileTagManager.getTagsForFile(file.path)
+                for (tag in tags) {
+                    tagCounts[tag.id] = (tagCounts[tag.id] ?: 0) + 1
+                }
+            }
+            val allTags = FileTagManager.getAllTags()
+            withContext(Dispatchers.Main) {
+                container.removeAllViews()
+                if (allTags.isEmpty()) {
+                    bar.isVisible = false
+                    return@withContext
+                }
+                val layoutInflater = LayoutInflater.from(container.context)
+                val margin = resources.getDimensionPixelSize(R.dimen.screen_edge_margin_minus_12dp)
+                allTags.forEach { tag ->
+                    val count = tagCounts[tag.id] ?: 0
+                    val state = when {
+                        count == total && total > 0 -> QuickTagState.ALL
+                        count > 0 -> QuickTagState.PARTIAL
+                        else -> QuickTagState.NONE
+                    }
+                    val view = createQuickTagView(layoutInflater, container, tag, state, total)
+                    val params = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    ).apply {
+                        marginEnd = margin
+                    }
+                    container.addView(view, params)
+                }
+            }
+        }
+    }
+
+    private fun createQuickTagView(
+        inflater: LayoutInflater,
+        container: LinearLayout,
+        tag: FileTag,
+        state: QuickTagState,
+        selectedCount: Int
+    ): TextView {
+        val textView = (inflater.inflate(R.layout.tag_item, container, false) as TextView).apply {
+            text = tag.name
+            val backgroundDrawable = ContextCompat.getDrawable(
+                context, R.drawable.tag_background_with_border
+            )?.mutate() as GradientDrawable
+            backgroundDrawable.setColor(tag.color)
+            val textColor = ColorUtils.getContrastingTextColor(tag.color, 180)
+            setTextColor(textColor)
+            val borderColor = ColorUtils.getBorderColorFromText(textColor)
+            backgroundDrawable.setStroke(
+                resources.getDimensionPixelSize(R.dimen.tag_border_width),
+                borderColor
+            )
+            background = backgroundDrawable
+            compoundDrawablePadding = resources.getDimensionPixelSize(
+                R.dimen.screen_edge_margin_minus_12dp
+            )
+            when (state) {
+                QuickTagState.ALL -> {
+                    alpha = 1f
+                    setCompoundDrawablesRelativeWithIntrinsicBounds(
+                        0, 0, R.drawable.ic_check_24dp, 0
+                    )
+                }
+                QuickTagState.PARTIAL -> {
+                    alpha = 0.7f
+                    setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, 0, 0)
+                }
+                QuickTagState.NONE -> {
+                    alpha = 0.5f
+                    setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, 0, 0)
+                }
+            }
+        }
+        textView.setOnClickListener { view ->
+            view.isEnabled = false
+            handleQuickTagClick(tag, state, selectedCount) {
+                view.isEnabled = true
+            }
+        }
+        return textView
+    }
+
+    private fun handleQuickTagClick(
+        tag: FileTag,
+        state: QuickTagState,
+        selectedCount: Int,
+        onComplete: () -> Unit
+    ) {
+        val selectedPaths = viewModel.selectedFiles.map { it.path }
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Default) {
+            if (state == QuickTagState.ALL && selectedCount > 0) {
+                FileTagManager.removeTagFromFiles(tag.id, selectedPaths)
+            } else {
+                FileTagManager.addTagToFiles(tag.id, selectedPaths)
+            }
+            withContext(Dispatchers.Main) {
+                onComplete()
+                adapter.refreshFileItemsWithUpdatedTags()
+                updateSelectionQuickTagsBar()
+            }
+        }
+    }
+
+    private enum class QuickTagState {
+        NONE,
+        PARTIAL,
+        ALL
     }
 
     private fun onOverlayActionModeMenuItemClicked(item: MenuItem): Boolean {
@@ -1256,6 +1471,10 @@ class FileListFragment : Fragment(),
 
     private fun onOverlayActionModeFinished() {
         viewModel.clearSelectedFiles()
+        selectionRatingSeekBar = null
+        selectionQuickTagsJob?.cancel()
+        selectionQuickTagsJob = null
+        binding.selectionQuickTagsBar.isVisible = false
     }
 
     private fun confirmReplaceFile(file: FileItem, setFileName: Boolean = true) {
@@ -2095,6 +2314,7 @@ class FileListFragment : Fragment(),
 
     override fun onTagsChanged() {
             adapter.refreshFileItemsWithUpdatedTags()
+        updateSelectionQuickTagsBar()
     }
 
     override fun deleteFiles(files: FileItemSet) {
@@ -2120,6 +2340,9 @@ class FileListFragment : Fragment(),
         
         // Clear video metadata cache to free up memory
         // VideoMetadataCache.clearCache()
+        selectionQuickTagsJob?.cancel()
+        selectionQuickTagsJob = null
+        selectionRatingSeekBar = null
     }
 
     companion object {
@@ -2167,6 +2390,8 @@ class FileListFragment : Fragment(),
         val filterTagsContainer: ViewGroup,
         val filterModeSwitchButton: SwitchCompat,
         val filterTagsView: TagsView,
+        val selectionQuickTagsBar: HorizontalScrollView,
+        val selectionQuickTagsContainer: LinearLayout,
         val contentLayout: ViewGroup,
         val progress: ProgressBar,
         val errorText: TextView,
@@ -2197,7 +2422,10 @@ class FileListFragment : Fragment(),
                     appBarBinding.toolbar, appBarBinding.overlayToolbar,
                     appBarBinding.breadcrumbLayout, appBarBinding.filterTagsContainer,
                     appBarBinding.filterModeSwitchButton,
-                    appBarBinding.filterTagsView, contentBinding.contentLayout,
+                    appBarBinding.filterTagsView,
+                    appBarBinding.selectionQuickTagsBar,
+                    appBarBinding.selectionQuickTagsContainer,
+                    contentBinding.contentLayout,
                     contentBinding.progress, contentBinding.errorText,
                     contentBinding.emptyView, contentBinding.swipeRefreshLayout,
                     contentBinding.recyclerView, bottomBarBinding.bottomBarLayout,

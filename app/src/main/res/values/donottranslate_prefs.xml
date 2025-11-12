@@ -100,4 +100,9 @@
     
     <string name="pref_key_hide_breadcrumb_path">hide_breadcrumb_path</string>
     <bool name="pref_default_value_hide_breadcrumb_path">false</bool>
+
+    <string name="pref_key_show_selection_rating_slider">show_selection_rating_slider</string>
+    <bool name="pref_default_value_show_selection_rating_slider">true</bool>
+    <string name="pref_key_show_selection_quick_tags">show_selection_quick_tags</string>
+    <bool name="pref_default_value_show_selection_quick_tags">true</bool>
 </resources>
