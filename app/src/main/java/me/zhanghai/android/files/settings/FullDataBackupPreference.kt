@@ -14,6 +14,9 @@ import me.zhanghai.android.files.R
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -66,10 +69,15 @@ class FullDataBackupPreference @JvmOverloads constructor(
 	}
 
 	private fun launchExport() {
+		// Generate filename with current date and time
+		val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.US)
+		val timestamp = dateFormat.format(Date())
+		val filename = "material_files_full_backup_$timestamp.zip"
+		
 		val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
 			addCategory(Intent.CATEGORY_OPENABLE)
 			type = "application/zip"
-			putExtra(Intent.EXTRA_TITLE, "material_files_full_backup.zip")
+			putExtra(Intent.EXTRA_TITLE, filename)
 		}
 		exportLauncher?.launch(intent)
 	}

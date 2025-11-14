@@ -27,7 +27,7 @@ import java.time.Instant
         )
     ],
     indices = [
-        Index("video_path"),
+        Index(value = ["video_path"], name = "idx_video_thumbnails_video_path"),
         Index(value = ["video_path", "is_default"], unique = true, name = "idx_video_default_thumbnail")
     ]
 )
@@ -45,17 +45,17 @@ data class VideoThumbnail(
     @ColumnInfo(name = "timestamp_ms")
     val timestampMs: Long,
 
-    @ColumnInfo(name = "display_order")
+    @ColumnInfo(name = "display_order", defaultValue = "0")
     val displayOrder: Int = 0,
 
-    @ColumnInfo(name = "is_default")
+    @ColumnInfo(name = "is_default", defaultValue = "0")
     val isDefault: Boolean = false,
 
     @ColumnInfo(name = "created_at")
     val createdAt: Long = System.currentTimeMillis(),
 
-    @ColumnInfo(name = "display_interval_ms")
-    val displayIntervalMs: Long = 1000L // Default 1 second
+    @ColumnInfo(name = "display_interval_ms", defaultValue = "5000")
+    val displayIntervalMs: Long = 5000L // Default 5 seconds (matches migration)
 ) {
     companion object {
         const val DEFAULT_INTERVAL_MS = 1000L // 1 second

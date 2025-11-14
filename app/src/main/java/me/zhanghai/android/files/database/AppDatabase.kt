@@ -53,7 +53,9 @@ abstract class AppDatabase : RoomDatabase() {
                 
                 // Add indices
                 database.execSQL("CREATE INDEX IF NOT EXISTS idx_video_thumbnails_video_path ON video_thumbnails(video_path)")
-                database.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_video_default_thumbnail ON video_thumbnails(video_path, is_default) WHERE is_default = 1")
+                // Note: Room doesn't support WHERE clause in Index annotation, so we create a simple unique index
+                // The uniqueness constraint will be enforced at the application level for is_default = 1
+                database.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_video_default_thumbnail ON video_thumbnails(video_path, is_default)")
             }
         }
 
