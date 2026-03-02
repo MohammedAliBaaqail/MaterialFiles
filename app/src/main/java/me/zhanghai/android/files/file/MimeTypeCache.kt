@@ -83,6 +83,13 @@ object MimeTypeCache {
 		}
 	}
 
+    private val persistRunnable = me.zhanghai.android.files.util.DebouncedRunnable(
+        android.os.Handler(android.os.Looper.getMainLooper()), 2000
+    ) {
+        // Offload to background
+        android.os.AsyncTask.execute { persist() }
+    }
+
 	fun getOrDetect(path: java8.nio.file.Path, attributes: BasicFileAttributes): MimeType {
 		ensureLoaded()
 		val key = path.toString()
@@ -96,7 +103,7 @@ object MimeTypeCache {
 		val detected = AndroidFileTypeDetector.getMimeType(path, attributes).asMimeType()
 		map[key] = Entry(detected.value, lm, size)
 		// Persist asynchronously to avoid I/O on calling thread
-		application.mainExecutor.execute { persist() }
+		persistRunnable()
 		return detected
 	}
 }

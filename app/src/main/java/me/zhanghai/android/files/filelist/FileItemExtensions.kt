@@ -23,6 +23,8 @@ import me.zhanghai.android.files.provider.document.documentSupportsThumbnail
 import me.zhanghai.android.files.provider.document.isDocumentPath
 import me.zhanghai.android.files.provider.ftp.isFtpPath
 import me.zhanghai.android.files.provider.linux.isLinuxPath
+import me.zhanghai.android.files.provider.veracrypt.createVeraCryptRootPath
+import me.zhanghai.android.files.provider.veracrypt.isVeraCryptContainer
 import me.zhanghai.android.files.settings.Settings
 import me.zhanghai.android.files.util.asFileName
 import me.zhanghai.android.files.util.isGetPackageArchiveInfoCompatible
@@ -49,11 +51,18 @@ fun FileItem.getMimeTypeName(context: Context): String {
 val FileItem.isArchiveFile: Boolean
     get() = path.isArchiveFile(mimeType)
 
+val FileItem.isVeraCryptContainer: Boolean
+    get() = path.isVeraCryptContainer
+
 val FileItem.isListable: Boolean
-    get() = attributes.isDirectory || isArchiveFile
+    get() = attributes.isDirectory || isArchiveFile || isVeraCryptContainer
 
 val FileItem.listablePath: Path
-    get() = if (isArchiveFile) path.createArchiveRootPath() else path
+    get() = when {
+        isArchiveFile -> path.createArchiveRootPath()
+        isVeraCryptContainer -> path.createVeraCryptRootPath()
+        else -> path
+    }
 
 // @see PathAttributesFetcher.fetch
 val FileItem.supportsThumbnail: Boolean

@@ -21,6 +21,7 @@ import me.zhanghai.android.files.provider.sftp.SftpFileSystemProvider
 import me.zhanghai.android.files.provider.smb.SmbFileSystemProvider
 import me.zhanghai.android.files.provider.webdav.WebDavFileSystemProvider
 import me.zhanghai.android.files.provider.webdav.WebDavsFileSystemProvider
+import me.zhanghai.android.files.provider.veracrypt.VeraCryptFileSystemProvider
 
 object FileSystemProviders {
     /**
@@ -46,6 +47,7 @@ object FileSystemProviders {
             FileSystemProvider.installProvider(SmbFileSystemProvider)
             FileSystemProvider.installProvider(WebDavFileSystemProvider)
             FileSystemProvider.installProvider(WebDavsFileSystemProvider)
+            FileSystemProvider.installProvider(VeraCryptFileSystemProvider)
         }
         Files.installFileTypeDetector(AndroidFileTypeDetector)
     }

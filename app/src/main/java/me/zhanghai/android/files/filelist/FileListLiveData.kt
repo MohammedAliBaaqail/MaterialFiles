@@ -22,6 +22,8 @@ import me.zhanghai.android.files.util.valueCompat
 import java.io.IOException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
+import java.util.stream.Collectors
+import java.util.stream.StreamSupport
 
 class FileListLiveData(private val path: Path) : CloseableLiveData<Stateful<List<FileItem>>>() {
     private var future: Future<Unit>? = null
@@ -52,7 +54,9 @@ class FileListLiveData(private val path: Path) : CloseableLiveData<Stateful<List
             }
             cached
         } catch (e: Exception) {
-            android.util.Log.e("FileListLiveData", "Error checking cache for ${path}", e)
+            if (e !is me.zhanghai.android.files.provider.common.UserActionRequiredException) {
+                android.util.Log.e("FileListLiveData", "Error checking cache for ${path}", e)
+            }
             null
         }
         
@@ -75,21 +79,56 @@ class FileListLiveData(private val path: Path) : CloseableLiveData<Stateful<List
                     val fileList = mutableListOf<FileItem>()
                     val batchSize = 200
                     var lastEmitted = 0
+                    
+                    val pathBatch = java.util.ArrayList<Path>(batchSize)
+                    
                     for (childPath in directoryStream) {
-                        try {
-                            fileList.add(childPath.loadFileItem())
-                        } catch (e: DirectoryIteratorException) {
-                            e.printStackTrace()
-                        } catch (e: IOException) {
-                            e.printStackTrace()
-                        }
-                        // Only emit progressive updates if we don't have cache
-                        // When cache exists, skip progressive updates to show all items at once
-                        if (!hasCache && fileList.size - lastEmitted >= batchSize) {
-                            postValue(Success(fileList.toList()))
-                            lastEmitted = fileList.size
+                        pathBatch.add(childPath)
+                        
+                        if (pathBatch.size >= batchSize) {
+                            val batchItems = StreamSupport.stream(pathBatch.spliterator(), true)
+                                .map {
+                                    try {
+                                        it.loadFileItem()
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                        null
+                                    }
+                                }
+                                .filter { it != null }
+                                .collect(Collectors.toList())
+                            
+                            for (item in batchItems) {
+                                if (item != null) fileList.add(item)
+                            }
+                            pathBatch.clear()
+                            
+                            if (!hasCache) {
+                                postValue(Success(fileList.toList()))
+                                lastEmitted = fileList.size
+                            }
                         }
                     }
+                    
+                    // Process remaining items
+                    if (pathBatch.isNotEmpty()) {
+                        val batchItems = StreamSupport.stream(pathBatch.spliterator(), true)
+                            .map {
+                                try {
+                                    it.loadFileItem()
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                    null
+                                }
+                            }
+                            .filter { it != null }
+                            .collect(Collectors.toList())
+                        
+                        for (item in batchItems) {
+                            if (item != null) fileList.add(item)
+                        }
+                    }
+                    
                     // Final full result
                     val finalList = fileList.toList()
                     // Update cache

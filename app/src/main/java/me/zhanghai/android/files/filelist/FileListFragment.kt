@@ -69,6 +69,10 @@ import me.zhanghai.android.files.app.application
 import me.zhanghai.android.files.app.clipboardManager
 import me.zhanghai.android.files.compat.checkSelfPermissionCompat
 import me.zhanghai.android.files.compat.setGroupDividerEnabledCompat
+import me.zhanghai.android.files.app.BackgroundActivityStarter
+import me.zhanghai.android.files.provider.common.UserActionRequiredException
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 import me.zhanghai.android.files.databinding.FileListFragmentAppBarIncludeBinding
 import me.zhanghai.android.files.databinding.FileListFragmentBinding
 import me.zhanghai.android.files.databinding.FileListFragmentBottomBarIncludeBinding
@@ -96,6 +100,8 @@ import me.zhanghai.android.files.navigation.NavigationRootMapLiveData
 import me.zhanghai.android.files.provider.archive.createArchiveRootPath
 import me.zhanghai.android.files.provider.archive.isArchivePath
 import me.zhanghai.android.files.provider.linux.isLinuxPath
+import me.zhanghai.android.files.provider.veracrypt.createVeraCryptRootPath
+import me.zhanghai.android.files.provider.veracrypt.isVeraCryptContainer
 import me.zhanghai.android.files.settings.Settings
 import me.zhanghai.android.files.terminal.Terminal
 import me.zhanghai.android.files.ui.AppBarLayoutExpandHackListener
@@ -151,6 +157,8 @@ import me.zhanghai.android.files.filelist.VideoMetadataCache
 import me.zhanghai.android.files.file.FileRatingManager
 import java8.nio.file.attribute.BasicFileAttributes
 import java8.nio.file.attribute.FileTime
+import me.zhanghai.android.files.file.asFileSize
+import me.zhanghai.android.files.provider.common.getFileStore
 import java.text.CollationKey
 import kotlin.math.roundToInt
 import kotlin.math.max
@@ -392,7 +400,7 @@ class FileListFragment : Fragment(),
                 else ->
                     if (path != null) {
                         val mimeType = intent.type?.asMimeTypeOrNull()
-                        path = handleArchivePath(path, mimeType)
+                        path = handleOpenPath(path, mimeType)
                     }
             }
             if (path == null) {
@@ -798,12 +806,26 @@ class FileListFragment : Fragment(),
         binding.errorText.fadeToVisibilityUnsafe(stateful is Failure && !hasFiles)
         val throwable = (stateful as? Failure)?.throwable
         if (throwable != null) {
-            throwable.printStackTrace()
-            val error = throwable.toString()
-            if (hasFiles) {
-                showToast(error)
+            if (throwable is UserActionRequiredException) {
+                lifecycleScope.launch {
+                    val successful = suspendCancellableCoroutine<Boolean> { continuation ->
+                        val userAction = throwable.getUserAction(continuation, requireContext())
+                        BackgroundActivityStarter.startActivity(
+                            userAction.intent, userAction.title, userAction.message, application
+                        )
+                    }
+                    if (successful) {
+                        viewModel.reload()
+                    }
+                }
             } else {
-                binding.errorText.text = error
+                throwable.printStackTrace()
+                val error = throwable.toString()
+                if (hasFiles) {
+                    showToast(error)
+                } else {
+                    binding.errorText.text = error
+                }
             }
         }
         binding.emptyView.fadeToVisibilityUnsafe(stateful is Success && !hasFiles)
@@ -819,36 +841,60 @@ class FileListFragment : Fragment(),
     }
 
     private fun getSubtitle(files: List<FileItem>): String {
+        val path = viewModel.currentPath
+        val fileStoreSubtitle = try {
+            val fileStore = path.getFileStore()
+            val totalSpace = fileStore.totalSpace
+            if (totalSpace > 0) {
+                val freeSpace = fileStore.usableSpace
+                val freeSpaceString = freeSpace.asFileSize().formatHumanReadable(requireContext())
+                val totalSpaceString = totalSpace.asFileSize().formatHumanReadable(requireContext())
+                getString(R.string.navigation_storage_subtitle_format, freeSpaceString, totalSpaceString)
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
+
         // Prefer cached total item count for current folder if available, to avoid fluctuation
-        me.zhanghai.android.files.file.FolderItemCountManager
-            .getItemCountIfPresent(viewModel.currentPath)
+        val itemCountSubtitle = me.zhanghai.android.files.file.FolderItemCountManager
+            .getItemCountIfPresent(path)
             ?.let { total ->
-                return getQuantityString(R.plurals.file_list_item_count_format, total, total)
+                getQuantityString(R.plurals.file_list_item_count_format, total, total)
+            }
+            ?: run {
+                val directoryCount = files.count { it.attributes.isDirectory }
+                val fileCount = files.size - directoryCount
+                val directoryCountText = if (directoryCount > 0) {
+                    getQuantityString(
+                        R.plurals.file_list_subtitle_directory_count_format, directoryCount,
+                        directoryCount
+                    )
+                } else {
+                    null
+                }
+                val fileCountText = if (fileCount > 0) {
+                    getQuantityString(
+                        R.plurals.file_list_subtitle_file_count_format, fileCount, fileCount
+                    )
+                } else {
+                    null
+                }
+                when {
+                    !directoryCountText.isNullOrEmpty() && !fileCountText.isNullOrEmpty() ->
+                        (directoryCountText + getString(R.string.file_list_subtitle_separator)
+                            + fileCountText)
+                    !directoryCountText.isNullOrEmpty() -> directoryCountText
+                    !fileCountText.isNullOrEmpty() -> fileCountText
+                    else -> getString(R.string.empty)
+                }
             }
 
-        val directoryCount = files.count { it.attributes.isDirectory }
-        val fileCount = files.size - directoryCount
-        val directoryCountText = if (directoryCount > 0) {
-            getQuantityString(
-                R.plurals.file_list_subtitle_directory_count_format, directoryCount, directoryCount
-            )
+        return if (fileStoreSubtitle != null) {
+            fileStoreSubtitle + getString(R.string.file_list_subtitle_separator) + itemCountSubtitle
         } else {
-            null
-        }
-        val fileCountText = if (fileCount > 0) {
-            getQuantityString(
-                R.plurals.file_list_subtitle_file_count_format, fileCount, fileCount
-            )
-        } else {
-            null
-        }
-        return when {
-            !directoryCountText.isNullOrEmpty() && !fileCountText.isNullOrEmpty() ->
-                (directoryCountText + getString(R.string.file_list_subtitle_separator)
-                    + fileCountText)
-            !directoryCountText.isNullOrEmpty() -> directoryCountText
-            !fileCountText.isNullOrEmpty() -> fileCountText
-            else -> getString(R.string.empty)
+            itemCountSubtitle
         }
     }
 
@@ -2273,9 +2319,12 @@ class FileListFragment : Fragment(),
         return path.isArchivePath || (mimeType.isSupportedArchive && !path.isArchivePath)
     }
 
-    private fun handleArchivePath(path: Path, mimeType: MimeType?): Path {
+    private fun handleOpenPath(path: Path, mimeType: MimeType?): Path {
         if (mimeType != null && isArchivePath(path, mimeType)) {
             return path.createArchiveRootPath()
+        }
+        if (path.isVeraCryptContainer) {
+            return path.createVeraCryptRootPath()
         }
         return path
     }

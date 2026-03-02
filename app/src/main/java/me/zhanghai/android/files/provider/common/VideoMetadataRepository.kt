@@ -14,6 +14,7 @@ import me.zhanghai.android.files.settings.PathSettings
 import me.zhanghai.android.files.settings.Settings
 import me.zhanghai.android.files.util.pathString
 import me.zhanghai.android.files.util.toHex
+import me.zhanghai.android.files.provider.common.setDataSource
 import me.zhanghai.android.files.util.valueCompat
 import java.io.File
 import java.io.FileOutputStream
@@ -50,7 +51,7 @@ class VideoMetadataRepository(context: Context) {
         return withContext(Dispatchers.IO) {
             try {
                 MediaMetadataRetriever().use { retriever ->
-                    retriever.setDataSource(pathString)
+                    retriever.setDataSource(path)
                     val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull()
                     
                     // Extract dimensions while we have the retriever open
@@ -125,7 +126,7 @@ class VideoMetadataRepository(context: Context) {
         return withContext(Dispatchers.IO) {
             try {
                 MediaMetadataRetriever().use { retriever ->
-                    retriever.setDataSource(pathString)
+                    retriever.setDataSource(path)
                     
                     // Extract dimensions for proper sizing
                     val width = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)?.toIntOrNull() ?: 1920
@@ -314,7 +315,7 @@ class VideoMetadataRepository(context: Context) {
         return withContext(Dispatchers.IO) {
             try {
                 MediaMetadataRetriever().use { retriever ->
-                    retriever.setDataSource(pathString)
+                    retriever.setDataSource(path)
                     val width = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)?.toIntOrNull()
                     val height = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)?.toIntOrNull()
                     

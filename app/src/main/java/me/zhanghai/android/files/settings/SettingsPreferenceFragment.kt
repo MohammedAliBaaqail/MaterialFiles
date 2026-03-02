@@ -65,15 +65,6 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
         super.onActivityCreated(savedInstanceState)
 
         val activity = requireActivity() as SettingsActivity
-        // Register the tag backup preference for activity results
-        tagBackupPreference.registerForActivityResult(activity)
-        Log.d(logTag, "Registered TagBackupPreference for activity results (onActivityCreated)")
-        // Register the folder item count backup preference for activity results
-        folderItemCountBackupPreference.registerForActivityResult(activity)
-        Log.d(logTag, "Registered FolderItemCountBackupPreference for activity results (onActivityCreated)")
-        // Register the full data backup preference for activity results
-        fullDataBackupPreference.registerForActivityResult(activity)
-        Log.d(logTag, "Registered FullDataBackupPreference for activity results (onActivityCreated)")
 
         val viewLifecycleOwner = viewLifecycleOwner
         // The following may end up passing the same lambda instance to the observer because it has

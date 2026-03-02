@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="bad_container_file_or_wrong_password">Wrong password or unsupported container format</string>
+    <string name="generic_error_message">An error occurred while processing the container.</string>
+    <string name="update_exfat_module">Please update the exFAT module.</string>
+    <string name="exfat_module_required">Please install the exFAT module.</string>
+</resources>

@@ -39,7 +39,7 @@ import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
-import com.google.android.exoplayer2.ui.PlayerView
+import com.google.android.exoplayer2.ui.StyledPlayerView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -218,7 +218,7 @@ class VideoThumbnailManagementDialogFragment : AppCompatDialogFragment() {
 
         val mediaViewSwitcher = view.findViewById<ViewSwitcher>(R.id.media_view_switcher)
         val thumbnailImageView = view.findViewById<ImageView>(R.id.thumbnail_image)
-        val playerView = view.findViewById<PlayerView>(R.id.player_view)
+        val playerView = view.findViewById<StyledPlayerView>(R.id.player_view)
         val timeSeekBar = view.findViewById<SeekBar>(R.id.time_seek_bar)
         val currentTimeText = view.findViewById<TextView>(R.id.current_time_text)
         val regenerateButton = view.findViewById<MaterialButton>(R.id.regenerate_button)
@@ -432,7 +432,7 @@ class VideoThumbnailManagementDialogFragment : AppCompatDialogFragment() {
         }
     }
     
-    private fun initializePlayer(playerView: PlayerView) {
+    private fun initializePlayer(playerView: StyledPlayerView) {
         // Release any existing player
         releasePlayer()
         

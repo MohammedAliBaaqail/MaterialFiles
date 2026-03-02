@@ -23,6 +23,7 @@ import me.zhanghai.android.files.file.FileItem
 import me.zhanghai.android.files.file.asFileSize
 import me.zhanghai.android.files.file.fileSize
 import me.zhanghai.android.files.file.formatLong
+import me.zhanghai.android.files.provider.common.getFileStore
 import me.zhanghai.android.files.filelist.getMimeTypeName
 import me.zhanghai.android.files.filelist.name
 import me.zhanghai.android.files.filelist.toUserFriendlyString
@@ -92,6 +93,20 @@ class FilePropertiesBasicTabFragment : FilePropertiesTabFragment() {
             }
             val lastModificationTime = file.attributes.lastModifiedTime().toInstant().formatLong()
             addItemView(R.string.file_properties_basic_last_modification_time, lastModificationTime)
+            try {
+                val fileStore = path.getFileStore()
+                val totalSpace = fileStore.totalSpace
+                if (totalSpace > 0) {
+                    val freeSpace = fileStore.usableSpace
+                    val freeSpaceString = freeSpace.asFileSize().formatHumanReadable(requireContext())
+                    val totalSpaceString = totalSpace.asFileSize().formatHumanReadable(requireContext())
+                    addItemView(
+                        R.string.navigation_storage_subtitle_format,
+                        getString(R.string.navigation_storage_subtitle_format, freeSpaceString, totalSpaceString)
+                    )
+                }
+            } catch (e: Exception) {
+            }
         }
     }
 

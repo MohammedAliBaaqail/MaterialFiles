@@ -16,6 +16,7 @@ import androidx.annotation.StringRes
 import java8.nio.file.Path
 import java8.nio.file.Paths
 import me.zhanghai.android.files.R
+import me.zhanghai.android.files.provider.common.getFileStore
 import me.zhanghai.android.files.about.AboutActivity
 import me.zhanghai.android.files.compat.getDescriptionCompat
 import me.zhanghai.android.files.compat.isPrimaryCompat
@@ -99,7 +100,7 @@ private class PathStorageItem(
     override fun getTitle(context: Context): String = storage.getName(context)
 
     override fun getSubtitle(context: Context): String? =
-        storage.linuxPath?.let { getStorageSubtitle(it, context) }
+        getStorageSubtitle(path, context)
 
     override fun onLongClick(listener: Listener): Boolean {
         listener.launchIntent(storage.createEditIntent())
@@ -155,26 +156,27 @@ private class StorageVolumeItem(
     override fun getTitle(context: Context): String = storageVolume.getDescriptionCompat(context)
 
     override fun getSubtitle(context: Context): String? =
-        getStorageSubtitle(storageVolume.pathCompat, context)
+        getStorageSubtitle(path, context)
 
     override fun getName(context: Context): String = getTitle(context)
 }
 
-private fun getStorageSubtitle(linuxPath: String, context: Context): String? {
-    var totalSpace = JavaFile.getTotalSpace(linuxPath)
-    val freeSpace: Long
-    when {
-        totalSpace != 0L -> freeSpace = JavaFile.getFreeSpace(linuxPath)
-        linuxPath == FileSystemRoot.LINUX_PATH -> {
-            // Root directory may not be an actual partition on legacy Android versions (can be
-            // a ramdisk instead). On modern Android the system partition will be mounted as
-            // root instead so let's try with the system partition again.
-            // @see https://source.android.com/devices/bootloader/system-as-root
+private fun getStorageSubtitle(path: Path, context: Context): String? {
+    var totalSpace: Long
+    var freeSpace: Long
+    try {
+        val fileStore = path.getFileStore()
+        totalSpace = fileStore.totalSpace
+        freeSpace = fileStore.usableSpace
+    } catch (e: Exception) {
+        val linuxPath = path.toString()
+        totalSpace = JavaFile.getTotalSpace(linuxPath)
+        freeSpace = if (totalSpace != 0L) JavaFile.getFreeSpace(linuxPath) else 0L
+        if (totalSpace == 0L && linuxPath == FileSystemRoot.LINUX_PATH) {
             val systemPath = Environment.getRootDirectory().path
             totalSpace = JavaFile.getTotalSpace(systemPath)
             freeSpace = JavaFile.getFreeSpace(systemPath)
         }
-        else -> freeSpace = 0
     }
     if (totalSpace == 0L) {
         return null

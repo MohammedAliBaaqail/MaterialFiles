@@ -19,3 +19,5 @@ target_compile_options(syscall
 target_link_libraries(syscall
         PRIVATE
         ${LOG_LIBRARY})
+
+add_subdirectory(src/main/native)

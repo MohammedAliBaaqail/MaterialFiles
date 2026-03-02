@@ -79,6 +79,10 @@
     <string name="file_action_archive_password_title">Password required</string>
     <string name="file_action_archive_password_message_format">"%1$s" is password-protected.</string>
     <string name="file_action_archive_password_error_empty">Password cannot be empty</string>
+    <string name="file_action_veracrypt_password_title">VeraCrypt password</string>
+    <string name="file_action_veracrypt_password_message_format">"%1$s" is a VeraCrypt container.</string>
+    <string name="file_action_veracrypt_password_checking">Checking password…</string>
+    <string name="file_action_veracrypt_password_error_incorrect">Incorrect password</string>
 
     <plurals name="file_job_archive_scan_notification_title_format">
         <item quantity="one">Preparing to compress %1$,d file (%2$s)</item>
@@ -98,6 +102,8 @@
         <item quantity="one">Copying %1$,d file to "%2$s"</item>
         <item quantity="other">Copying %1$,d files to "%2$s"</item>
     </plurals>
+
+    <string name="veracrypt_viewer_title">VeraCrypt container opener</string>
     <plurals name="file_job_extract_scan_notification_title_format">
         <item quantity="one">Preparing to extract %1$,d file (%2$s)</item>
         <item quantity="other">Preparing to extract %1$,d files (%2$s)</item>
@@ -957,6 +963,8 @@
     <string name="full_backup_export_error">Failed to export backup</string>
     <string name="full_backup_import_success">Backup imported</string>
     <string name="full_backup_import_error">Failed to import backup</string>
+    <string name="full_backup_importing">Importing backup, please wait…</string>
+    <string name="full_backup_import_restart">Backup imported. Restarting app...</string>
 
     <!-- Selection UI settings -->
     <string name="settings_selection_rating_slider_title">Show rating slider during selection</string>

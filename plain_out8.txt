@@ -1,0 +1,627 @@
+﻿WARNING: We recommend using a newer Android Gradle plugin to use compileSdk = 35
+
+This Android Gradle plugin (8.3.2) was tested up to compileSdk = 34.
+
+You are strongly encouraged to update your project to use a newer
+Android Gradle plugin that has been tested with compileSdk = 35.
+
+If you are already using the latest version of the Android Gradle plugin,
+you may need to wait until a newer version with support for compileSdk = 35 is available.
+
+To suppress this warning, add/update
+    android.suppressUnsupportedCompileSdk=35
+to this project's gradle.properties.
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:checkKotlinGradlePluginConfigurationErrors
+> Task :app:dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:injectCrashlyticsMappingFileIdDebug UP-TO-DATE
+> Task :app:processDebugGoogleServices UP-TO-DATE
+> Task :app:extractDebugSupportedLocales UP-TO-DATE
+> Task :app:generateDebugLocaleConfig UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:dataBindingGenBaseClassesDebug UP-TO-DATE
+> Task :app:generateDebugBuildConfig UP-TO-DATE
+> Task :app:generateSafeArgsDebug UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:processDebugMainManifest
+> Task :app:processDebugManifest
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:processDebugManifestForPackage
+> Task :app:compileDebugAidl
+> Task :app:processDebugResources
+> Task :app:kspDebugKotlin
+> Task :app:compileDebugKotlin
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/about/AboutFragment.kt:34:15 'onActivityCreated(Bundle?): Unit' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/app/AppInitializers.kt:8:19 'AsyncTask<Params : Any!, Progress : Any!, Result : Any!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/app/AppInitializers.kt:65:5 'AsyncTask<Params : Any!, Progress : Any!, Result : Any!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/app/AppInitializers.kt:65:15 'THREAD_POOL_EXECUTOR: Executor!' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/compat/ParcelCompat.kt:25:16 'readParcelableList((Mutable)List<T!>, ClassLoader?): (Mutable)List<T!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/compat/ParcelCompat.kt:35:27 'readParcelable(ClassLoader?): T?' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/compat/ParcelCompat.kt:65:47 'readSerializable(): Serializable?' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/database/AppDatabase.kt:29:34 The corresponding parameter in the supertype 'Migration' is named 'db'. This may cause problems when calling this function with named arguments.
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/database/AppDatabase.kt:39:34 The corresponding parameter in the supertype 'Migration' is named 'db'. This may cause problems when calling this function with named arguments.
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/file/FileTagTestColors.kt:17:22 Parameter 'context' is never used
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/file/InstantExtensions.kt:10:28 'Time' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/file/MimeTypeCache.kt:90:20 'AsyncTask<Params : Any!, Progress : Any!, Result : Any!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/file/MimeTypeCache.kt:90:30 'execute(Runnable!): Unit' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/file/MimeTypeConversionExtensions.kt:20:9 Name shadowed: extension
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileaction/ArchivePasswordDialogFragment.kt:85:70 'SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileaction/VeraCryptPasswordDialogActivity.kt:47:9 'overridePendingTransition(Int, Int): Unit' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileaction/VeraCryptPasswordDialogFragment.kt:84:70 'SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filejob/FileJobConflictDialogFragment.kt:144:70 'SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filejob/FileJobConflictDialogFragment.kt:211:37 Parameter 'dialog' is never used
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filejob/FileJobErrorDialogFragment.kt:79:36 'launchWhenStarted(suspend CoroutineScope.() -> Unit): Job' is deprecated. launchWhenStarted is deprecated as it can lead to wasted resources in some cases. Replace with suspending repeatOnLifecycle to run the block whenever the Lifecycle state is at least Lifecycle.State.STARTED.
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filejob/FileJobErrorDialogFragment.kt:119:37 Parameter 'dialog' is never used
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filejob/FileJobs.kt:1313:9 Name shadowed: target
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileListAdapter.kt:268:13 Name shadowed: viewType
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileListAdapter.kt:314:13 Variable 'pathString' is never used
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileListAdapter.kt:315:13 Variable 'fileAttributes' is never used
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileListAdapter.kt:399:44 Parameter 'view' is never used, could be renamed to _
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileListAdapter.kt:409:48 Parameter 'view' is never used, could be renamed to _
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileListAdapter.kt:427:49 Parameter 'view' is never used, could be renamed to _
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileListAdapter.kt:437:53 Parameter 'view' is never used, could be renamed to _
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileListAdapter.kt:1008:39 Variable 'duration' initializer is redundant
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileListAdapter.kt:1039:39 Parameter 'file' is never used
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileListCache.kt:317:35 'readParcelable(ClassLoader?): T?' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileListFragment.kt:249:9 'setHasOptionsMenu(Boolean): Unit' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileListFragment.kt:262:15 'onActivityCreated(Bundle?): Unit' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileListFragment.kt:540:15 'onPrepareOptionsMenu(Menu): Unit' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileListFragment.kt:717:27 'onOptionsItemSelected(MenuItem): Boolean' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileListFragment.kt:775:38 Parameter 'path' is never used
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileListFragment.kt:785:45 Parameter 'expanded' is never used
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileListFragment.kt:891:47 Parameter 'pathSpecific' is never used
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileListFragment.kt:1001:42 Parameter 'showHiddenFiles' is never used
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileListFragment.kt:1567:37 Parameter 'pasteState' is never used
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileListFragment.kt:1807:38 Parameter 'targetPath' is never used
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileListFragment.kt:2608:42 Unnecessary safe call on a non-null receiver of type Path
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileListFragment.kt:2608:79 Unnecessary safe call on a non-null receiver of type Path
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileListLiveData.kt:8:19 'AsyncTask<Params : Any!, Progress : Any!, Result : Any!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileListLiveData.kt:71:19 'AsyncTask<Params : Any!, Progress : Any!, Result : Any!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileListLiveData.kt:71:29 'THREAD_POOL_EXECUTOR: Executor!' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileListLiveData.kt:79:25 Variable 'lastEmitted' is assigned but never accessed
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileListLiveData.kt:106:33 The value 'fileList.size' assigned to 'var lastEmitted: Int defined in me.zhanghai.android.files.filelist.FileListLiveData.loadValue.`<anonymous>`.`<anonymous>`' is never used
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileSortOptions.kt:40:17 Property would not be serialized into a 'Parcel'. Add '@IgnoredOnParcel' annotation to remove the warning
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileTagManagementDialogFragment.kt:47:28 'getParcelableArrayList(String?): ArrayList<T!>?' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileTagManagementDialogFragment.kt:120:47 'getter for adapterPosition: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FileTagManagementDialogFragment.kt:121:41 'getter for adapterPosition: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/FolderThumbnailManagementDialogFragment.kt:228:82 Parameter 'input' is never used, could be renamed to _
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/PathObserver.kt:8:19 'AsyncTask<Params : Any!, Progress : Any!, Result : Any!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/PathObserver.kt:26:9 'AsyncTask<Params : Any!, Progress : Any!, Result : Any!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/PathObserver.kt:26:19 'THREAD_POOL_EXECUTOR: Executor!' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/PathObserver.kt:49:9 'AsyncTask<Params : Any!, Progress : Any!, Result : Any!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/PathObserver.kt:49:19 'THREAD_POOL_EXECUTOR: Executor!' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/SearchFileListLiveData.kt:8:19 'AsyncTask<Params : Any!, Progress : Any!, Result : Any!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/SearchFileListLiveData.kt:36:19 'AsyncTask<Params : Any!, Progress : Any!, Result : Any!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/SearchFileListLiveData.kt:36:29 'THREAD_POOL_EXECUTOR: Executor!' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/TrailData.kt:67:17 Name shadowed: path
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/VideoMetadataCache.kt:82:13 Condition 'path == null' is always 'false'
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/VideoMetadataCache.kt:108:13 Condition 'path == null' is always 'false'
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/VideoMetadataCache.kt:134:13 Condition 'path == null' is always 'false'
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/VideoThumbnailManagementDialogFragment.kt:42:41 'PlayerView' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/VideoThumbnailManagementDialogFragment.kt:221:44 'PlayerView' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/VideoThumbnailManagementDialogFragment.kt:435:46 'PlayerView' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/filelist/VideoThumbnailManagementDialogFragment.kt:595:82 Parameter 'input' is never used, could be renamed to _
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileproperties/FileLiveData.kt:8:19 'AsyncTask<Params : Any!, Progress : Any!, Result : Any!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileproperties/FileLiveData.kt:37:9 'AsyncTask<Params : Any!, Progress : Any!, Result : Any!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileproperties/FileLiveData.kt:37:19 'THREAD_POOL_EXECUTOR: Executor!' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileproperties/FilePropertiesDialogFragment.kt:62:15 'onActivityCreated(Bundle?): Unit' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileproperties/FilePropertiesTabFragment.kt:40:15 'onActivityCreated(Bundle?): Unit' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileproperties/apk/ApkInfoLiveData.kt:9:19 'AsyncTask<Params : Any!, Progress : Any!, Result : Any!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileproperties/apk/ApkInfoLiveData.kt:32:9 'AsyncTask<Params : Any!, Progress : Any!, Result : Any!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileproperties/apk/ApkInfoLiveData.kt:32:19 'THREAD_POOL_EXECUTOR: Executor!' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileproperties/apk/PermissionListAdapter.kt:39:41 'capitalize(Locale): String' is deprecated. Use replaceFirstChar instead.
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileproperties/apk/PermissionListLiveData.kt:8:19 'AsyncTask<Params : Any!, Progress : Any!, Result : Any!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileproperties/apk/PermissionListLiveData.kt:27:9 'AsyncTask<Params : Any!, Progress : Any!, Result : Any!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileproperties/apk/PermissionListLiveData.kt:27:19 'THREAD_POOL_EXECUTOR: Executor!' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileproperties/audio/AudioInfoLiveData.kt:9:19 'AsyncTask<Params : Any!, Progress : Any!, Result : Any!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileproperties/audio/AudioInfoLiveData.kt:32:9 'AsyncTask<Params : Any!, Progress : Any!, Result : Any!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileproperties/audio/AudioInfoLiveData.kt:32:19 'THREAD_POOL_EXECUTOR: Executor!' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileproperties/checksum/ChecksumInfoLiveData.kt:8:19 'AsyncTask<Params : Any!, Progress : Any!, Result : Any!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileproperties/checksum/ChecksumInfoLiveData.kt:32:19 'AsyncTask<Params : Any!, Progress : Any!, Result : Any!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileproperties/checksum/ChecksumInfoLiveData.kt:32:29 'THREAD_POOL_EXECUTOR: Executor!' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileproperties/image/ImageInfoLiveData.kt:9:19 'AsyncTask<Params : Any!, Progress : Any!, Result : Any!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileproperties/image/ImageInfoLiveData.kt:38:9 'AsyncTask<Params : Any!, Progress : Any!, Result : Any!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileproperties/image/ImageInfoLiveData.kt:38:19 'THREAD_POOL_EXECUTOR: Executor!' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileproperties/permission/PrincipalListLiveData.kt:9:19 'AsyncTask<Params : Any!, Progress : Any!, Result : Any!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileproperties/permission/PrincipalListLiveData.kt:25:9 'AsyncTask<Params : Any!, Progress : Any!, Result : Any!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileproperties/permission/PrincipalListLiveData.kt:25:19 'THREAD_POOL_EXECUTOR: Executor!' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileproperties/video/VideoInfoLiveData.kt:9:19 'AsyncTask<Params : Any!, Progress : Any!, Result : Any!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileproperties/video/VideoInfoLiveData.kt:33:9 'AsyncTask<Params : Any!, Progress : Any!, Result : Any!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/fileproperties/video/VideoInfoLiveData.kt:33:19 'THREAD_POOL_EXECUTOR: Executor!' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ftpserver/FtpServerFragment.kt:29:15 'onActivityCreated(Bundle?): Unit' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ftpserver/FtpServerUrl.kt:34:46 'CONNECTIVITY_ACTION: String' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/navigation/NavigationFragment.kt:37:15 'onActivityCreated(Bundle?): Unit' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/navigation/NavigationFragment.kt:56:38 Parameter 'path' is never used
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/navigation/NavigationRecyclerView.kt:32:66 'statusBarColor: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/navigation/NavigationRecyclerView.kt:54:13 Name shadowed: widthSpec
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/navigation/NavigationRecyclerView.kt:71:20 'getter for systemWindowInsetRight: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/navigation/NavigationRecyclerView.kt:73:20 'getter for systemWindowInsetLeft: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/navigation/NavigationRecyclerView.kt:77:27 'getter for systemWindowInsetTop: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/navigation/NavigationRecyclerView.kt:80:38 'getter for systemWindowInsetBottom: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/navigation/NavigationRecyclerView.kt:83:23 'replaceSystemWindowInsets(Int, Int, Int, Int): WindowInsets' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/navigation/NavigationRecyclerView.kt:84:20 'getter for systemWindowInsetLeft: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/navigation/NavigationRecyclerView.kt:85:20 'getter for systemWindowInsetRight: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/navigation/NavigationRecyclerView.kt:92:39 'getter for statusBarColor: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/nonfree/CrashlyticsInitializer.kt:40:53 'GET_SIGNATURES: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/nonfree/CrashlyticsInitializer.kt:42:38 'signatures: Array<(out) Signature!>?' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/provider/archive/ArchiveFileSystem.kt:234:42 'readParcelable(ClassLoader?): T?' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/provider/archive/archiver/ArchiveReader.kt:65:17 Name shadowed: path
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/provider/common/WalkFileTreeSearchable.kt:126:25 Name shadowed: attributes
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/provider/document/DocumentFileSystemProvider.kt:204:13 Name shadowed: options
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/provider/document/resolver/DocumentResolver.kt:449:13 'delete(Uri): Unit' is deprecated. 
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/provider/ftp/FtpCopyMove.kt:159:13 Name shadowed: copyOptions
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/provider/linux/LinuxCopyMove.kt:283:13 Name shadowed: copyOptions
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/provider/linux/LocalLinuxFileStore.kt:61:13 Name shadowed: path
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/provider/linux/LocalLinuxFileStore.kt:125:13 Name shadowed: mountFlags
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/provider/linux/media/MediaScanner.kt:75:13 Name shadowed: file
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/provider/linux/syscall/Syscall.kt:198:17 Name shadowed: timeout
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/provider/remote/ParcelableCopyOptions.kt:20:28 'readParcelable(ClassLoader?): T?' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/provider/remote/ParcelableObject.kt:16:16 'readParcelable(ClassLoader?): T?' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/provider/remote/ParcelableSerializable.kt:16:55 'readSerializable(): Serializable?' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/provider/remote/RemoteFileSystemProvider.kt:63:13 Name shadowed: options
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/provider/remote/RemoteFileSystemProvider.kt:79:13 Name shadowed: filter
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/provider/sftp/SftpCopyMove.kt:274:13 Name shadowed: copyOptions
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/provider/smb/SmbCopyMove.kt:218:13 Name shadowed: copyOptions
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/provider/smb/client/FileExtensions.kt:91:9 Name shadowed: length
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/provider/veracrypt/VeraCryptByteChannel.kt:36:13 Variable 'position' is never used
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/provider/veracrypt/VeraCryptFileAttributeView.kt:31:17 Variable 'dir' is never used
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/provider/veracrypt/VeraCryptFileSystem.kt:169:44 'readParcelable(ClassLoader?): T?' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/provider/webdav/WebDavCopyMove.kt:164:13 Name shadowed: copyOptions
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/provider/webdav/client/Client.kt:169:36 Parameter 'noFollowLinks' is never used
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/settings/BookmarkDirectoryListFragment.kt:55:15 'onActivityCreated(Bundle?): Unit' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/settings/DefaultIfEmptyEditTextPreference.kt:43:13 Name shadowed: text
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/settings/RootStrategyPreference.kt:44:48 'yes: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/settings/SettingsActivity.kt:35:13 Name shadowed: savedInstanceState
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/settings/SettingsActivity.kt:73:9 'overridePendingTransition(Int, Int): Unit' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/settings/SettingsFragment.kt:29:15 'onActivityCreated(Bundle?): Unit' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/settings/SettingsPreferenceFragment.kt:65:15 'onActivityCreated(Bundle?): Unit' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/settings/SettingsPreferenceFragment.kt:67:13 Variable 'activity' is never used
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/settings/SettingsPreferenceFragment.kt:85:37 Parameter 'themeColor' is never used
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/settings/SettingsPreferenceFragment.kt:89:42 Parameter 'isMaterialDesign3' is never used
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/settings/SettingsPreferenceFragment.kt:93:36 Parameter 'nightMode' is never used
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/settings/SettingsPreferenceFragment.kt:97:41 Parameter 'blackNightMode' is never used
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/settings/StandardDirectoryListFragment.kt:29:15 'onActivityCreated(Bundle?): Unit' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/settings/StandardDirectoryListPreferenceFragment.kt:28:15 'onActivityCreated(Bundle?): Unit' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/storage/AddDocumentTreeFragment.kt:24:15 'onActivityCreated(Bundle?): Unit' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/storage/AddExternalStorageShortcutFragment.kt:25:15 'onActivityCreated(Bundle?): Unit' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/storage/AddLanSmbServerFragment.kt:49:15 'onActivityCreated(Bundle?): Unit' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/storage/EditFtpServerFragment.kt:52:24 'launchWhenStarted(suspend CoroutineScope.() -> Unit): Job' is deprecated. launchWhenStarted is deprecated as it can lead to wasted resources in some cases. Replace with suspending repeatOnLifecycle to run the block whenever the Lifecycle state is at least Lifecycle.State.STARTED.
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/storage/EditFtpServerFragment.kt:70:33 'launchWhenCreated(suspend CoroutineScope.() -> Unit): Job' is deprecated. launchWhenCreated is deprecated as it can lead to wasted resources in some cases. Replace with suspending repeatOnLifecycle to run the block whenever the Lifecycle state is at least Lifecycle.State.CREATED.
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/storage/EditSftpServerFragment.kt:59:24 'launchWhenStarted(suspend CoroutineScope.() -> Unit): Job' is deprecated. launchWhenStarted is deprecated as it can lead to wasted resources in some cases. Replace with suspending repeatOnLifecycle to run the block whenever the Lifecycle state is at least Lifecycle.State.STARTED.
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/storage/EditSftpServerFragment.kt:80:33 'launchWhenCreated(suspend CoroutineScope.() -> Unit): Job' is deprecated. launchWhenCreated is deprecated as it can lead to wasted resources in some cases. Replace with suspending repeatOnLifecycle to run the block whenever the Lifecycle state is at least Lifecycle.State.CREATED.
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/storage/EditSmbServerFragment.kt:51:24 'launchWhenStarted(suspend CoroutineScope.() -> Unit): Job' is deprecated. launchWhenStarted is deprecated as it can lead to wasted resources in some cases. Replace with suspending repeatOnLifecycle to run the block whenever the Lifecycle state is at least Lifecycle.State.STARTED.
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/storage/EditSmbServerFragment.kt:69:33 'launchWhenCreated(suspend CoroutineScope.() -> Unit): Job' is deprecated. launchWhenCreated is deprecated as it can lead to wasted resources in some cases. Replace with suspending repeatOnLifecycle to run the block whenever the Lifecycle state is at least Lifecycle.State.CREATED.
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/storage/EditWebDavServerFragment.kt:54:24 'launchWhenStarted(suspend CoroutineScope.() -> Unit): Job' is deprecated. launchWhenStarted is deprecated as it can lead to wasted resources in some cases. Replace with suspending repeatOnLifecycle to run the block whenever the Lifecycle state is at least Lifecycle.State.STARTED.
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/storage/EditWebDavServerFragment.kt:72:33 'launchWhenCreated(suspend CoroutineScope.() -> Unit): Job' is deprecated. launchWhenCreated is deprecated as it can lead to wasted resources in some cases. Replace with suspending repeatOnLifecycle to run the block whenever the Lifecycle state is at least Lifecycle.State.CREATED.
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/storage/LanSmbServerListLiveData.kt:8:19 'AsyncTask<Params : Any!, Progress : Any!, Result : Any!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/storage/LanSmbServerListLiveData.kt:44:23 'AsyncTask<Params : Any!, Progress : Any!, Result : Any!>' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/storage/LanSmbServerListLiveData.kt:44:33 'THREAD_POOL_EXECUTOR: Executor!' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/storage/LanSmbServerListLiveData.kt:49:45 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/storage/LanSmbServerListLiveData.kt:85:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/storage/LanSmbServerListLiveData.kt:102:35 There is more than one label with such a name in this scope
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/storage/LanSmbServerListLiveData.kt:112:43 There is more than one label with such a name in this scope
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/storage/LanSmbServerListLiveData.kt:123:9 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/storage/LanSmbServerListLiveData.kt:136:35 There is more than one label with such a name in this scope
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/storage/LanSmbServerListLiveData.kt:138:82 There is more than one label with such a name in this scope
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/storage/StorageListFragment.kt:45:15 'onActivityCreated(Bundle?): Unit' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/theme/night/NightMode.kt:14:33 'MODE_NIGHT_AUTO_TIME: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/CoordinatorAppBarLayout.kt:40:41 'getter for statusBarColor: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/CoordinatorAppBarLayout.kt:43:24 'setter for statusBarColor: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/CoordinatorScrollingFrameLayout.kt:55:37 'getter for systemWindowInsetLeft: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/CoordinatorScrollingFrameLayout.kt:55:75 'getter for systemWindowInsetRight: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/CoordinatorScrollingFrameLayout.kt:57:14 'setSystemWindowInsets(Insets): WindowInsetsCompat.Builder' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/CoordinatorScrollingFrameLayout.kt:57:62 'getter for systemWindowInsetBottom: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/CoordinatorScrollingFrameLayout.kt:74:75 'getter for systemWindowInsetBottom: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/CoordinatorScrollingFrameLayout.kt:78:53 'getter for systemWindowInsetBottom: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/CoordinatorScrollingFrameLayout.kt:100:13 Name shadowed: view
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/CoordinatorScrollingFrameLayout.kt:124:17 Name shadowed: parentHeightMeasureSpec
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/CoordinatorScrollingFrameLayout.kt:129:36 'getter for systemWindowInsetTop: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/CoordinatorScrollingFrameLayout.kt:129:72 'getter for systemWindowInsetBottom: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/CoordinatorScrollingLinearLayout.kt:55:37 'getter for systemWindowInsetLeft: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/CoordinatorScrollingLinearLayout.kt:55:75 'getter for systemWindowInsetRight: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/CoordinatorScrollingLinearLayout.kt:57:14 'setSystemWindowInsets(Insets): WindowInsetsCompat.Builder' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/CoordinatorScrollingLinearLayout.kt:57:62 'getter for systemWindowInsetBottom: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/CoordinatorScrollingLinearLayout.kt:75:75 'getter for systemWindowInsetBottom: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/CoordinatorScrollingLinearLayout.kt:79:53 'getter for systemWindowInsetBottom: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/CoordinatorScrollingLinearLayout.kt:101:13 Name shadowed: view
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/CoordinatorScrollingLinearLayout.kt:125:17 Name shadowed: parentHeightMeasureSpec
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/CoordinatorScrollingLinearLayout.kt:130:36 'getter for systemWindowInsetTop: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/CoordinatorScrollingLinearLayout.kt:130:72 'getter for systemWindowInsetBottom: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/FitsSystemWindowsAppBarLayout.kt:33:33 'getter for systemWindowInsetLeft: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/FitsSystemWindowsAppBarLayout.kt:33:77 'getter for systemWindowInsetRight: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/MaterialPreferenceDialogFragmentCompat.kt:37:24 'getter for targetFragment: Fragment?' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentBarLayout.kt:50:32 'replaceSystemWindowInsets(Int, Int, Int, Int): WindowInsets' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentBarLayout.kt:51:36 'getter for systemWindowInsetLeft: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentBarLayout.kt:51:66 'getter for systemWindowInsetTop: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentBarLayout.kt:52:36 'getter for systemWindowInsetRight: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentBarLayout.kt:57:32 'replaceSystemWindowInsets(Int, Int, Int, Int): WindowInsets' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentBarLayout.kt:58:36 'getter for systemWindowInsetLeft: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentBarLayout.kt:58:69 'getter for systemWindowInsetRight: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentBarLayout.kt:59:36 'getter for systemWindowInsetBottom: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentBarLayout.kt:69:23 'consumeSystemWindowInsets(): WindowInsets' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentBarLayout.kt:81:35 'replaceSystemWindowInsets(Int, Int, Int, Int): WindowInsets' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentBarLayout.kt:82:39 'getter for systemWindowInsetLeft: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentBarLayout.kt:83:40 'getter for systemWindowInsetTop: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentBarLayout.kt:84:39 'getter for systemWindowInsetRight: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentBarLayout.kt:85:39 'getter for systemWindowInsetBottom: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentBarLayout.kt:88:35 'replaceSystemWindowInsets(Int, Int, Int, Int): WindowInsets' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentBarLayout.kt:89:39 'getter for systemWindowInsetLeft: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentBarLayout.kt:90:39 'getter for systemWindowInsetTop: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentBarLayout.kt:91:39 'getter for systemWindowInsetRight: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentBarLayout.kt:92:40 'getter for systemWindowInsetBottom: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentDrawerLayout.kt:47:32 'replaceSystemWindowInsets(Int, Int, Int, Int): WindowInsets' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentDrawerLayout.kt:48:36 'getter for systemWindowInsetLeft: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentDrawerLayout.kt:48:66 'getter for systemWindowInsetTop: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentDrawerLayout.kt:49:36 'getter for systemWindowInsetBottom: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentDrawerLayout.kt:54:32 'replaceSystemWindowInsets(Int, Int, Int, Int): WindowInsets' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentDrawerLayout.kt:56:36 'getter for systemWindowInsetTop: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentDrawerLayout.kt:56:65 'getter for systemWindowInsetRight: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentDrawerLayout.kt:57:36 'getter for systemWindowInsetBottom: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentDrawerLayout.kt:67:23 'consumeSystemWindowInsets(): WindowInsets' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentDrawerLayout.kt:79:35 'replaceSystemWindowInsets(Int, Int, Int, Int): WindowInsets' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentDrawerLayout.kt:80:40 'getter for systemWindowInsetLeft: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentDrawerLayout.kt:81:39 'getter for systemWindowInsetTop: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentDrawerLayout.kt:82:39 'getter for systemWindowInsetRight: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentDrawerLayout.kt:83:39 'getter for systemWindowInsetBottom: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentDrawerLayout.kt:86:35 'replaceSystemWindowInsets(Int, Int, Int, Int): WindowInsets' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentDrawerLayout.kt:87:39 'getter for systemWindowInsetLeft: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentDrawerLayout.kt:88:39 'getter for systemWindowInsetTop: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentDrawerLayout.kt:89:40 'getter for systemWindowInsetRight: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/PersistentDrawerLayout.kt:91:39 'getter for systemWindowInsetBottom: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/ReadOnlyTextInputEditText.kt:55:13 Name shadowed: background
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/ScrollingViewOnApplyWindowInsetsListener.kt:27:44 'getter for systemWindowInsetBottom: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/ScrollingViewOnApplyWindowInsetsListener.kt:29:50 'getter for systemWindowInsetBottom: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/TabFragmentPagerAdapter.kt:10:30 'FragmentPagerAdapter' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/TabFragmentPagerAdapter.kt:15:5 'FragmentPagerAdapter' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/ThemedSpeedDialView.kt:167:13 Name shadowed: actionItem
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/videothumbnails/ThumbnailSlideshowView.kt:11:27 'OnLifecycleEvent' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/videothumbnails/ThumbnailSlideshowView.kt:100:6 'OnLifecycleEvent' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/videothumbnails/ThumbnailSlideshowView.kt:107:6 'OnLifecycleEvent' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/ui/videothumbnails/ThumbnailSlideshowView.kt:112:6 'OnLifecycleEvent' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/BundleExtensions.kt:15:12 'getParcelable(String?): T?' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/BundleExtensions.kt:20:12 'getParcelableArray(String?): Array<(out) Parcelable!>?' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/BundleExtensions.kt:25:12 'getParcelableArrayList(String?): ArrayList<T!>?' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/BundleExtensions.kt:30:12 'getSparseParcelableArray(String?): SparseArray<T!>?' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/ForegroundNotificationManager.kt:41:29 'stopForeground(Boolean): Unit' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/FragmentExtensions.kt:184:9 'startActivityForResult(Intent, Int, Bundle?): Unit' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/GeocoderExtensions.kt:23:9 'getFromLocation(Double, Double, Int): (Mutable)List<Address!>?' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/InetAddressExtensions.kt:16:32 'getter for connectionInfo: WifiInfo!' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/InetAddressExtensions.kt:20:32 'getter for ipAddress: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/IntentExtensions.kt:82:12 'getParcelableExtra(String!): T?' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/IntentExtensions.kt:87:12 'getParcelableArrayExtra(String!): Array<(out) Parcelable!>?' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/IntentExtensions.kt:92:12 'getParcelableArrayListExtra(String!): ArrayList<T!>?' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/IntentPathExtensions.kt:69:30 'getSerializableExtra(String!): Serializable?' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/Parcelers.kt:24:56 'readParcelable(ClassLoader?): T?' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/ViewExtensions.kt:84:13 'getter for systemUiVisibility: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/ViewExtensions.kt:84:45 'SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/ViewExtensions.kt:86:9 'setter for systemUiVisibility: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/ViewExtensions.kt:87:13 'getter for systemUiVisibility: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/ViewExtensions.kt:87:40 'SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/ViewExtensions.kt:88:22 'SYSTEM_UI_FLAG_LAYOUT_STABLE: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/ViewExtensions.kt:90:13 'getter for systemUiVisibility: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/ViewExtensions.kt:90:44 'SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/ViewExtensions.kt:95:13 'getter for systemUiVisibility: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/ViewExtensions.kt:95:45 'SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/ViewExtensions.kt:97:9 'setter for systemUiVisibility: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/ViewExtensions.kt:98:13 'getter for systemUiVisibility: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/ViewExtensions.kt:98:40 'SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/ViewExtensions.kt:99:22 'SYSTEM_UI_FLAG_LAYOUT_STABLE: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/ViewExtensions.kt:101:13 'getter for systemUiVisibility: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/ViewExtensions.kt:101:44 'SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/ViewExtensions.kt:124:5 This is a delicate API and its use requires care. Make sure you fully read and understand documentation of the declaration that is marked as a delicate API.
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/ViewExtensions.kt:147:5 This is a delicate API and its use requires care. Make sure you fully read and understand documentation of the declaration that is marked as a delicate API.
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/ViewExtensions.kt:159:5 This is a delicate API and its use requires care. Make sure you fully read and understand documentation of the declaration that is marked as a delicate API.
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/ViewExtensions.kt:182:5 This is a delicate API and its use requires care. Make sure you fully read and understand documentation of the declaration that is marked as a delicate API.
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/ViewExtensions.kt:211:5 This is a delicate API and its use requires care. Make sure you fully read and understand documentation of the declaration that is marked as a delicate API.
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/ViewExtensions.kt:233:5 This is a delicate API and its use requires care. Make sure you fully read and understand documentation of the declaration that is marked as a delicate API.
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/util/WakeWifiLock.kt:17:48 'WIFI_MODE_FULL_HIGH_PERF: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/viewer/image/ImageViewerFragment.kt:65:9 'setHasOptionsMenu(Boolean): Unit' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/viewer/image/ImageViewerFragment.kt:78:15 'onActivityCreated(Bundle?): Unit' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/viewer/image/ImageViewerFragment.kt:90:25 'setter for statusBarColor: Int' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/viewer/image/ImageViewerFragment.kt:141:15 'onCreateOptionsMenu(Menu, MenuInflater): Unit' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/viewer/image/ImageViewerFragment.kt:156:27 'onOptionsItemSelected(MenuItem): Boolean' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/viewer/text/TextEditorFragment.kt:60:9 'setHasOptionsMenu(Boolean): Unit' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/viewer/text/TextEditorFragment.kt:62:24 'launchWhenStarted(suspend CoroutineScope.() -> Unit): Job' is deprecated. launchWhenStarted is deprecated as it can lead to wasted resources in some cases. Replace with suspending repeatOnLifecycle to run the block whenever the Lifecycle state is at least Lifecycle.State.STARTED.
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/viewer/text/TextEditorFragment.kt:103:33 'launchWhenCreated(suspend CoroutineScope.() -> Unit): Job' is deprecated. launchWhenCreated is deprecated as it can lead to wasted resources in some cases. Replace with suspending repeatOnLifecycle to run the block whenever the Lifecycle state is at least Lifecycle.State.CREATED.
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/viewer/text/TextEditorFragment.kt:138:15 'onCreateOptionsMenu(Menu, MenuInflater): Unit' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/viewer/text/TextEditorFragment.kt:144:15 'onPrepareOptionsMenu(Menu): Unit' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/viewer/text/TextEditorFragment.kt:164:27 'onOptionsItemSelected(MenuItem): Boolean' is deprecated. Deprecated in Java
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/viewer/text/TextEditorFragment.kt:179:35 Parameter 'encoding' is never used
+w: file:///E:/For%20Safe%20Keeping/WEB%20REF/MaterialFiles/app/src/main/java/me/zhanghai/android/files/viewer/text/TextEditorFragment.kt:226:40 Parameter 'changed' is never used
+
+> Task :app:compileDebugJavaWithJavac
+.\gradlew.bat : E:\For Safe Keeping\WEB REF\MaterialFiles\app\build\
+generated\data_binding_base_class_source_out\debug\out\me\zhanghai\a
+ndroid\files\databinding\VideoThumbnailManagementDialogBinding.java:
+18: warning: [deprecation] PlayerView in 
+com.google.android.exoplayer2.ui has been deprecated
+At line:1 char:1
++ .\gradlew.bat :app:compileDebugJavaWithJavac --console=plain > 
+plain_ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~
+    + CategoryInfo          : NotSpecified: (E:\For Safe Kee...been 
+    deprecated:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+import com.google.android.exoplayer2.ui.PlayerView;
+                                       ^
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\build\generated\data_b
+inding_base_class_source_out\debug\out\me\zhanghai\android\files\dat
+abinding\VideoThumbnailManagementDialogBinding.java:18: warning: 
+[deprecation] PlayerView in com.google.android.exoplayer2.ui has 
+been deprecated
+import com.google.android.exoplayer2.ui.PlayerView;
+                                       ^
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\build\generated\data_b
+inding_base_class_source_out\debug\out\me\zhanghai\android\files\dat
+abinding\VideoThumbnailManagementDialogBinding.java:18: warning: 
+[deprecation] PlayerView in com.google.android.exoplayer2.ui has 
+been deprecated
+import com.google.android.exoplayer2.ui.PlayerView;
+                                       ^
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\src\main\java\com\sovw
+orks\eds\fs\fat\FatFS.java:1320: error: cannot find symbol
+        int cc = (int) ((ds * _bpb.bytesPerSector) / 
+(_bpb.getSectorsPerCluster() * _bpb.bytesPerSector));
+                                                          ^
+  symbol:   method getSectorsPerCluster()
+  location: variable _bpb of type BPB
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\src\main\java\com\sovw
+orks\eds\fs\fat\FatFS.java:1361: error: cannot find symbol
+        int cc = (int) ((ds * _bpb.bytesPerSector) / 
+(_bpb.getSectorsPerCluster() * _bpb.bytesPerSector));
+                                                          ^
+  symbol:   method getSectorsPerCluster()
+  location: variable _bpb of type BPB
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\src\main\java\com\sovw
+orks\eds\fs\fat\FatFS.java:1381: error: init() in Fat32FS cannot 
+override init() in FatFS
+    @Override protected void init() throws IOException { 
+super.init(); try { fsInfo.read(_input); } catch (Exception 
+ignored) {} }
+                             ^
+  attempting to assign weaker access privileges; was public
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\src\main\java\com\sovw
+orks\eds\fs\fat\DirEntry.java:115: error: cannot find symbol
+            int fb = Util.unsignedByteToInt(buf[0]);
+                         ^
+  symbol:   method unsignedByteToInt(byte)
+  location: class Util
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\src\main\java\com\sovw
+orks\eds\fs\fat\DirEntry.java:187: error: cannot find symbol
+                int dv = Util.unsignedShortToIntLE(buf, 0x10);
+                             ^
+  symbol:   method unsignedShortToIntLE(byte[],int)
+  location: class Util
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\src\main\java\com\sovw
+orks\eds\fs\fat\DirEntry.java:188: error: cannot find symbol
+                int tv = Util.unsignedShortToIntLE(buf, 0x0E);
+                             ^
+  symbol:   method unsignedShortToIntLE(byte[],int)
+  location: class Util
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\src\main\java\com\sovw
+orks\eds\fs\fat\DirEntry.java:189: error: cannot find symbol
+                int secs = Util.unsignedByteToInt(buf[0x0D]) / 100;
+                               ^
+  symbol:   method unsignedByteToInt(byte)
+  location: class Util
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\src\main\java\com\sovw
+orks\eds\fs\fat\DirEntry.java:192: error: cannot find symbol
+                dv = Util.unsignedShortToIntLE(buf, 0x12);
+                         ^
+  symbol:   method unsignedShortToIntLE(byte[],int)
+  location: class Util
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\src\main\java\com\sovw
+orks\eds\fs\fat\DirEntry.java:194: error: cannot find symbol
+                dv = Util.unsignedShortToIntLE(buf, 0x18);
+                         ^
+  symbol:   method unsignedShortToIntLE(byte[],int)
+  location: class Util
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\src\main\java\com\sovw
+orks\eds\fs\fat\DirEntry.java:195: error: cannot find symbol
+                tv = Util.unsignedShortToIntLE(buf, 0x16);
+                         ^
+  symbol:   method unsignedShortToIntLE(byte[],int)
+  location: class Util
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\src\main\java\com\sovw
+orks\eds\fs\fat\DirEntry.java:197: error: cannot find symbol
+                entry.fileSize = Util.unsignedIntToLongLE(buf, 
+0x1C);
+                                     ^
+  symbol:   method unsignedIntToLongLE(byte[],int)
+  location: class Util
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\src\main\java\com\sovw
+orks\eds\fs\fat\DirEntry.java:198: error: cannot find symbol
+                entry.startCluster = 
+(Util.unsignedShortToIntLE(buf, 0x14) << 16) | 
+Util.unsignedShortToIntLE(buf, 0x1A);
+                                          ^
+  symbol:   method unsignedShortToIntLE(byte[],int)
+  location: class Util
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\src\main\java\com\sovw
+orks\eds\fs\fat\DirEntry.java:198: error: cannot find symbol
+                entry.startCluster = 
+(Util.unsignedShortToIntLE(buf, 0x14) << 16) | 
+Util.unsignedShortToIntLE(buf, 0x1A);
+                                                                    
+                    ^
+  symbol:   method unsignedShortToIntLE(byte[],int)
+  location: class Util
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\src\main\java\com\sovw
+orks\eds\fs\fat\DirEntry.java:243: error: cannot find symbol
+        Util.shortToBytesLE((short) startCluster, record, 0x1A);
+            ^
+  symbol:   method shortToBytesLE(short,byte[],int)
+  location: class Util
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\src\main\java\com\sovw
+orks\eds\fs\fat\DirEntry.java:244: error: cannot find symbol
+        Util.shortToBytesLE((short) (startCluster >> 16), record, 
+0x14);
+            ^
+  symbol:   method shortToBytesLE(short,byte[],int)
+  location: class Util
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\src\main\java\com\sovw
+orks\eds\fs\fat\DirEntry.java:245: error: cannot find symbol
+        Util.intToBytesLE((int) fileSize, record, 0x1C);
+            ^
+  symbol:   method intToBytesLE(int,byte[],int)
+  location: class Util
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\src\main\java\com\sovw
+orks\eds\fs\fat\DirEntry.java:247: error: cannot find symbol
+        Util.shortToBytesLE(encodeTime(createDateTime), record, 
+0x0E);
+            ^
+  symbol:   method shortToBytesLE(short,byte[],int)
+  location: class Util
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\src\main\java\com\sovw
+orks\eds\fs\fat\DirEntry.java:248: error: cannot find symbol
+        Util.shortToBytesLE(encodeDate(createDateTime), record, 
+0x10);
+            ^
+  symbol:   method shortToBytesLE(short,byte[],int)
+  location: class Util
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\src\main\java\com\sovw
+orks\eds\fs\fat\DirEntry.java:249: error: cannot find symbol
+        Util.shortToBytesLE(encodeDate(lastAccessDate), record, 
+0x12);
+            ^
+  symbol:   method shortToBytesLE(short,byte[],int)
+  location: class Util
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\src\main\java\com\sovw
+orks\eds\fs\fat\DirEntry.java:250: error: cannot find symbol
+        Util.shortToBytesLE(encodeTime(lastModifiedDateTime), 
+record, 0x16);
+            ^
+  symbol:   method shortToBytesLE(short,byte[],int)
+  location: class Util
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\src\main\java\com\sovw
+orks\eds\fs\fat\DirEntry.java:251: error: cannot find symbol
+        Util.shortToBytesLE(encodeDate(lastModifiedDateTime), 
+record, 0x18);
+            ^
+  symbol:   method shortToBytesLE(short,byte[],int)
+  location: class Util
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\src\main\java\com\sovw
+orks\eds\fs\fat\DirEntry.java:295: error: cannot find symbol
+                numDeletedEntries = Util.unsignedByteToInt(buf[0]) 
+== 0xE5 ? numDeletedEntries + 1 : 0;
+                                        ^
+  symbol:   method unsignedByteToInt(byte)
+  location: class Util
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\src\main\java\com\sovw
+orks\eds\fs\fat\DirEntry.java:309: error: cannot find symbol
+            sum = Util.unsignedByteToInt((byte) (((sum & 1) << 7) + 
+(sum >> 1) + fn[i + offset]));
+                      ^
+  symbol:   method unsignedByteToInt(byte)
+  location: class Util
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\src\main\java\com\sovw
+orks\eds\fs\fat\DirEntry.java:365: error: cannot find symbol
+        if (Util.unsignedByteToInt(recordData[0]) == 0xE5) 
+recordData[0] = 0x05;
+                ^
+  symbol:   method unsignedByteToInt(byte)
+  location: class Util
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\src\main\java\com\sovw
+orks\eds\fs\fat\DirEntry.java:393: error: cannot find symbol
+                    Util.shortToBytesLE(charIdx == numChars ? 0 : 
+(short) 0xFFFF, recData, idx);
+                        ^
+  symbol:   method shortToBytesLE(short,byte[],int)
+  location: class Util
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\src\main\java\com\sovw
+orks\eds\fs\std\StdFs.java:14: error: cannot find symbol
+        return (StdFsPath) Util.makePath(getStdFs(), elements);
+                               ^
+  symbol:   method makePath(StdFs,Object[])
+  location: class Util
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\src\main\java\com\sovw
+orks\eds\fs\std\StdFileRecord.java:28: error: cannot find symbol
+        return ParcelFileDescriptor.open(_path.getJavaFile(), 
+Util.getParcelFileDescriptorModeFromAccessMode(accessMode));
+                                                                  ^
+  symbol:   method 
+getParcelFileDescriptorModeFromAccessMode(AccessMode)
+  location: class Util
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\build\generated\data_b
+inding_base_class_source_out\debug\out\me\zhanghai\android\files\dat
+abinding\VideoThumbnailManagementDialogBinding.java:60: warning: 
+[deprecation] PlayerView in com.google.android.exoplayer2.ui has 
+been deprecated
+  public final PlayerView playerView;
+               ^
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\build\generated\data_b
+inding_base_class_source_out\debug\out\me\zhanghai\android\files\dat
+abinding\VideoThumbnailManagementDialogBinding.java:60: warning: 
+[deprecation] PlayerView in com.google.android.exoplayer2.ui has 
+been deprecated
+  public final PlayerView playerView;
+               ^
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\build\generated\data_b
+inding_base_class_source_out\debug\out\me\zhanghai\android\files\dat
+abinding\VideoThumbnailManagementDialogBinding.java:60: warning: 
+[deprecation] PlayerView in com.google.android.exoplayer2.ui has 
+been deprecated
+  public final PlayerView playerView;
+               ^
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\build\generated\data_b
+inding_base_class_source_out\debug\out\me\zhanghai\android\files\dat
+abinding\VideoThumbnailManagementDialogBinding.java:88: warning: 
+[deprecation] PlayerView in com.google.android.exoplayer2.ui has 
+been deprecated
+      @NonNull MaterialButtonToggleGroup playerModeToggle, @NonNull 
+PlayerView playerView,
+                                                                    
+^
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\build\generated\data_b
+inding_base_class_source_out\debug\out\me\zhanghai\android\files\dat
+abinding\VideoThumbnailManagementDialogBinding.java:88: warning: 
+[deprecation] PlayerView in com.google.android.exoplayer2.ui has 
+been deprecated
+      @NonNull MaterialButtonToggleGroup playerModeToggle, @NonNull 
+PlayerView playerView,
+                                                                    
+^
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\build\generated\data_b
+inding_base_class_source_out\debug\out\me\zhanghai\android\files\dat
+abinding\VideoThumbnailManagementDialogBinding.java:88: warning: 
+[deprecation] PlayerView in com.google.android.exoplayer2.ui has 
+been deprecated
+      @NonNull MaterialButtonToggleGroup playerModeToggle, @NonNull 
+PlayerView playerView,
+                                                                    
+^
+E:\For Safe Keeping\WEB REF\MaterialFiles\app\build\generated\data_b
+inding_base_class_source_out\debug\out\me\zhanghai\android\files\dat
+abinding\VideoThumbnailManagementDialogBinding.java:195: warning: 
+[deprecation] PlayerView in com.google.android.exoplayer2.ui has 
+been deprecated
+      PlayerView playerView = 
+ViewBindings.findChildViewById(rootView, id);
+      ^
+27 errors
+10 warnings
+
+> Task :app:compileDebugJavaWithJavac FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugJavaWithJavac'.
+> Compilation failed; see the compiler error output for details.
+
+* Try:
+> Run with --info option to get more log output.
+> Run with --scan to get full insights.
+
+BUILD FAILED in 1m 20s
+27 actionable tasks: 9 executed, 18 up-to-date
