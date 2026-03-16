@@ -36,11 +36,14 @@ import me.zhanghai.android.files.util.isMounted
 import me.zhanghai.android.files.util.putArgs
 import me.zhanghai.android.files.util.supportsExternalStorageManager
 import me.zhanghai.android.files.util.valueCompat
+import me.zhanghai.android.files.provider.veracrypt.VeraCryptFileSystem
+import me.zhanghai.android.files.provider.veracrypt.VeraCryptFileSystemProvider
 
 val navigationItems: List<NavigationItem?>
     get() =
         mutableListOf<NavigationItem?>().apply {
             addAll(storageItems)
+            addAll(veraCryptStorageItems)
             if (Environment::class.supportsExternalStorageManager()) {
                 // Starting with R, we can get read/write access to non-primary storage volumes with
                 // MANAGE_EXTERNAL_STORAGE. However before R, we only have read-only access to them
@@ -69,6 +72,10 @@ private val storageItems: List<NavigationItem>
         Settings.STORAGES.valueCompat.filter { it.isVisible }.map {
             if (it.path != null) PathStorageItem(it) else IntentStorageItem(it)
         }
+
+private val veraCryptStorageItems: List<NavigationItem>
+    get() =
+        VeraCryptFileSystemProvider.activeFileSystems.valueCompat.map { VeraCryptStorageItem(it) }
 
 private abstract class PathItem(val path: Path) : NavigationItem() {
     override fun isChecked(listener: Listener): Boolean = listener.currentPath == path
@@ -157,6 +164,35 @@ private class StorageVolumeItem(
 
     override fun getSubtitle(context: Context): String? =
         getStorageSubtitle(path, context)
+
+    override fun getName(context: Context): String = getTitle(context)
+}
+
+private class VeraCryptStorageItem(
+    private val fileSystem: VeraCryptFileSystem
+) : PathItem(fileSystem.rootDirectory), NavigationRoot {
+    override val id: Long
+        get() = fileSystem.hashCode().toLong()
+
+    override val iconRes: Int
+        @DrawableRes
+        get() = R.drawable.lock_icon_white_24dp
+
+    override fun getTitle(context: Context): String = fileSystem.containerFile.fileName.toString()
+
+    override fun getSubtitle(context: Context): String? =
+        getStorageSubtitle(path, context)
+
+    override fun onLongClick(listener: Listener): Boolean {
+        if (listener.currentPath.fileSystem == fileSystem) {
+            listener.navigateToDefaultRoot()
+        }
+        val context = listener.navigationContext
+        val title = getTitle(context)
+        fileSystem.close()
+        listener.showToast(context.getString(R.string.veracrypt_locked_format, title))
+        return true
+    }
 
     override fun getName(context: Context): String = getTitle(context)
 }

@@ -29,20 +29,25 @@ fun MediaMetadataRetriever.setDataSource(path: Path) {
 
 @android.annotation.TargetApi(Build.VERSION_CODES.M)
 private class PathMediaDataSource(private val path: Path) : MediaDataSource() {
-    private var channel = path.newByteChannel()
+    private val channel = path.newByteChannel()
+    private val lock = Any()
 
     @Throws(IOException::class)
     override fun readAt(position: Long, buffer: ByteArray, offset: Int, size: Int): Int {
-        channel.position(position)
-        val readBuffer = java.nio.ByteBuffer.wrap(buffer, offset, size)
-        return channel.read(readBuffer)
+        synchronized(lock) {
+            channel.position(position)
+            val readBuffer = java.nio.ByteBuffer.wrap(buffer, offset, size)
+            return channel.read(readBuffer)
+        }
     }
 
     @Throws(IOException::class)
-    override fun getSize(): Long = channel.size()
+    override fun getSize(): Long = synchronized(lock) { channel.size() }
 
     @Throws(IOException::class)
     override fun close() {
-        channel.close()
+        synchronized(lock) {
+            channel.close()
+        }
     }
 }

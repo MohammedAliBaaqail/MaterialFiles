@@ -59,4 +59,21 @@ class FileSystemCache<K : Any, FS : FileSystem?> {
             }
         }
     }
+
+    fun getAll(): List<FS> {
+        synchronized(lock) {
+            val result = mutableListOf<FS>()
+            val iterator = fileSystems.entries.iterator()
+            while (iterator.hasNext()) {
+                val entry = iterator.next()
+                val fileSystem = entry.value.get()
+                if (fileSystem != null) {
+                    result.add(fileSystem)
+                } else {
+                    iterator.remove()
+                }
+            }
+            return result
+        }
+    }
 }

@@ -24,4 +24,9 @@ public class FormatInfo extends com.sovworks.eds.truecrypt.FormatInfo {
     public boolean hasCustomKDFIterationsSupport() {
         return true;
     }
+    
+    @Override
+    public int getMaxPasswordLength() {
+        return 128;
+    }
 }

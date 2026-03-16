@@ -174,7 +174,7 @@ public abstract class FatFS implements FileSystem {
 
     // ---- Fields missing from the ported version ----
     protected static final String RESERVED_SYMBOLS = "\"*:<>?/\\|";
-    protected static final int PATH_LOCK_TIMEOUT = 5000;
+    protected static final int PATH_LOCK_TIMEOUT = 10000;
 
     protected RandomAccessIO _input;
     protected BPB _bpb;

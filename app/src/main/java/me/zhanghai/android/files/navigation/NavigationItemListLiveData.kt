@@ -8,6 +8,7 @@ package me.zhanghai.android.files.navigation
 import androidx.lifecycle.MediatorLiveData
 import me.zhanghai.android.files.settings.Settings
 import me.zhanghai.android.files.storage.StorageVolumeListLiveData
+import me.zhanghai.android.files.provider.veracrypt.VeraCryptFileSystemProvider
 
 object NavigationItemListLiveData : MediatorLiveData<List<NavigationItem?>>() {
     init {
@@ -17,6 +18,7 @@ object NavigationItemListLiveData : MediatorLiveData<List<NavigationItem?>>() {
         addSource(StorageVolumeListLiveData) { loadValue() }
         addSource(StandardDirectoriesLiveData) { loadValue() }
         addSource(Settings.BOOKMARK_DIRECTORIES) { loadValue() }
+        addSource(VeraCryptFileSystemProvider.activeFileSystems) { loadValue() }
     }
 
     private fun loadValue() {

@@ -54,6 +54,20 @@ internal class VeraCryptPath : ByteStringListPath<VeraCryptPath>, RootablePath {
     override val defaultDirectory: VeraCryptPath
         get() = fileSystem.rootDirectory
 
+    override fun toString(): String {
+        val internalPath = internalPathString
+        if (!isAbsolute) return internalPath
+        val containerName = fileSystem.containerFile.fileName?.toString()?.substringBeforeLast('.') ?: ""
+        return if (internalPath == "/") {
+            containerName
+        } else {
+            "$containerName$internalPath"
+        }
+    }
+
+    val internalPathString: String
+        get() = super.toString()
+
     override fun getFileSystem(): VeraCryptFileSystem = fileSystem
 
     override fun getRoot(): VeraCryptPath? = if (isAbsolute) fileSystem.rootDirectory else null
@@ -74,7 +88,10 @@ internal class VeraCryptPath : ByteStringListPath<VeraCryptPath>, RootablePath {
         events: Array<WatchEvent.Kind<*>>,
         vararg modifiers: WatchEvent.Modifier
     ): WatchKey {
-        throw UnsupportedOperationException()
+        if (watcher !is me.zhanghai.android.files.provider.common.LocalWatchService) {
+            throw java8.nio.file.ProviderMismatchException(watcher.toString())
+        }
+        return watcher.register(this, events, *modifiers)
     }
 
     override fun isRootRequired(isAttributeAccess: Boolean): Boolean {

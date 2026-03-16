@@ -46,19 +46,27 @@ fun MediaMetadataRetriever.setDataSource(path: Path) {
 
 @RequiresApi(Build.VERSION_CODES.M)
 private class PathMediaDataSource(private val channel: SeekableByteChannel) : MediaDataSource() {
+    private val lock = Any()
+
     @Throws(IOException::class)
     override fun readAt(position: Long, buffer: ByteArray, offset: Int, size: Int): Int {
-        channel.position(position)
-        return channel.read(ByteBuffer.wrap(buffer, offset, size))
+        synchronized(lock) {
+            channel.position(position)
+            return channel.read(ByteBuffer.wrap(buffer, offset, size))
+        }
     }
 
     @Throws(IOException::class)
     override fun getSize(): Long {
-        return channel.size()
+        synchronized(lock) {
+            return channel.size()
+        }
     }
 
     @Throws(IOException::class)
     override fun close() {
-        channel.close()
+        synchronized(lock) {
+            channel.close()
+        }
     }
 }

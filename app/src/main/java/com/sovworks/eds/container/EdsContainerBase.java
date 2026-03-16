@@ -14,9 +14,12 @@ import com.sovworks.eds.fs.File.AccessMode;
 import com.sovworks.eds.fs.FileSystem;
 import com.sovworks.eds.fs.Path;
 import com.sovworks.eds.fs.RandomAccessIO;
+import com.sovworks.eds.fs.exfat.ExFat;
 import com.sovworks.eds.fs.fat.FatFS;
 import com.sovworks.eds.fs.std.StdFs;
 import com.sovworks.eds.fs.std.StdFsPath;
+
+import me.zhanghai.android.files.R;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -50,8 +53,21 @@ public abstract class EdsContainerBase implements Closeable {
     }
 
     public static FileSystem loadFileSystem(RandomAccessIO io, boolean isReadOnly) throws IOException, UserException {
-        // exFAT support is skipped for now because the native module is missing.
+        Logger.debug("Detecting file system type...");
+        if (ExFat.isExFATImage(io)) {
+            Logger.debug("File system detected as ExFAT.");
+            if (ExFat.isModuleInstalled())
+                return new ExFat(io, isReadOnly);
+            if (ExFat.isModuleIncompatible()) {
+                Logger.debug("ExFAT module is incompatible.");
+                throw new UserException("Please update the exFAT module.", R.string.update_exfat_module);
+            }
+            Logger.debug("ExFAT module is NOT installed/loaded.");
+            throw new UserException("Please install the exFAT module", R.string.exfat_module_required);
+        }
+        Logger.debug("File system is not ExFAT, trying FAT...");
         FatFS fs = FatFS.getFat(io);
+        Logger.debug("File system detected as FAT.");
         if (isReadOnly)
             fs.setReadOnlyMode(true);
         return fs;
@@ -217,6 +233,7 @@ public abstract class EdsContainerBase implements Closeable {
         if (cf.hasCustomKDFIterationsSupport() && _numKDFIterations > 0)
             vl.setNumKDFIterations(_numKDFIterations);
         if (vl.readHeader(containerFile)) {
+            Logger.debug(String.format("Header decrypted successfully using %s", cf.getFormatName()));
             _containerFormat = cf;
             _layout = vl;
             return true;

@@ -83,6 +83,8 @@
     <string name="file_action_veracrypt_password_message_format">"%1$s" is a VeraCrypt container.</string>
     <string name="file_action_veracrypt_password_checking">Checking password…</string>
     <string name="file_action_veracrypt_password_error_incorrect">Incorrect password</string>
+    <string name="veracrypt_lock">Lock</string>
+    <string name="veracrypt_locked_format">"%1$s" locked</string>
 
     <plurals name="file_job_archive_scan_notification_title_format">
         <item quantity="one">Preparing to compress %1$,d file (%2$s)</item>

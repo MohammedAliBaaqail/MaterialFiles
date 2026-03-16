@@ -49,7 +49,7 @@ internal class VeraCryptFileAttributes(
             val group = null
             val mode = null
             val seLinuxContext = null
-            val isEncrypted = true // Files in VeraCrypt are encrypted
+            val isEncrypted = false // Don't show encrypted badge for files inside container
             return VeraCryptFileAttributes(
                 lastModifiedTime, lastAccessTime, creationTime, type, size, fileKey, owner, group,
                 mode, seLinuxContext, isEncrypted

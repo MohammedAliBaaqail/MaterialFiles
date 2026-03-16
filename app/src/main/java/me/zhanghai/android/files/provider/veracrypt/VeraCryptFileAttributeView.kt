@@ -24,7 +24,8 @@ internal class VeraCryptFileAttributeView(
 
     @Throws(IOException::class)
     override fun readAttributes(): PosixFileAttributes {
-        val innerPath = path.getFileSystem().getInnerFs().getPath(path.toString())
+        val innerFs = path.getFileSystem().getInnerFs()
+        val innerPath = innerFs.getPath(path.internalPathString)
         if (!innerPath.exists()) {
             throw NoSuchFileException(path.toString())
         }
@@ -45,7 +46,7 @@ internal class VeraCryptFileAttributeView(
                 modTime = try { file.lastModified.time } catch (e: Exception) { 0L }
             }
         }
-        return VeraCryptFileAttributes.from(path.getFileSystem().containerFile, path.toString(), stat)
+        return VeraCryptFileAttributes.from(path.getFileSystem().containerFile, path.internalPathString, stat)
     }
 
     override fun setTimes(
@@ -55,7 +56,7 @@ internal class VeraCryptFileAttributeView(
     ) {
         if (lastModifiedTime == null) return
         val innerFs = path.getFileSystem().getInnerFs()
-        val innerPath = innerFs.getPath(path.toString())
+        val innerPath = innerFs.getPath(path.internalPathString)
         val record = if (innerPath.isDirectory) innerPath.getDirectory() else innerPath.getFile()
         record.lastModified = Date(lastModifiedTime.toMillis())
     }

@@ -149,4 +149,33 @@ public class Util {
             default:         return ParcelFileDescriptor.MODE_READ_WRITE | ParcelFileDescriptor.MODE_CREATE | ParcelFileDescriptor.MODE_TRUNCATE;
         }
     }
+
+    public static int pread(com.sovworks.eds.fs.RandomAccessIO io, byte[] buf, int bufOffset, int count, long position) throws IOException {
+        long cur = io.getFilePointer();
+        io.seek(position);
+        try {
+            int res = 0;
+            for (int tmp; res < count; ) {
+                tmp = io.read(buf, bufOffset + res, count - res);
+                if (tmp > 0)
+                    res += tmp;
+                else
+                    break;
+            }
+            return res;
+        } finally {
+            io.seek(cur);
+        }
+    }
+
+    public static int pwrite(com.sovworks.eds.fs.RandomAccessIO io, byte[] buf, int bufOffset, int count, long position) throws IOException {
+        long cur = io.getFilePointer();
+        io.seek(position);
+        try {
+            io.write(buf, bufOffset, count);
+            return count;
+        } finally {
+            io.seek(cur);
+        }
+    }
 }

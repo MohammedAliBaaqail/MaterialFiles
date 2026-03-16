@@ -32,8 +32,11 @@ abstract class NavigationItem {
 
     interface Listener {
         val currentPath: Path
+        val navigationContext: Context
         fun navigateTo(path: Path)
         fun navigateToRoot(path: Path)
+        fun navigateToDefaultRoot()
+        fun showToast(text: String)
         fun launchIntent(intent: Intent)
         fun closeNavigationDrawer()
     }

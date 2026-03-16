@@ -13,11 +13,22 @@ import me.zhanghai.android.files.provider.archive.isArchivePath
 import me.zhanghai.android.files.provider.document.isDocumentPath
 import me.zhanghai.android.files.provider.document.resolver.DocumentResolver
 import me.zhanghai.android.files.provider.linux.isLinuxPath
+import me.zhanghai.android.files.provider.veracrypt.isVeraCryptPath
+import me.zhanghai.android.files.provider.veracrypt.veraCryptContainerFile
 
 val Path.name: String
-    get() = fileName?.toString() ?: if (isArchivePath) archiveFile.fileName.toString() else "/"
+    get() = fileName?.toString() ?: when {
+        isArchivePath -> archiveFile.fileName.toString()
+        isVeraCryptPath -> veraCryptContainerFile.fileName.toString().substringBeforeLast('.')
+        else -> "/"
+    }
 
-fun Path.toUserFriendlyString(): String = if (isLinuxPath) toFile().path else toUri().toString()
+fun Path.toUserFriendlyString(): String =
+    when {
+        isLinuxPath -> toFile().path
+        isVeraCryptPath -> toString()
+        else -> toUri().toString()
+    }
 
 fun Path.isArchiveFile(mimeType: MimeType): Boolean = !isArchivePath && mimeType.isSupportedArchive
 

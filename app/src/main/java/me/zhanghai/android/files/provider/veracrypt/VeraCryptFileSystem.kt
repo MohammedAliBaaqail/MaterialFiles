@@ -15,11 +15,13 @@ import java8.nio.file.PathMatcher
 import java8.nio.file.WatchService
 import java8.nio.file.attribute.UserPrincipalLookupService
 import java8.nio.file.spi.FileSystemProvider
+import com.sovworks.eds.android.Logger
 import com.sovworks.eds.container.EdsContainer
 import com.sovworks.eds.fs.FileSystem as EdsFileSystem
 import me.zhanghai.android.files.provider.common.ByteString
 import me.zhanghai.android.files.provider.common.ByteStringBuilder
 import me.zhanghai.android.files.provider.common.ByteStringListPathCreator
+import me.zhanghai.android.files.provider.common.LocalWatchService
 import me.zhanghai.android.files.provider.common.toByteString
 import java.io.IOException
 import java.nio.charset.StandardCharsets
@@ -55,8 +57,16 @@ internal class VeraCryptFileSystem(
     fun getInnerFs(): EdsFileSystem {
         synchronized(lock) {
             if (!isOpen) throw ClosedFileSystemException()
-            innerFs?.let { return it }
+            
+            // 24-hour limit check
+            if (VeraCryptMountManager.isMountExpired(containerFile)) {
+                clearCachedState()
+                throw VeraCryptPasswordRequiredException(containerFile, "Mount expired after 24 hours")
+            }
 
+            innerFs?.let { return it }
+            
+            Logger.debug("Mounting VeraCrypt container: $containerFile")
             val container = EdsContainer(DelegatingEdsPath(containerFile))
             var lastException: Exception? = null
             
@@ -66,13 +76,19 @@ internal class VeraCryptFileSystem(
                 for (pass in currentPasswords) {
                     try {
                         container.open(pass)
+                        Logger.debug("Successfully opened container header.")
                         edsContainer = container
+                        Logger.debug("Loading embedded file system...")
                         val fs = container.getEncryptedFS()
+                        Logger.debug("File system loaded successfully.")
                         innerFs = fs
                         // Cache the successful password
                         passwords.add(pass)
+                        // Record mount time
+                        VeraCryptMountManager.onMounted(containerFile)
                         return fs
                     } catch (e: Exception) {
+                        Logger.debug("Failed to mount container with password: ${e.message}")
                         lastException = e
                     }
                 }
@@ -103,10 +119,18 @@ internal class VeraCryptFileSystem(
         synchronized(lock) {
             if (!isOpen) return
             isOpen = false
+            clearCachedState()
+            provider.removeFileSystem(this)
+        }
+    }
+
+    private fun clearCachedState() {
+        synchronized(lock) {
             innerFs = null
             edsContainer?.close()
             edsContainer = null
-            provider.removeFileSystem(this)
+            passwords.clear()
+            VeraCryptMountManager.clearMount(containerFile)
         }
     }
 
@@ -149,7 +173,8 @@ internal class VeraCryptFileSystem(
 
     @Throws(IOException::class)
     override fun newWatchService(): WatchService {
-        throw UnsupportedOperationException()
+        if (!isOpen) throw ClosedFileSystemException()
+        return LocalWatchService()
     }
 
     override fun equals(other: Any?): Boolean {

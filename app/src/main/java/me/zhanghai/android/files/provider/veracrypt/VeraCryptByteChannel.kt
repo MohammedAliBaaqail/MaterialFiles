@@ -12,11 +12,14 @@ import com.sovworks.eds.fs.File.AccessMode
 import com.sovworks.eds.fs.RandomAccessIO
 import java.io.IOException
 import java.nio.ByteBuffer
+import java.nio.channels.ClosedChannelException
 
 internal class VeraCryptByteChannel(
     private val path: VeraCryptPath,
     private val options: Set<OpenOption>
 ) : SeekableByteChannel {
+    private var closed = false
+    private val lock = Any()
     private val randomAccessIO: RandomAccessIO
 
     init {
@@ -25,47 +28,87 @@ internal class VeraCryptByteChannel(
         } else {
             AccessMode.Read
         }
-        val innerPath = path.getFileSystem().getInnerFs().getPath(path.toString())
+        val innerFs = path.getFileSystem().getInnerFs()
+        val innerPath = innerFs.getPath(path.internalPathString)
         if (innerPath.isDirectory) {
              throw IOException("Path is a directory: ${path}")
         }
-        randomAccessIO = innerPath.getFile().getRandomAccessIO(mode)
+        
+        var lastException: IOException? = null
+        var io: RandomAccessIO? = null
+        // Increase retries to 10 times with slightly longer wait for container stability
+        for (i in 0 until 10) {
+            try {
+                io = innerPath.getFile().getRandomAccessIO(mode)
+                break
+            } catch (e: IOException) {
+                lastException = e
+                if (e.javaClass.name.endsWith("FileInUseException")) {
+                    Thread.sleep(150L + (i * 50)) // Increasing backoff
+                    continue
+                }
+                throw e
+            }
+        }
+        randomAccessIO = io ?: throw lastException!!
     }
 
     override fun read(dst: ByteBuffer): Int {
-        val position = randomAccessIO.filePointer
-        val array = ByteArray(dst.remaining())
-        val read = randomAccessIO.read(array, 0, array.size)
-        if (read > 0) {
-            dst.put(array, 0, read)
+        synchronized(lock) {
+            if (closed) throw ClosedChannelException()
+            val remaining = dst.remaining()
+            if (remaining == 0) return 0
+            val array = ByteArray(remaining)
+            val read = try {
+                randomAccessIO.read(array, 0, array.size)
+            } catch (e: IOException) {
+                throw e
+            }
+            if (read > 0) {
+                dst.put(array, 0, read)
+            }
+            return if (read == 0 || read == -1) -1 else read
         }
-        return if (read == 0 && dst.hasRemaining()) -1 else read
     }
 
     override fun write(src: ByteBuffer): Int {
-        val array = ByteArray(src.remaining())
-        src.get(array)
-        randomAccessIO.write(array, 0, array.size)
-        return array.size
+        synchronized(lock) {
+            if (closed) throw ClosedChannelException()
+            val array = ByteArray(src.remaining())
+            src.get(array)
+            randomAccessIO.write(array, 0, array.size)
+            return array.size
+        }
     }
 
-    override fun position(): Long = randomAccessIO.filePointer
+    override fun position(): Long = synchronized(lock) { randomAccessIO.filePointer }
 
     override fun position(newPosition: Long): SeekableByteChannel {
-        randomAccessIO.seek(newPosition)
-        return this
+        synchronized(lock) {
+            if (closed) throw ClosedChannelException()
+            randomAccessIO.seek(newPosition)
+            return this
+        }
     }
 
-    override fun size(): Long = randomAccessIO.length()
+    override fun size(): Long = synchronized(lock) { randomAccessIO.length() }
 
     override fun truncate(size: Long): SeekableByteChannel {
-        randomAccessIO.setLength(size)
-        return this
+        synchronized(lock) {
+            if (closed) throw ClosedChannelException()
+            randomAccessIO.setLength(size)
+            return this
+        }
     }
 
-    override fun isOpen(): Boolean = true // RandomAccessIO doesn't have isOpen, handles it internally or via close
+    override fun isOpen(): Boolean = !closed
 
+    @Throws(IOException::class)
     override fun close() {
-        randomAccessIO.close()
+        synchronized(lock) {
+            if (closed) return
+            closed = true
+            randomAccessIO.close()
+        }
     }
 }

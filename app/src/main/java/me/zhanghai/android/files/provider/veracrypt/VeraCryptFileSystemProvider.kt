@@ -14,6 +14,7 @@ import java8.nio.file.FileStore
 import java8.nio.file.FileSystem
 import java8.nio.file.LinkOption
 import java8.nio.file.OpenOption
+import java8.nio.file.StandardOpenOption
 import java8.nio.file.Path
 import java8.nio.file.Paths
 import java8.nio.file.ProviderMismatchException
@@ -21,6 +22,8 @@ import java8.nio.file.attribute.BasicFileAttributes
 import java8.nio.file.attribute.FileAttribute
 import java8.nio.file.attribute.FileAttributeView
 import java8.nio.file.spi.FileSystemProvider
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import me.zhanghai.android.files.provider.common.ByteString
 import me.zhanghai.android.files.provider.common.FileSystemCache
 import me.zhanghai.android.files.provider.common.PathListDirectoryStream
@@ -29,6 +32,9 @@ import me.zhanghai.android.files.provider.common.Searchable
 import me.zhanghai.android.files.provider.common.decodedPathByteString
 import me.zhanghai.android.files.provider.common.decodedQueryByteString
 import me.zhanghai.android.files.provider.common.toByteString
+import me.zhanghai.android.files.provider.common.LocalWatchService
+import me.zhanghai.android.files.provider.common.PathObservable
+import me.zhanghai.android.files.provider.common.WatchServicePathObservable
 import java.io.IOException
 import java.net.URI
 
@@ -36,22 +42,34 @@ object VeraCryptFileSystemProvider : FileSystemProvider(), PathObservableProvide
     const val SCHEME = "veracrypt"
 
     private val fileSystems = FileSystemCache<Path, VeraCryptFileSystem>()
+    
+    private val activeFileSystemsLiveData = MutableLiveData<List<VeraCryptFileSystem>>(emptyList())
+    internal val activeFileSystems: LiveData<List<VeraCryptFileSystem>> = activeFileSystemsLiveData
 
     override fun getScheme(): String = SCHEME
 
     override fun newFileSystem(uri: URI, env: Map<String, *>): FileSystem {
         uri.requireSameScheme()
         val containerFile = uri.containerFile
-        return fileSystems.create(containerFile) { newFileSystem(containerFile) }
+        val fs = fileSystems.create(containerFile) { newFileSystem(containerFile) }
+        updateActiveFileSystems()
+        return fs
     }
 
-    override fun newFileSystem(file: Path, env: Map<String, *>): FileSystem = newFileSystem(file)
+    override fun newFileSystem(file: Path, env: Map<String, *>): FileSystem {
+        val fs = newFileSystem(file)
+        updateActiveFileSystems()
+        return fs
+    }
 
     private fun newFileSystem(containerFile: Path): VeraCryptFileSystem =
         VeraCryptFileSystem(this, containerFile)
 
-    internal fun getOrNewFileSystem(containerFile: Path): VeraCryptFileSystem =
-        fileSystems.getOrCreate(containerFile) { newFileSystem(containerFile) }
+    internal fun getOrNewFileSystem(containerFile: Path): VeraCryptFileSystem {
+        val fs = fileSystems.getOrCreate(containerFile) { newFileSystem(containerFile) }
+        updateActiveFileSystems()
+        return fs
+    }
 
     override fun getFileSystem(uri: URI): FileSystem {
         uri.requireSameScheme()
@@ -87,7 +105,12 @@ object VeraCryptFileSystemProvider : FileSystemProvider(), PathObservableProvide
         vararg attributes: FileAttribute<*>
     ): SeekableByteChannel {
         file as? VeraCryptPath ?: throw ProviderMismatchException(file.toString())
-        return VeraCryptByteChannel(file, options)
+        val channel = VeraCryptByteChannel(file, options)
+        return if (options.contains(StandardOpenOption.WRITE) || options.contains(StandardOpenOption.APPEND)) {
+            me.zhanghai.android.files.provider.common.NotifyEntryModifiedSeekableByteChannel(channel, file)
+        } else {
+            channel
+        }
     }
 
     @Throws(IOException::class)
@@ -98,7 +121,7 @@ object VeraCryptFileSystemProvider : FileSystemProvider(), PathObservableProvide
         directory as? VeraCryptPath ?: throw ProviderMismatchException(directory.toString())
         val fs = directory.getFileSystem()
         val innerFs = fs.getInnerFs()
-        val innerPath = innerFs.getPath(directory.toString())
+        val innerPath = innerFs.getPath(directory.internalPathString)
         val dir = innerPath.getDirectory()
         val contents = dir.list()
         val children = contents.use { it.map { p -> fs.getPath(p.pathString) } }
@@ -110,28 +133,80 @@ object VeraCryptFileSystemProvider : FileSystemProvider(), PathObservableProvide
         val fs = directory.getFileSystem()
         val innerFs = fs.getInnerFs()
         val parentPath = directory.parent ?: throw IOException("Cannot create root directory")
-        val innerParentPath = innerFs.getPath(parentPath.toString())
+        val innerParentPath = innerFs.getPath(parentPath.internalPathString)
         innerParentPath.getDirectory().createDirectory(directory.fileName.toString())
+        LocalWatchService.onEntryCreated(directory)
     }
 
     override fun delete(path: Path) {
         path as? VeraCryptPath ?: throw ProviderMismatchException(path.toString())
         val innerFs = path.getFileSystem().getInnerFs()
-        val innerPath = innerFs.getPath(path.toString())
+        val innerPath = innerFs.getPath(path.internalPathString)
         val record = if (innerPath.isDirectory) {
             innerPath.getDirectory()
         } else {
             innerPath.getFile()
         }
         record.delete()
+        LocalWatchService.onEntryDeleted(path)
     }
 
     override fun copy(source: Path, target: Path, vararg options: CopyOption?) {
-        throw UnsupportedOperationException()
+        source as? VeraCryptPath ?: throw ProviderMismatchException(source.toString())
+        target as? VeraCryptPath ?: throw ProviderMismatchException(target.toString())
+        if (source.fileSystem != target.fileSystem) {
+            throw IOException("Copying between different VeraCrypt file systems is not supported natively")
+        }
+        val fs = source.fileSystem
+        val innerFs = fs.getInnerFs()
+        val innerSourcePath = innerFs.getPath(source.internalPathString)
+        val parentTarget = target.parent ?: throw IOException("Cannot copy to root without a name")
+        val innerParentTarget = innerFs.getPath(parentTarget.internalPathString)
+        
+        if (innerSourcePath.isDirectory) {
+            // For directories, we'd need a recursive copy. 
+            // Standard nio copy(source, target) for directories usually only creates the target directory.
+            innerParentTarget.getDirectory().createDirectory(target.fileName.toString())
+        } else {
+            val sourceFile = innerSourcePath.getFile()
+            val targetDir = innerParentTarget.getDirectory()
+            val targetFile = targetDir.createFile(target.fileName.toString())
+            sourceFile.getInputStream().use { input ->
+                targetFile.getOutputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+        }
+        LocalWatchService.onEntryCreated(target)
     }
 
     override fun move(source: Path, target: Path, vararg options: CopyOption?) {
-        throw UnsupportedOperationException()
+        source as? VeraCryptPath ?: throw ProviderMismatchException(source.toString())
+        target as? VeraCryptPath ?: throw ProviderMismatchException(target.toString())
+        if (source.fileSystem != target.fileSystem) {
+            throw IOException("Moving between different VeraCrypt file systems is not supported natively")
+        }
+        
+        val fs = source.fileSystem
+        val innerFs = fs.getInnerFs()
+        val innerSourcePath = innerFs.getPath(source.internalPathString)
+        val sourceRecord = if (innerSourcePath.isDirectory) innerSourcePath.getDirectory() else innerSourcePath.getFile()
+        
+        val sourceParent = source.parent
+        val targetParent = target.parent
+        
+        // If parent is different, move it first
+        if (sourceParent != targetParent) {
+            val innerTargetParent = innerFs.getPath(targetParent?.internalPathString ?: "/")
+            sourceRecord.moveTo(innerTargetParent.getDirectory())
+        }
+        
+        // If name is different, rename it
+        if (source.fileName != target.fileName) {
+            sourceRecord.rename(target.fileName.toString())
+        }
+        LocalWatchService.onEntryDeleted(source)
+        LocalWatchService.onEntryCreated(target)
     }
 
     override fun isSameFile(path: Path, path2: Path): Boolean = path == path2
@@ -194,8 +269,9 @@ object VeraCryptFileSystemProvider : FileSystemProvider(), PathObservableProvide
         throw UnsupportedOperationException()
     }
 
-    override fun observe(path: Path, intervalMillis: Long): me.zhanghai.android.files.provider.common.PathObservable {
-         throw UnsupportedOperationException()
+    override fun observe(path: Path, intervalMillis: Long): PathObservable {
+        path as? VeraCryptPath ?: throw ProviderMismatchException(path.toString())
+        return WatchServicePathObservable(path, intervalMillis)
     }
 
     override fun search(
@@ -209,5 +285,10 @@ object VeraCryptFileSystemProvider : FileSystemProvider(), PathObservableProvide
 
     internal fun removeFileSystem(fileSystem: VeraCryptFileSystem) {
         fileSystems.remove(fileSystem.containerFile, fileSystem)
+        updateActiveFileSystems()
+    }
+
+    private fun updateActiveFileSystems() {
+        activeFileSystemsLiveData.postValue(fileSystems.getAll())
     }
 }

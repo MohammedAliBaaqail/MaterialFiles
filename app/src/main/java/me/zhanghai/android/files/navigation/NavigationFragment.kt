@@ -5,6 +5,7 @@
 
 package me.zhanghai.android.files.navigation
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -15,6 +16,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.recyclerview.widget.LinearLayoutManager
 import java8.nio.file.Path
 import me.zhanghai.android.files.databinding.NavigationFragmentBinding
+import me.zhanghai.android.files.util.showToast
 import me.zhanghai.android.files.util.startActivitySafe
 
 class NavigationFragment : Fragment(), NavigationItem.Listener {
@@ -57,6 +59,9 @@ class NavigationFragment : Fragment(), NavigationItem.Listener {
         adapter.notifyCheckedChanged()
     }
 
+    override val navigationContext: Context
+        get() = requireContext()
+
     override val currentPath: Path
         get() = listener.currentPath
 
@@ -66,6 +71,14 @@ class NavigationFragment : Fragment(), NavigationItem.Listener {
 
     override fun navigateToRoot(path: Path) {
         listener.navigateToRoot(path)
+    }
+
+    override fun navigateToDefaultRoot() {
+        listener.navigateToDefaultRoot()
+    }
+
+    override fun showToast(text: String) {
+        requireContext().showToast(text)
     }
 
     override fun launchIntent(intent: Intent) {

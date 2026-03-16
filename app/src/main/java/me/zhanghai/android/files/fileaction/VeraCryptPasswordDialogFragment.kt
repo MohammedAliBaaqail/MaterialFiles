@@ -121,24 +121,26 @@ class VeraCryptPasswordDialogFragment : AppCompatDialogFragment() {
             binding.passwordLayout.error = null
             binding.passwordLayout.helperText = getString(R.string.file_action_veracrypt_password_checking)
             
-            val success = withContext(Dispatchers.IO) {
+            val result = withContext(Dispatchers.IO) {
                 try {
                     val container = EdsContainer(DelegatingEdsPath(args.path.veraCryptContainerFile))
                     container.open(password.toByteArray(Charsets.UTF_8))
+                    // Try to load the filesystem to check for missing modules (like ExFAT)
+                    container.getEncryptedFS()
                     container.close()
-                    true
+                    null // No error
                 } catch (e: Exception) {
-                    false
+                    e.message ?: getString(R.string.file_action_veracrypt_password_error_incorrect)
                 }
             }
             
-            if (success) {
+            if (result == null) {
                 args.path.veraCryptAddPassword(password)
                 notifyListenerOnce(true)
                 finish()
             } else {
                 binding.passwordLayout.helperText = null
-                binding.passwordLayout.error = getString(R.string.file_action_veracrypt_password_error_incorrect)
+                binding.passwordLayout.error = result
                 okButton.isEnabled = true
             }
         }
