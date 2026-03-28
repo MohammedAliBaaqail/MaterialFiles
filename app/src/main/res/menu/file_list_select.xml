@@ -66,6 +66,11 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/action_select_between"
+        android:title="@string/select_between"
+        app:showAsAction="ifRoom" />
+
+    <item
         android:id="@+id/action_select_all"
         android:icon="@drawable/select_all_icon_control_normal_24dp"
         android:title="@string/select_all"

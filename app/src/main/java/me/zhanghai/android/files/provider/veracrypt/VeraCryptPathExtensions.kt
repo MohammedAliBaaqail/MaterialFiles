@@ -8,9 +8,9 @@ package me.zhanghai.android.files.provider.veracrypt
 import java8.nio.file.Path
 import java8.nio.file.ProviderMismatchException
 
-fun Path.veraCryptAddPassword(password: String) {
-    (this as? VeraCryptPath)?.fileSystem?.addPassword(password)
-        ?: (this.createVeraCryptRootPath() as VeraCryptPath).fileSystem.addPassword(password)
+fun Path.veraCryptAddPassword(password: String, container: com.sovworks.eds.container.EdsContainer? = null, timeoutSeconds: Long = 24 * 3600L) {
+    (this as? VeraCryptPath)?.fileSystem?.addPassword(password, container, timeoutSeconds)
+        ?: (this.createVeraCryptRootPath() as VeraCryptPath).fileSystem.addPassword(password, container, timeoutSeconds)
 }
 
 val Path.isVeraCryptPath: Boolean

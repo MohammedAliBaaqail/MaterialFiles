@@ -183,64 +183,344 @@
         <item name="colorPrimary">@color/material_blue_grey_300</item>
     </style>
 
-    <style name="Theme.MaterialFiles.color_primary.Black" />
-    <style name="Theme.MaterialFiles.Translucent.color_primary.Black" />
-    <style name="Theme.MaterialFiles.Immersive.color_primary.Black" />
-    <style name="Theme.MaterialFiles.material_red.Black" />
-    <style name="Theme.MaterialFiles.Translucent.material_red.Black" />
-    <style name="Theme.MaterialFiles.Immersive.material_red.Black" />
-    <style name="Theme.MaterialFiles.material_pink.Black" />
-    <style name="Theme.MaterialFiles.Translucent.material_pink.Black" />
-    <style name="Theme.MaterialFiles.Immersive.material_pink.Black" />
-    <style name="Theme.MaterialFiles.material_purple.Black" />
-    <style name="Theme.MaterialFiles.Translucent.material_purple.Black" />
-    <style name="Theme.MaterialFiles.Immersive.material_purple.Black" />
-    <style name="Theme.MaterialFiles.material_deep_purple.Black" />
-    <style name="Theme.MaterialFiles.Translucent.material_deep_purple.Black" />
-    <style name="Theme.MaterialFiles.Immersive.material_deep_purple.Black" />
-    <style name="Theme.MaterialFiles.material_indigo.Black" />
-    <style name="Theme.MaterialFiles.Translucent.material_indigo.Black" />
-    <style name="Theme.MaterialFiles.Immersive.material_indigo.Black" />
-    <style name="Theme.MaterialFiles.material_blue.Black" />
-    <style name="Theme.MaterialFiles.Translucent.material_blue.Black" />
-    <style name="Theme.MaterialFiles.Immersive.material_blue.Black" />
-    <style name="Theme.MaterialFiles.material_light_blue.Black" />
-    <style name="Theme.MaterialFiles.Translucent.material_light_blue.Black" />
-    <style name="Theme.MaterialFiles.Immersive.material_light_blue.Black" />
-    <style name="Theme.MaterialFiles.material_cyan.Black" />
-    <style name="Theme.MaterialFiles.Translucent.material_cyan.Black" />
-    <style name="Theme.MaterialFiles.Immersive.material_cyan.Black" />
-    <style name="Theme.MaterialFiles.material_teal.Black" />
-    <style name="Theme.MaterialFiles.Translucent.material_teal.Black" />
-    <style name="Theme.MaterialFiles.Immersive.material_teal.Black" />
-    <style name="Theme.MaterialFiles.material_green.Black" />
-    <style name="Theme.MaterialFiles.Translucent.material_green.Black" />
-    <style name="Theme.MaterialFiles.Immersive.material_green.Black" />
-    <style name="Theme.MaterialFiles.material_light_green.Black" />
-    <style name="Theme.MaterialFiles.Translucent.material_light_green.Black" />
-    <style name="Theme.MaterialFiles.Immersive.material_light_green.Black" />
-    <style name="Theme.MaterialFiles.material_lime.Black" />
-    <style name="Theme.MaterialFiles.Translucent.material_lime.Black" />
-    <style name="Theme.MaterialFiles.Immersive.material_lime.Black" />
-    <style name="Theme.MaterialFiles.material_yellow.Black" />
-    <style name="Theme.MaterialFiles.Translucent.material_yellow.Black" />
-    <style name="Theme.MaterialFiles.Immersive.material_yellow.Black" />
-    <style name="Theme.MaterialFiles.material_amber.Black" />
-    <style name="Theme.MaterialFiles.Translucent.material_amber.Black" />
-    <style name="Theme.MaterialFiles.Immersive.material_amber.Black" />
-    <style name="Theme.MaterialFiles.material_orange.Black" />
-    <style name="Theme.MaterialFiles.Translucent.material_orange.Black" />
-    <style name="Theme.MaterialFiles.Immersive.material_orange.Black" />
-    <style name="Theme.MaterialFiles.material_deep_orange.Black" />
-    <style name="Theme.MaterialFiles.Translucent.material_deep_orange.Black" />
-    <style name="Theme.MaterialFiles.Immersive.material_deep_orange.Black" />
-    <style name="Theme.MaterialFiles.material_brown.Black" />
-    <style name="Theme.MaterialFiles.Translucent.material_brown.Black" />
-    <style name="Theme.MaterialFiles.Immersive.material_brown.Black" />
-    <style name="Theme.MaterialFiles.material_grey.Black" />
-    <style name="Theme.MaterialFiles.Translucent.material_grey.Black" />
-    <style name="Theme.MaterialFiles.Immersive.material_grey.Black" />
-    <style name="Theme.MaterialFiles.material_blue_grey.Black" />
-    <style name="Theme.MaterialFiles.Translucent.material_blue_grey.Black" />
-    <style name="Theme.MaterialFiles.Immersive.material_blue_grey.Black" />
+    <style name="Theme.MaterialFiles.color_primary.Black" parent="Theme.MaterialFiles.color_primary">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Translucent.color_primary.Black" parent="Theme.MaterialFiles.Translucent.color_primary">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Immersive.color_primary.Black" parent="Theme.MaterialFiles.Immersive.color_primary">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.material_red.Black" parent="Theme.MaterialFiles.material_red">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Translucent.material_red.Black" parent="Theme.MaterialFiles.Translucent.material_red">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Immersive.material_red.Black" parent="Theme.MaterialFiles.Immersive.material_red">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.material_pink.Black" parent="Theme.MaterialFiles.material_pink">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Translucent.material_pink.Black" parent="Theme.MaterialFiles.Translucent.material_pink">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Immersive.material_pink.Black" parent="Theme.MaterialFiles.Immersive.material_pink">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.material_purple.Black" parent="Theme.MaterialFiles.material_purple">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Translucent.material_purple.Black" parent="Theme.MaterialFiles.Translucent.material_purple">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Immersive.material_purple.Black" parent="Theme.MaterialFiles.Immersive.material_purple">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.material_deep_purple.Black" parent="Theme.MaterialFiles.material_deep_purple">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Translucent.material_deep_purple.Black" parent="Theme.MaterialFiles.Translucent.material_deep_purple">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Immersive.material_deep_purple.Black" parent="Theme.MaterialFiles.Immersive.material_deep_purple">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.material_indigo.Black" parent="Theme.MaterialFiles.material_indigo">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Translucent.material_indigo.Black" parent="Theme.MaterialFiles.Translucent.material_indigo">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Immersive.material_indigo.Black" parent="Theme.MaterialFiles.Immersive.material_indigo">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.material_blue.Black" parent="Theme.MaterialFiles.material_blue">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Translucent.material_blue.Black" parent="Theme.MaterialFiles.Translucent.material_blue">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Immersive.material_blue.Black" parent="Theme.MaterialFiles.Immersive.material_blue">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.material_light_blue.Black" parent="Theme.MaterialFiles.material_light_blue">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Translucent.material_light_blue.Black" parent="Theme.MaterialFiles.Translucent.material_light_blue">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Immersive.material_light_blue.Black" parent="Theme.MaterialFiles.Immersive.material_light_blue">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.material_cyan.Black" parent="Theme.MaterialFiles.material_cyan">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Translucent.material_cyan.Black" parent="Theme.MaterialFiles.Translucent.material_cyan">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Immersive.material_cyan.Black" parent="Theme.MaterialFiles.Immersive.material_cyan">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.material_teal.Black" parent="Theme.MaterialFiles.material_teal">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Translucent.material_teal.Black" parent="Theme.MaterialFiles.Translucent.material_teal">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Immersive.material_teal.Black" parent="Theme.MaterialFiles.Immersive.material_teal">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.material_green.Black" parent="Theme.MaterialFiles.material_green">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Translucent.material_green.Black" parent="Theme.MaterialFiles.Translucent.material_green">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Immersive.material_green.Black" parent="Theme.MaterialFiles.Immersive.material_green">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.material_light_green.Black" parent="Theme.MaterialFiles.material_light_green">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Translucent.material_light_green.Black" parent="Theme.MaterialFiles.Translucent.material_light_green">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Immersive.material_light_green.Black" parent="Theme.MaterialFiles.Immersive.material_light_green">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.material_lime.Black" parent="Theme.MaterialFiles.material_lime">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Translucent.material_lime.Black" parent="Theme.MaterialFiles.Translucent.material_lime">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Immersive.material_lime.Black" parent="Theme.MaterialFiles.Immersive.material_lime">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.material_yellow.Black" parent="Theme.MaterialFiles.material_yellow">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Translucent.material_yellow.Black" parent="Theme.MaterialFiles.Translucent.material_yellow">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Immersive.material_yellow.Black" parent="Theme.MaterialFiles.Immersive.material_yellow">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.material_amber.Black" parent="Theme.MaterialFiles.material_amber">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Translucent.material_amber.Black" parent="Theme.MaterialFiles.Translucent.material_amber">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Immersive.material_amber.Black" parent="Theme.MaterialFiles.Immersive.material_amber">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.material_orange.Black" parent="Theme.MaterialFiles.material_orange">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Translucent.material_orange.Black" parent="Theme.MaterialFiles.Translucent.material_orange">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Immersive.material_orange.Black" parent="Theme.MaterialFiles.Immersive.material_orange">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.material_deep_orange.Black" parent="Theme.MaterialFiles.material_deep_orange">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Translucent.material_deep_orange.Black" parent="Theme.MaterialFiles.Translucent.material_deep_orange">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Immersive.material_deep_orange.Black" parent="Theme.MaterialFiles.Immersive.material_deep_orange">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.material_brown.Black" parent="Theme.MaterialFiles.material_brown">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Translucent.material_brown.Black" parent="Theme.MaterialFiles.Translucent.material_brown">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Immersive.material_brown.Black" parent="Theme.MaterialFiles.Immersive.material_brown">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.material_grey.Black" parent="Theme.MaterialFiles.material_grey">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Translucent.material_grey.Black" parent="Theme.MaterialFiles.Translucent.material_grey">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Immersive.material_grey.Black" parent="Theme.MaterialFiles.Immersive.material_grey">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.material_blue_grey.Black" parent="Theme.MaterialFiles.material_blue_grey">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Translucent.material_blue_grey.Black" parent="Theme.MaterialFiles.Translucent.material_blue_grey">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Immersive.material_blue_grey.Black" parent="Theme.MaterialFiles.Immersive.material_blue_grey">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
 </resources>

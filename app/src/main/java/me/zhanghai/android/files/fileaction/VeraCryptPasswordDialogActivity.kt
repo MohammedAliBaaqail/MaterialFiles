@@ -9,7 +9,12 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.commit
 import me.zhanghai.android.files.app.AppActivity
+import android.content.Context
+import java8.nio.file.Path
+import me.zhanghai.android.files.filelist.FileListActivity
+import me.zhanghai.android.files.provider.veracrypt.createVeraCryptRootPath
 import me.zhanghai.android.files.util.args
+import me.zhanghai.android.files.util.createIntent
 import me.zhanghai.android.files.util.putArgs
 
 class VeraCryptPasswordDialogActivity : AppActivity() {
@@ -46,5 +51,19 @@ class VeraCryptPasswordDialogActivity : AppActivity() {
         supportFragmentManager.executePendingTransactions()
         super.finish()
         overridePendingTransition(0, 0)
+    }
+
+    companion object {
+        fun start(path: Path, context: Context) {
+            context.startActivity(
+                VeraCryptPasswordDialogActivity::class.createIntent()
+                    .putArgs(VeraCryptPasswordDialogFragment.Args(path, listener = { successful ->
+                        if (successful) {
+                            val rootPath = path.createVeraCryptRootPath()
+                            context.startActivity(FileListActivity.createViewIntent(rootPath))
+                        }
+                    }))
+            )
+        }
     }
 }

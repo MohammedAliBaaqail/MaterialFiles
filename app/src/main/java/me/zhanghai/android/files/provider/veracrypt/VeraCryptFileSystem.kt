@@ -26,7 +26,7 @@ import me.zhanghai.android.files.provider.common.toByteString
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 
-internal class VeraCryptFileSystem(
+class VeraCryptFileSystem(
     private val provider: VeraCryptFileSystemProvider,
     val containerFile: Path
 ) : FileSystem(), ByteStringListPathCreator, Parcelable {
@@ -50,18 +50,18 @@ internal class VeraCryptFileSystem(
     val isOpened: Boolean
         get() = synchronized(lock) { innerFs != null }
 
-    val defaultDirectory: VeraCryptPath
-        get() = rootDirectory
+    val isMountExpired: Boolean
+        get() = VeraCryptMountManager.isMountExpired(containerFile)
 
     @Throws(IOException::class)
     fun getInnerFs(): EdsFileSystem {
         synchronized(lock) {
             if (!isOpen) throw ClosedFileSystemException()
             
-            // 24-hour limit check
-            if (VeraCryptMountManager.isMountExpired(containerFile)) {
+            // Expiration check
+            if (isMountExpired) {
                 clearCachedState()
-                throw VeraCryptPasswordRequiredException(containerFile, "Mount expired after 24 hours")
+                throw VeraCryptPasswordRequiredException(containerFile, "Mount expired")
             }
 
             innerFs?.let { return it }
@@ -85,7 +85,7 @@ internal class VeraCryptFileSystem(
                         // Cache the successful password
                         passwords.add(pass)
                         // Record mount time
-                        VeraCryptMountManager.onMounted(containerFile)
+                        VeraCryptMountManager.onMounted(containerFile, VeraCryptMountManager.getTimeoutSeconds(containerFile))
                         return fs
                     } catch (e: Exception) {
                         Logger.debug("Failed to mount container with password: ${e.message}")
@@ -102,14 +102,31 @@ internal class VeraCryptFileSystem(
         }
     }
 
-    fun addPassword(password: String) {
+    fun addPassword(password: String, openedContainer: EdsContainer? = null, timeoutSeconds: Long = 24 * 3600L) {
         synchronized(lock) {
-            if (!isOpen) throw ClosedFileSystemException()
+            if (!isOpen) {
+                openedContainer?.close()
+                throw ClosedFileSystemException()
+            }
             passwords.add(password.toByteArray(StandardCharsets.UTF_8))
+            // Store the mount info
+            VeraCryptMountManager.onMounted(containerFile, timeoutSeconds)
             // Clear cached FS to retry with new password if needed
             innerFs = null
             edsContainer?.close()
-            edsContainer = null
+            if (openedContainer != null) {
+                Logger.debug("Using already opened container for $containerFile")
+                edsContainer = openedContainer
+                try {
+                    innerFs = openedContainer.getEncryptedFS()
+                } catch (e: Exception) {
+                    Logger.debug("Failed to get inner FS from handed-over container: ${e.message}")
+                    edsContainer = null
+                    openedContainer.close()
+                }
+            } else {
+                edsContainer = null
+            }
         }
     }
 

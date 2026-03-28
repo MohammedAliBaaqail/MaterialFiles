@@ -68,33 +68,70 @@ object FileListCache {
     fun get(path: Path, currentLastModified: Long): List<FileItem>? {
         ensureLoaded()
         val pathString = path.toString()
+        
+        // 1. Check in-memory cache first
         lock.read {
-            val cached = cache[pathString] ?: return null
-            // Use <= instead of < to allow for small timestamp differences
-            // Also add a small tolerance (1 second) for filesystem timestamp precision
-            if (cached.lastModified + 1000 < currentLastModified) {
-                // Cache is stale, remove it asynchronously
-                lock.write {
-                    cache.remove(pathString)
-                    Thread {
-                        deleteCacheFile(pathString)
-                    }.start()
+            val cached = cache[pathString]
+            if (cached != null) {
+                if (cached.lastModified + 1000 < currentLastModified) {
+                    lock.write {
+                        cache.remove(pathString)
+                        Thread { deleteCacheFile(pathString) }.start()
+                    }
+                    return null
                 }
+                Log.d(TAG, "Memory cache hit for $pathString (${cached.fileList.size} items)")
+                return cached.fileList
+            }
+        }
+        
+        // 2. Not in memory, check on-disk if we have it in index
+        val hash = lock.read { index[pathString] } ?: return null
+        
+        return try {
+            val cacheFile = File(cacheDir, "$hash.cache")
+            if (!cacheFile.exists()) {
+                synchronized(index) { index.remove(pathString) }
                 return null
             }
-            Log.d(TAG, "Cache hit for $pathString (${cached.fileList.size} items)")
-            return cached.fileList
+            
+            val bytes = cacheFile.readBytes()
+            if (bytes.isEmpty()) {
+                return null
+            }
+            
+            val fileList = deserializeList(bytes) ?: return null
+            
+            val metaFile = File(cacheDir, "$hash.meta")
+            val lastModified = metaFile.readText().toLongOrNull() ?: cacheFile.lastModified()
+            
+            if (lastModified + 1000 < currentLastModified) {
+                Thread { deleteCacheFile(pathString) }.start()
+                return null
+            }
+            
+            // Put into memory cache
+            lock.write {
+                cache[pathString] = CachedList(fileList, lastModified)
+            }
+            Log.d(TAG, "Disk cache hit for $pathString (${fileList.size} items)")
+            fileList
+        } catch (e: Exception) {
+            Log.e(TAG, "Error reading cache file for $pathString", e)
+            null
         }
     }
-    
+
     /**
-     * Store file list in cache. No size limit - stores everything.
+     * Store file list in cache.
      */
     fun put(path: Path, fileList: List<FileItem>, lastModified: Long) {
         ensureLoaded()
         val pathString = path.toString()
+        val hash = getPathHash(pathString)
         lock.write {
             cache[pathString] = CachedList(fileList, lastModified)
+            index[pathString] = hash
             Log.d(TAG, "Caching $pathString (${fileList.size} items, lastModified=$lastModified)")
             // Save asynchronously to avoid blocking
             Thread {
@@ -102,7 +139,7 @@ object FileListCache {
             }.start()
         }
     }
-    
+
     /**
      * Invalidate cache for a path.
      */
@@ -110,16 +147,18 @@ object FileListCache {
         val pathString = path.toString()
         lock.write {
             cache.remove(pathString)
+            index.remove(pathString)
             deleteCacheFile(pathString)
         }
     }
-    
+
     /**
      * Clear all cached data.
      */
     fun clear() {
         lock.write {
             cache.clear()
+            index.clear()
             try {
                 cacheDir.listFiles()?.forEach { it.delete() }
             } catch (e: Exception) {
@@ -127,13 +166,14 @@ object FileListCache {
             }
         }
     }
+
+    private val index = mutableMapOf<String, String>()
     
     private fun ensureLoaded() {
         if (isLoaded) return
         synchronized(this) {
             if (isLoaded) return
             if (isLoading) {
-                // Wait for async load to complete
                 var waitCount = 0
                 while (isLoading && waitCount < 100) {
                     Thread.sleep(10)
@@ -143,80 +183,38 @@ object FileListCache {
             }
             isLoading = true
             try {
-                loadCache()
+                loadIndex()
                 isLoaded = true
-                Log.d(TAG, "Cache loaded: ${cache.size} entries")
             } finally {
                 isLoading = false
             }
         }
     }
     
-    private fun loadCache() {
-        lock.write {
-            try {
-                cache.clear()
-                val indexFile = File(cacheDir, "index.json")
-                if (!indexFile.exists()) {
-                    Log.d(TAG, "No cache index file found")
-                    return
-                }
-                
-                val indexText = indexFile.readText()
-                if (indexText.isBlank()) {
-                    Log.d(TAG, "Cache index file is empty")
-                    return
-                }
-                
-                val indexJson = org.json.JSONObject(indexText)
-                var loadedCount = 0
-                
+    private fun loadIndex() {
+        try {
+            val indexFile = File(cacheDir, "index.json")
+            if (!indexFile.exists()) return
+            
+            val indexText = indexFile.readText()
+            if (indexText.isBlank()) return
+            
+            val indexJson = org.json.JSONObject(indexText)
+            lock.write {
+                index.clear()
                 for (pathString in indexJson.keys()) {
-                    try {
-                        val hash = indexJson.getString(pathString)
-                        val cacheFile = File(cacheDir, "$hash.cache")
-                        if (!cacheFile.exists()) {
-                            Log.w(TAG, "Cache file not found for $pathString (hash=$hash)")
-                            continue
-                        }
-                        
-                        val bytes = cacheFile.readBytes()
-                        if (bytes.isEmpty()) {
-                            Log.w(TAG, "Cache file is empty for $pathString")
-                            continue
-                        }
-                        
-                        val cachedList = deserializeList(bytes)
-                        if (cachedList != null) {
-                            // Read lastModified from a metadata file or use cache file's lastModified
-                            // Store it in the index for better reliability
-                            val lastModified = try {
-                                // Try to read from metadata file first
-                                val metaFile = File(cacheDir, "$hash.meta")
-                                if (metaFile.exists()) {
-                                    metaFile.readText().toLongOrNull() ?: cacheFile.lastModified()
-                                } else {
-                                    cacheFile.lastModified()
-                                }
-                            } catch (e: Exception) {
-                                cacheFile.lastModified()
-                            }
-                            
-                            cache[pathString] = CachedList(cachedList, lastModified)
-                            loadedCount++
-                            Log.d(TAG, "Loaded cache for $pathString: ${cachedList.size} items")
-                        } else {
-                            Log.w(TAG, "Failed to deserialize cache for $pathString")
-                        }
-                    } catch (e: Exception) {
-                        Log.w(TAG, "Error loading cache for $pathString", e)
-                    }
+                    index[pathString] = indexJson.getString(pathString)
                 }
-                Log.d(TAG, "Cache load complete: $loadedCount entries loaded")
-            } catch (e: Exception) {
-                Log.e(TAG, "Error loading cache", e)
             }
+            Log.d(TAG, "Cache index loaded: ${index.size} entries")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error loading cache index", e)
         }
+    }
+    
+    private fun loadCache() {
+       // This is no longer used, as we load on demand.
+       loadIndex()
     }
     
     private fun saveCacheFile(pathString: String, fileList: List<FileItem>, lastModified: Long) {

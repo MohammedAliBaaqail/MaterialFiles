@@ -46,6 +46,9 @@ object VeraCryptFileSystemProvider : FileSystemProvider(), PathObservableProvide
     private val activeFileSystemsLiveData = MutableLiveData<List<VeraCryptFileSystem>>(emptyList())
     internal val activeFileSystems: LiveData<List<VeraCryptFileSystem>> = activeFileSystemsLiveData
 
+    @Volatile
+    private var isServiceRunning = false
+
     override fun getScheme(): String = SCHEME
 
     override fun newFileSystem(uri: URI, env: Map<String, *>): FileSystem {
@@ -69,6 +72,11 @@ object VeraCryptFileSystemProvider : FileSystemProvider(), PathObservableProvide
         val fs = fileSystems.getOrCreate(containerFile) { newFileSystem(containerFile) }
         updateActiveFileSystems()
         return fs
+    }
+
+    internal fun getActiveFileSystem(containerFile: Path): VeraCryptFileSystem? {
+        val fs = fileSystems.getOrNull(containerFile)
+        return if (fs != null && fs.isOpened && !fs.isMountExpired) fs else null
     }
 
     override fun getFileSystem(uri: URI): FileSystem {
@@ -283,12 +291,37 @@ object VeraCryptFileSystemProvider : FileSystemProvider(), PathObservableProvide
          throw UnsupportedOperationException()
     }
 
+    internal fun unmountAll() {
+        val allFs = fileSystems.getAll()
+        for (fs in allFs) {
+            try {
+                fs.close()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            fileSystems.remove(fs.containerFile, fs)
+        }
+        updateActiveFileSystems()
+    }
+
     internal fun removeFileSystem(fileSystem: VeraCryptFileSystem) {
         fileSystems.remove(fileSystem.containerFile, fileSystem)
         updateActiveFileSystems()
     }
 
     private fun updateActiveFileSystems() {
-        activeFileSystemsLiveData.postValue(fileSystems.getAll())
+        val allActive = fileSystems.getAll().filter { !it.isMountExpired }
+        activeFileSystemsLiveData.postValue(allActive)
+        
+        val context = me.zhanghai.android.files.app.application
+        val shouldBeRunning = allActive.isNotEmpty()
+        if (shouldBeRunning != isServiceRunning) {
+            isServiceRunning = shouldBeRunning
+            if (shouldBeRunning) {
+                VeraCryptService.start(context)
+            } else {
+                VeraCryptService.stop(context)
+            }
+        }
     }
 }

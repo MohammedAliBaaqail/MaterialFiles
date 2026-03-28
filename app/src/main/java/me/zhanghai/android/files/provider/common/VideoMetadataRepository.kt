@@ -7,6 +7,7 @@ import java8.nio.file.Path
 import java8.nio.file.attribute.BasicFileAttributes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.asCoroutineDispatcher
 import me.zhanghai.android.files.database.AppDatabase
 import me.zhanghai.android.files.database.VideoMetadata
 import me.zhanghai.android.files.database.VideoMetadataDao
@@ -29,8 +30,9 @@ class VideoMetadataRepository(context: Context) {
     private val videoMetadataDao: VideoMetadataDao
     private val context = context.applicationContext
 
-    // Use a limited thread pool specifically for metadata extraction
+    // Use a limited thread pool specifically for metadata extraction to avoid contention on encrypted storage
     private val executor = Executors.newFixedThreadPool(2)
+    private val metadataDispatcher = executor.asCoroutineDispatcher()
 
     init {
         val database = AppDatabase.getDatabase(context)
@@ -47,8 +49,8 @@ class VideoMetadataRepository(context: Context) {
             return metadata.durationMillis
         }
 
-        // Extract duration
-        return withContext(Dispatchers.IO) {
+        // Extract duration using limited concurrency dispatcher
+        return withContext(metadataDispatcher) {
             try {
                 MediaMetadataRetriever().use { retriever ->
                     retriever.setDataSource(path)
@@ -123,78 +125,73 @@ class VideoMetadataRepository(context: Context) {
         }
 
         // Generate thumbnail
-        return withContext(Dispatchers.IO) {
+        return withContext(metadataDispatcher) {
             try {
                 MediaMetadataRetriever().use { retriever ->
                     retriever.setDataSource(path)
                     
-                    // Extract dimensions for proper sizing
-                    val width = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)?.toIntOrNull() ?: 1920
-                    val height = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)?.toIntOrNull() ?: 1080
+                    // Extract dimensions and duration for proper sizing and cache update
+                    val width = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)?.toIntOrNull() ?: 0
+                    val height = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)?.toIntOrNull() ?: 0
+                    val durationMillis = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
                     
                     // Calculate thumbnail size based on scale
-                    // For large scales, we need to use higher resolution to avoid blurry thumbnails
+                    // Use a more reasonable base size (512px) for list thumbnails
+                    val baseWidth = 512f
                     val scaleMultiplier = max(1.0f, effectiveScale / 100.0f)
-                    // Target at least 1920 width for high quality thumbnails
-                    val targetWidth = (max(width, 1920) * scaleMultiplier).toInt()
-                    val targetHeight = if (width > 0) (targetWidth.toFloat() / width * height).toInt() else 1080
+                    val targetWidth = (baseWidth * scaleMultiplier).toInt().coerceAtMost(max(width, height).takeIf { it > 0 } ?: 1024)
+                    val targetHeight = if (width > 0) (targetWidth.toFloat() / width * height).toInt() else targetWidth
                     
-                    Log.d(TAG, "Extracting thumbnail for $pathString, scale=$effectiveScale")
+                    Log.d(TAG, "Extracting thumbnail for $pathString at target size $targetWidth x $targetHeight")
                     
-                    // Check if the video has embedded image (added by programs like FFmpeg)
-                    val hasEmbeddedImage = retriever.extractMetadata(
-                        MediaMetadataRetriever.METADATA_KEY_HAS_IMAGE
-                    )?.toIntOrNull() == 1
-                    
-                    // First try to get embedded image if available (highest quality source)
-                    val frame = if (hasEmbeddedImage) {
-                        Log.d(TAG, "Video has embedded image, extracting it")
+                    // Check if video has embedded picture via metadata hint before trying to extract it
+                    val hasImage = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                        retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_IMAGE) == "yes"
+                    } else {
+                        // On older versions we can't be sure without trying or checking other keys
+                        true
+                    }
+
+                    // First try to get embedded picture (highest quality source for albums/posters)
+                    // This is much faster than decoding a video frame
+                    val embeddedPicture = if (hasImage) {
                         try {
-                            // -1 timeUs tells the retriever to extract the embedded image
-                            retriever.getFrameAtTime(-1, MediaMetadataRetriever.OPTION_CLOSEST)
+                            retriever.embeddedPicture?.let { bytes ->
+                                android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                            }
                         } catch (e: Exception) {
-                            Log.w(TAG, "Failed to extract embedded image, falling back to video frame", e)
                             null
                         }
                     } else null
                     
-                    // If no embedded image or extraction failed, get a video frame
-                    val videoFrame = if (frame == null) {
-                        // Request a high-quality frame at 1/3 of the video duration
-                        val durationMillis = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
-                            ?.toLongOrNull() ?: 0L
+                    // If no embedded picture, get a video frame
+                    val frame = if (embeddedPicture == null) {
+                        // Request a frame at 1/3 of the video duration
                         val frameTimeMicros = TimeUnit.MICROSECONDS.convert(
                             durationMillis / 3, TimeUnit.MILLISECONDS
                         )
                         
-                        Log.d(TAG, "Extracting frame at $frameTimeMicros micros for $pathString")
+                        Log.d(TAG, "Extracting keyframe at $frameTimeMicros micros for $pathString")
                         
-                        // Use OPTION_CLOSEST for better quality frame (not just keyframes)
-                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O_MR1) {
-                            // Use the scaled retriever method on newer devices
-                            // Ensure the aspect ratio is maintained but the frame fills the container
-                            // by using slightly larger dimensions to prevent black areas
-                            val overscaledWidth = (targetWidth * 1.01f).toInt()
-                            val overscaledHeight = (targetHeight * 1.01f).toInt()
-                            Log.d(TAG, "Using getScaledFrameAtTime with size $overscaledWidth x $overscaledHeight")
+                        // CRITICAL: Use OPTION_CLOSEST_SYNC for speed (decodes nearest keyframe)
+                        // OPTION_CLOSEST decodes all frames between keyframes, taking seconds/decades on encrypted files
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O_MR1 && width > 0 && height > 0) {
                             retriever.getScaledFrameAtTime(
                                 frameTimeMicros,
-                                MediaMetadataRetriever.OPTION_CLOSEST,
-                                overscaledWidth,
-                                overscaledHeight
+                                MediaMetadataRetriever.OPTION_CLOSEST_SYNC,
+                                targetWidth,
+                                targetHeight
                             )
                         } else {
-                            // Fall back to regular method on older devices
-                            Log.d(TAG, "Using getFrameAtTime (non-scaled)")
                             retriever.getFrameAtTime(
                                 frameTimeMicros,
-                                MediaMetadataRetriever.OPTION_CLOSEST
+                                MediaMetadataRetriever.OPTION_CLOSEST_SYNC
                             )
                         }
                     } else null
                     
                     // Use either the embedded image or the video frame
-                    val finalFrame = frame ?: videoFrame
+                    val finalFrame = embeddedPicture ?: frame
                     
                     if (finalFrame != null) {
                         // Ensure the frame fills the container without black areas
@@ -312,7 +309,7 @@ class VideoMetadataRepository(context: Context) {
         }
 
         // Extract dimensions if not cached
-        return withContext(Dispatchers.IO) {
+        return withContext(metadataDispatcher) {
             try {
                 MediaMetadataRetriever().use { retriever ->
                     retriever.setDataSource(path)

@@ -390,19 +390,17 @@ val Path.fileProviderUri: Uri
                 e.printStackTrace()
             }
         }
-        val uriPath = Uri.encode(toUri().toString())
-        return Uri.Builder()
+        val uriString = toUri().toString()
+        val builder = Uri.Builder()
             .scheme(ContentResolver.SCHEME_CONTENT)
             .authority(BuildConfig.FILE_PROVIDIER_AUTHORITY)
-            .path(uriPath)
-            .build()
+            .appendPath(uriString)
+        fileName?.let { builder.appendPath(it.toString()) }
+        return builder.build()
     }
 
 private val Uri.fileProviderPath: Path
     get() {
-        // Strip the prepended slash. A slash is always prepended because our Uri path starts with
-        // our URI scheme, which can never start with a slash; but our Uri has an authority so its
-        // path must start with a slash.
-        val uriPath = Uri.decode(path).substring(1)
-        return Paths.get(URI.create(uriPath))
+        val uriString = pathSegments[0]
+        return Paths.get(URI.create(uriString))
     }

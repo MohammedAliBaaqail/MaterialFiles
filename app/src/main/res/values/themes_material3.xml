@@ -98,7 +98,21 @@
     </style>
     <style name="Theme.MaterialFiles.Material3.Immersive" parent="Base.Theme.MaterialFiles.Material3.Immersive" />
 
-    <style name="Theme.MaterialFiles.Material3.Black" />
-    <style name="Theme.MaterialFiles.Material3.Translucent.Black" />
-    <style name="Theme.MaterialFiles.Material3.Immersive.Black" />
+    <style name="Theme.MaterialFiles.Material3.Black" parent="Theme.MaterialFiles.Material3">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Material3.Translucent.Black" parent="Theme.MaterialFiles.Material3.Translucent">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+    </style>
+    <style name="Theme.MaterialFiles.Material3.Immersive.Black" parent="Theme.MaterialFiles.Material3.Immersive">
+        <item name="android:colorBackground">@android:color/black</item>
+        <item name="colorSurface">@android:color/black</item>
+        <item name="colorAppBarSurface">@android:color/black</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
 </resources>

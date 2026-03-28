@@ -50,6 +50,17 @@ class FileSystemCache<K : Any, FS : FileSystem?> {
         }
     }
 
+    fun getOrNull(key: K): FS? {
+        synchronized(lock) {
+            val fileSystem = fileSystems[key]?.get()
+            if (fileSystem == null) {
+                fileSystems.remove(key)
+                return null
+            }
+            return fileSystem
+        }
+    }
+
     fun remove(key: K, fileSystem: FS) {
         synchronized(lock) {
             val fileSystemReference = fileSystems[key] ?: return

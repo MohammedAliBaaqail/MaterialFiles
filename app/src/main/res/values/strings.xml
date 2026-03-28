@@ -42,6 +42,7 @@
     <string name="sort_by">Sort by</string>
     <string name="select">Select</string>
     <string name="select_all">Select all</string>
+    <string name="select_between">Select between</string>
     <string name="share">Share</string>
     <string name="show">Show</string>
     <string name="skip">Skip</string>
@@ -755,6 +756,7 @@
         <item>Follow system</item>
         <item>Off</item>
         <item>On</item>
+        <item>On (Pure Black)</item>
         <item>Based on time</item>
         <item>Based on battery saver</item>
     </string-array>

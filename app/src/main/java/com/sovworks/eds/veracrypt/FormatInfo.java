@@ -17,7 +17,7 @@ public class FormatInfo extends com.sovworks.eds.truecrypt.FormatInfo {
 
     @Override
     public int getOpeningPriority() {
-        return 3;
+        return 1;
     }
 
     @Override

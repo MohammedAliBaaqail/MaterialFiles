@@ -103,6 +103,9 @@ class VeraCryptPasswordDialogFragment : AppCompatDialogFragment() {
             val linearLayout = scrollView.getChildAt(0) as LinearLayout
             linearLayout.addView(binding.root)
             binding.passwordEdit.requestFocus()
+            binding.timeoutSlider.addOnChangeListener { _, value, _ ->
+                binding.timeoutText.text = "Session Timeout: ${value.toInt()} hour${if (value > 1) "s" else ""}"
+            }
         }
     }
 
@@ -121,26 +124,31 @@ class VeraCryptPasswordDialogFragment : AppCompatDialogFragment() {
             binding.passwordLayout.error = null
             binding.passwordLayout.helperText = getString(R.string.file_action_veracrypt_password_checking)
             
-            val result = withContext(Dispatchers.IO) {
+            val (container, error) = withContext(Dispatchers.IO) {
                 try {
                     val container = EdsContainer(DelegatingEdsPath(args.path.veraCryptContainerFile))
                     container.open(password.toByteArray(Charsets.UTF_8))
                     // Try to load the filesystem to check for missing modules (like ExFAT)
                     container.getEncryptedFS()
-                    container.close()
-                    null // No error
+                    container to null
                 } catch (e: Exception) {
-                    e.message ?: getString(R.string.file_action_veracrypt_password_error_incorrect)
+                    null to (e.message ?: getString(R.string.file_action_veracrypt_password_error_incorrect))
                 }
             }
             
-            if (result == null) {
-                args.path.veraCryptAddPassword(password)
+            val timeoutHours = binding.timeoutSlider.value.toInt()
+            val timeoutSeconds = timeoutHours * 3600L
+
+            if (error == null && container != null) {
+                args.path.veraCryptAddPassword(password, container, timeoutSeconds)
                 notifyListenerOnce(true)
                 finish()
             } else {
+                withContext(Dispatchers.IO) {
+                    container?.close()
+                }
                 binding.passwordLayout.helperText = null
-                binding.passwordLayout.error = result
+                binding.passwordLayout.error = error
                 okButton.isEnabled = true
             }
         }

@@ -26,6 +26,12 @@
         app:showAsAction="always" />
 
     <item
+        android:id="@+id/action_select_between"
+        android:orderInCategory="100"
+        android:title="@string/select_between"
+        app:showAsAction="ifRoom" />
+
+    <item
         android:id="@+id/action_select_all"
         android:alphabeticShortcut="a"
         android:orderInCategory="100"

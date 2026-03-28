@@ -20,7 +20,6 @@ import android.widget.TextView
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import coil.dispose
 import coil.load
@@ -237,7 +236,25 @@ class FileListAdapter(
         listener.selectFiles(files, true)
     }
 
-    private fun isFileSelectable(file: FileItem): Boolean {
+    fun selectRange(file1: FileItem, file2: FileItem) {
+        val pos1 = getFilePosition(file1.path)
+        val pos2 = getFilePosition(file2.path)
+        if (pos1 == RecyclerView.NO_POSITION || pos2 == RecyclerView.NO_POSITION) {
+            return
+        }
+        val start = minOf(pos1, pos2)
+        val end = maxOf(pos1, pos2)
+        val filesToSelect = fileItemSetOf()
+        for (i in start..end) {
+            val file = getItem(i)
+            if (isFileSelectable(file)) {
+                filesToSelect.add(file)
+            }
+        }
+        listener.selectFiles(filesToSelect, true)
+    }
+
+    fun isFileSelectable(file: FileItem): Boolean {
         val pickOptions = pickOptions ?: return true
         return when (pickOptions.mode) {
             PickOptions.Mode.OPEN_FILE, PickOptions.Mode.CREATE_FILE ->
@@ -261,6 +278,8 @@ class FileListAdapter(
             filePositionMap[file.path] = index
         }
     }
+
+    fun getFilePosition(path: Path): Int = filePositionMap[path] ?: RecyclerView.NO_POSITION
 
     override fun getItemViewType(position: Int): Int = viewType.ordinal
 
@@ -1005,16 +1024,8 @@ class FileListAdapter(
                 if (rating > 0) rating.toString() else "-"
             }
             FileSortOptions.By.DURATION -> {
-                var duration: Long? = null
-                // Use runBlocking carefully, okay for potentially quick DB lookup
-                runBlocking {
-                    duration = try {
-                         metadataRepository.getDurationMillis(file.path)
-                    } catch (e: Exception) {
-                        null
-                    }
-                }
-                duration?.format() ?: "-"
+                // Return placeholder and let background loading update it
+                "-"
             }
         }
     }

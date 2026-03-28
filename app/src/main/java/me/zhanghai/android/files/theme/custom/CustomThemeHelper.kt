@@ -16,6 +16,7 @@ import me.zhanghai.android.files.compat.recreateCompat
 import me.zhanghai.android.files.compat.setThemeCompat
 import me.zhanghai.android.files.compat.themeResIdCompat
 import me.zhanghai.android.files.settings.Settings
+import me.zhanghai.android.files.theme.night.NightMode
 import me.zhanghai.android.files.theme.night.NightModeHelper
 import me.zhanghai.android.files.util.SimpleActivityLifecycleCallbacks
 import me.zhanghai.android.files.util.valueCompat
@@ -75,7 +76,11 @@ object CustomThemeHelper {
             val themeColorName =
                 resources.getResourceEntryName(Settings.THEME_COLOR.valueCompat.resourceId)
             "$baseThemeName.$themeColorName"
-        } + if (Settings.BLACK_NIGHT_MODE.valueCompat) ".Black" else ""
+        } + if (Settings.BLACK_NIGHT_MODE.valueCompat || Settings.NIGHT_MODE.valueCompat == NightMode.BLACK_ON) {
+            ".Black"
+        } else {
+            ""
+        }
         return resources.getIdentifier(customThemeName, null, null)
     }
 

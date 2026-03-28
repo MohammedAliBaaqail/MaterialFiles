@@ -15,6 +15,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import androidx.appcompat.widget.ActionMenuView
 import android.os.Handler
 import android.os.Looper
 import android.text.TextUtils
@@ -57,6 +58,9 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import me.zhanghai.android.files.provider.veracrypt.isVeraCryptContainer
+import me.zhanghai.android.files.provider.veracrypt.VeraCryptFileSystemProvider
+import me.zhanghai.android.files.fileaction.VeraCryptPasswordDialogActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -79,6 +83,7 @@ import me.zhanghai.android.files.databinding.FileListFragmentBottomBarIncludeBin
 import me.zhanghai.android.files.databinding.FileListFragmentContentIncludeBinding
 import me.zhanghai.android.files.databinding.FileListFragmentIncludeBinding
 import me.zhanghai.android.files.databinding.FileListFragmentSpeedDialIncludeBinding
+import me.zhanghai.android.files.databinding.MenuSelectionRatingSliderBinding
 import me.zhanghai.android.files.file.FileItem
 import me.zhanghai.android.files.file.FileTag
 import me.zhanghai.android.files.file.FileTagManager
@@ -88,6 +93,7 @@ import me.zhanghai.android.files.file.extension
 import me.zhanghai.android.files.file.fileProviderUri
 import me.zhanghai.android.files.file.isApk
 import me.zhanghai.android.files.file.isImage
+import me.zhanghai.android.files.file.isVideo
 import me.zhanghai.android.files.file.isSupportedArchive
 import me.zhanghai.android.files.filejob.FileJobService
 import me.zhanghai.android.files.filelist.FileSortOptions.By
@@ -221,6 +227,7 @@ class FileListFragment : Fragment(),
     private lateinit var navigationFragment: NavigationFragment
 
     private lateinit var menuBinding: MenuBinding
+    private var selectionRatingSliderBinding: MenuSelectionRatingSliderBinding? = null
 
     private lateinit var overlayActionMode: ToolbarActionMode
 
@@ -1226,10 +1233,12 @@ class FileListFragment : Fragment(),
             menu.findItem(R.id.action_open).isVisible = isOpen
             menu.findItem(R.id.action_create).isVisible = !isOpen
             menu.findItem(R.id.action_select_all).isVisible = pickOptions.allowMultiple
+            menu.findItem(R.id.action_select_between).isVisible = pickOptions.allowMultiple && files.size >= 2
         } else {
             overlayActionMode.title = getString(R.string.file_list_select_title_format, files.size)
             overlayActionMode.setMenuResource(R.menu.file_list_select)
             val menu = overlayActionMode.menu
+            menu.findItem(R.id.action_select_between).isVisible = files.size >= 2
             val isAnyFileReadOnly = files.any { it.path.fileSystem.isReadOnly }
             menu.findItem(R.id.action_cut).isVisible = !isAnyFileReadOnly
             val areAllFilesArchivePaths = files.all { it.path.isArchivePath }
@@ -1275,25 +1284,49 @@ class FileListFragment : Fragment(),
     }
 
     private fun configureSelectionRatingSlider(menu: Menu) {
-        val sliderItem = menu.findItem(R.id.action_rating_slider)
-        val sliderView = sliderItem?.actionView?.findViewById<SeekBar>(R.id.selectionRatingSeekBar)
-        val labelView = sliderItem?.actionView?.findViewById<TextView>(R.id.selectionRatingLabel)
-        selectionRatingSeekBar = null
+        val toolbar = binding.overlayToolbar
         val shouldShow = showSelectionRatingSlider && viewModel.selectedFiles.isNotEmpty()
-        sliderItem?.isVisible = shouldShow
+        
+        // Remove the menu item if it exists (we'll use a custom view instead)
+        menu.findItem(R.id.action_rating_slider)?.isVisible = false
         menu.findItem(R.id.action_set_rating)?.isVisible = !showSelectionRatingSlider
-        if (!shouldShow || sliderView == null) {
+
+        if (!shouldShow) {
+            selectionRatingSliderBinding?.let {
+                toolbar.removeView(it.root)
+                selectionRatingSliderBinding = null
+                selectionRatingSeekBar = null
+            }
             return
+        }
+
+        if (selectionRatingSliderBinding == null) {
+            val inflater = LayoutInflater.from(requireContext())
+            selectionRatingSliderBinding = MenuSelectionRatingSliderBinding.inflate(inflater, toolbar, false)
+            val lp = Toolbar.LayoutParams(
+                Toolbar.LayoutParams.MATCH_PARENT,
+                Toolbar.LayoutParams.MATCH_PARENT
+            )
+            // Add at index 1 to be after navigation icon and title
+            toolbar.addView(selectionRatingSliderBinding!!.root, lp)
+        }
+
+        val sliderView = selectionRatingSliderBinding!!.selectionRatingSeekBar
+        val labelView = selectionRatingSliderBinding!!.selectionRatingLabel
+        // Disable parent interception (like DrawerLayout) when the slider is touched.
+        sliderView.setOnTouchListener { v, event ->
+            v.parent.requestDisallowInterceptTouchEvent(true)
+            false // allow the SeekBar to consume the event
         }
         selectionRatingSeekBar = sliderView
         sliderView.max = 9
         sliderView.setOnSeekBarChangeListener(null)
         val progress = computeSelectionRatingProgress()
         sliderView.progress = progress
-        labelView?.text = progress.toString()
+        labelView.text = progress.toString()
         sliderView.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-                labelView?.text = progress.toString()
+                labelView.text = progress.toString()
                 if (!fromUser) {
                     return
                 }
@@ -1503,6 +1536,10 @@ class FileListFragment : Fragment(),
                 selectAllFiles()
                 true
             }
+            R.id.action_select_between -> {
+                selectBetweenFiles()
+                true
+            }
             R.id.action_manage_tags -> {
                 FileTagManagementDialogFragment.show(viewModel.selectedFiles.toList(), this)
                 true
@@ -1517,6 +1554,10 @@ class FileListFragment : Fragment(),
 
     private fun onOverlayActionModeFinished() {
         viewModel.clearSelectedFiles()
+        selectionRatingSliderBinding?.let {
+            binding.overlayToolbar.removeView(it.root)
+            selectionRatingSliderBinding = null
+        }
         selectionRatingSeekBar = null
         selectionQuickTagsJob?.cancel()
         selectionQuickTagsJob = null
@@ -1606,6 +1647,28 @@ class FileListFragment : Fragment(),
 
     private fun selectAllFiles() {
         adapter.selectAllFiles()
+    }
+
+    private fun selectBetweenFiles() {
+        val files = viewModel.selectedFiles
+        if (files.size < 2) {
+            return
+        }
+        var minPos = Int.MAX_VALUE
+        var maxPos = Int.MIN_VALUE
+        for (file in files) {
+            val pos = adapter.getFilePosition(file.path)
+            if (pos != RecyclerView.NO_POSITION) {
+                minPos = minOf(minPos, pos)
+                maxPos = maxOf(maxPos, pos)
+            }
+        }
+        if (minPos == Int.MAX_VALUE || maxPos == Int.MIN_VALUE || minPos == maxPos) {
+            return
+        }
+        val file1 = adapter.getItem(minPos)
+        val file2 = adapter.getItem(maxPos)
+        adapter.selectRange(file1, file2)
     }
 
     private fun onPasteStateChanged(pasteState: PasteState) {
@@ -1823,7 +1886,16 @@ class FileListFragment : Fragment(),
         }
         
         // Open the file with the effective path
-        openFile(effectivePath, effectivePath, file.mimeType)
+        if (effectivePath.isVeraCryptContainer) {
+            val fs = VeraCryptFileSystemProvider.getActiveFileSystem(effectivePath)
+            if (fs != null) {
+                navigate(fs.rootDirectory)
+            } else {
+                VeraCryptPasswordDialogActivity.start(effectivePath, requireContext())
+            }
+        } else {
+            openFile(effectivePath, effectivePath, file.mimeType)
+        }
     }
 
     override fun manageVideoThumbnail(file: FileItem) {
@@ -1854,6 +1926,7 @@ class FileListFragment : Fragment(),
                 .apply {
                     extraPath = path
                     maybeAddImageViewerActivityExtras(this, path, mimeType)
+                    maybeAddVideoPlayerExtras(this, path, mimeType)
                 }
                 .let {
                 if (pickOptions != null) {
@@ -1868,6 +1941,66 @@ class FileListFragment : Fragment(),
                     }
                 }
             startActivitySafe(intent)
+    }
+
+    private fun maybeAddVideoPlayerExtras(intent: Intent, path: Path, mimeType: MimeType) {
+        if (!mimeType.isVideo) {
+            return
+        }
+        val videoPaths = mutableListOf<Path>()
+        var currentPosition = -1
+        for (index in 0..<adapter.itemCount) {
+            val file = adapter.getItem(index)
+            if (file.mimeType.isVideo) {
+                videoPaths.add(file.path)
+                if (file.path == path) {
+                    currentPosition = videoPaths.size - 1
+                }
+            }
+        }
+        if (currentPosition == -1) {
+            return
+        }
+        var subVideoPaths = videoPaths
+        var subPosition = currentPosition
+        if (videoPaths.size > VIDEO_PLAYER_ACTIVITY_PATH_LIST_SIZE_MAX) {
+            val start = (currentPosition - VIDEO_PLAYER_ACTIVITY_PATH_LIST_SIZE_MAX / 2)
+                .coerceIn(0, videoPaths.size - VIDEO_PLAYER_ACTIVITY_PATH_LIST_SIZE_MAX)
+            subVideoPaths = videoPaths.subList(start, start + VIDEO_PLAYER_ACTIVITY_PATH_LIST_SIZE_MAX)
+            subPosition -= start
+        }
+        val videoUris = subVideoPaths.map { it.fileProviderUri }.toTypedArray()
+        intent.putExtra("video_list", videoUris)
+        intent.putExtra("playlist", videoUris)
+
+        val baseName = path.name.asFileName().baseName
+        val subtitleUris = mutableListOf<Uri>()
+        val subtitleExtensions = setOf("srt", "ass", "ssa", "vtt", "sub")
+        for (index in 0..<adapter.itemCount) {
+            val file = adapter.getItem(index)
+            val fileName = file.name.asFileName()
+            if (subtitleExtensions.contains(fileName.singleExtension.lowercase())) {
+                if (fileName.baseName == baseName) {
+                    subtitleUris.add(file.path.fileProviderUri)
+                }
+            }
+        }
+        if (subtitleUris.isNotEmpty()) {
+            val subtitleUriArray = subtitleUris.toTypedArray()
+            intent.putExtra("subs", subtitleUriArray)
+            intent.putExtra("subs.name", subtitleUris.map { it.lastPathSegment }.toTypedArray())
+            intent.putExtra("subtitles", subtitleUriArray)
+        }
+
+        val clipData = ClipData.newRawUri(null, videoUris[0])
+        for (i in 1 until videoUris.size) {
+            clipData.addItem(ClipData.Item(videoUris[i]))
+        }
+        for (i in 0 until subtitleUris.size) {
+            clipData.addItem(ClipData.Item(subtitleUris[i]))
+        }
+        intent.clipData = clipData
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
 
     private fun maybeAddImageViewerActivityExtras(intent: Intent, path: Path, mimeType: MimeType) {
@@ -2394,11 +2527,14 @@ class FileListFragment : Fragment(),
         selectionRatingSeekBar = null
     }
 
+
+
     companion object {
         private const val ACTION_VIEW_DOWNLOADS =
             "me.zhanghai.android.files.intent.action.VIEW_DOWNLOADS"
 
-        private const val IMAGE_VIEWER_ACTIVITY_PATH_LIST_SIZE_MAX = 1000
+        private const val IMAGE_VIEWER_ACTIVITY_PATH_LIST_SIZE_MAX = 100
+        private const val VIDEO_PLAYER_ACTIVITY_PATH_LIST_SIZE_MAX = 100
     }
 
     private class RequestAllFilesAccessContract : ActivityResultContract<Unit, Boolean>() {

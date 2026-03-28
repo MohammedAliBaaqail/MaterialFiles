@@ -373,6 +373,9 @@
         <service android:name="me.zhanghai.android.files.ftpserver.FtpServerService"
             android:foregroundServiceType="dataSync" />
 
+        <service android:name="me.zhanghai.android.files.provider.veracrypt.VeraCryptService"
+            android:foregroundServiceType="dataSync" />
+
         <service
             android:name="me.zhanghai.android.files.ftpserver.FtpServerTileService"
             android:exported="true"

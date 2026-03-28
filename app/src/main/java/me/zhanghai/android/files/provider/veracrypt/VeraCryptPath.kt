@@ -20,7 +20,7 @@ import me.zhanghai.android.files.util.readParcelable
 import java.io.File
 import java.io.IOException
 
-internal class VeraCryptPath : ByteStringListPath<VeraCryptPath>, RootablePath {
+class VeraCryptPath : ByteStringListPath<VeraCryptPath>, RootablePath {
     private val fileSystem: VeraCryptFileSystem
 
     constructor(fileSystem: VeraCryptFileSystem, path: ByteString) : super(

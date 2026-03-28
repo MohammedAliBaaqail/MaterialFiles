@@ -38,71 +38,107 @@
                 android:checkableBehavior="single">
                 <item
                     android:id="@+id/action_view_list"
-                    android:title="@string/file_list_action_view_list" />
+                    android:icon="@drawable/menu_icon_control_normal_24dp"
+                    android:title="@string/file_list_action_view_list"
+                    app:iconTint="@android:color/white" />
                 <item
                     android:id="@+id/action_view_grid"
-                    android:title="@string/file_list_action_view_grid" />
+                    android:icon="@drawable/ic_image_white_24dp"
+                    android:title="@string/file_list_action_view_grid"
+                    app:iconTint="@android:color/white" />
             </group>
             <group
                 android:id="@+id/group_sort"
                 android:checkableBehavior="single">
                 <item
                     android:id="@+id/action_sort_by_name"
-                    android:title="@string/file_list_action_sort_by_name" />
+                    android:icon="@drawable/text_file_icon_white_24dp"
+                    android:title="@string/file_list_action_sort_by_name"
+                    app:iconTint="@android:color/white" />
                 <item
                     android:id="@+id/action_sort_by_type"
-                    android:title="@string/file_list_action_sort_by_type" />
+                    android:icon="@drawable/file_icon_white_24dp"
+                    android:title="@string/file_list_action_sort_by_type"
+                    app:iconTint="@android:color/white" />
                 <item
                     android:id="@+id/action_sort_by_size"
-                    android:title="@string/file_list_action_sort_by_size" />
+                    android:icon="@drawable/sd_card_icon_white_24dp"
+                    android:title="@string/file_list_action_sort_by_size"
+                    app:iconTint="@android:color/white" />
                 <item
                     android:id="@+id/action_sort_by_last_modified"
-                    android:title="@string/file_list_action_sort_by_last_modified" />
+                    android:icon="@drawable/tim_icon_white_24dp"
+                    android:title="@string/file_list_action_sort_by_last_modified"
+                    app:iconTint="@android:color/white" />
                 <item
                     android:id="@+id/action_sort_by_rating"
-                    android:title="@string/file_list_action_sort_by_rating" />
+                    android:icon="@drawable/star_icon_control_normal_24dp"
+                    android:title="@string/file_list_action_sort_by_rating"
+                    app:iconTint="@android:color/white" />
                 <item
                     android:id="@+id/action_sort_by_duration"
-                    android:title="@string/file_list_action_sort_by_duration" />
+                    android:icon="@drawable/video_icon_white_24dp"
+                    android:title="@string/file_list_action_sort_by_duration"
+                    app:iconTint="@android:color/white" />
                 <item
                     android:id="@+id/action_sort_order_ascending"
                     android:checkable="true"
-                    android:title="@string/file_list_action_sort_order_ascending" />
+                    android:icon="@drawable/arrow_end_icon_white_24dp"
+                    android:title="@string/file_list_action_sort_order_ascending"
+                    app:iconTint="@android:color/white" />
                 <item
                     android:id="@+id/action_sort_directories_first"
                     android:checkable="true"
-                    android:title="@string/file_list_action_sort_directories_first" />
+                    android:icon="@drawable/directory_icon_white_24dp"
+                    android:title="@string/file_list_action_sort_directories_first"
+                    app:iconTint="@android:color/white" />
                 <item
                     android:id="@+id/action_show_date_type"
                     android:checkable="true"
-                    android:title="@string/file_list_action_show_creation_date" />
+                    android:icon="@drawable/alarm_icon_white_24dp"
+                    android:title="@string/file_list_action_show_creation_date"
+                    app:iconTint="@android:color/white" />
                 <item
                     android:id="@+id/action_hide_info_in_grid"
                     android:checkable="true"
-                    android:title="@string/settings_file_list_hide_info_in_grid_title" />
+                    android:icon="@drawable/information_icon_white_24dp"
+                    android:title="@string/settings_file_list_hide_info_in_grid_title"
+                    app:iconTint="@android:color/white" />
                 <item
                     android:id="@+id/action_use_square_thumbnails"
                     android:checkable="true"
-                    android:title="@string/file_list_action_use_square_thumbnails" />
+                    android:icon="@drawable/badge_background_18dp"
+                    android:title="@string/file_list_action_use_square_thumbnails"
+                    app:iconTint="@android:color/white" />
                 <item
                     android:id="@+id/action_square_thumbnails_in_grid"
                     android:checkable="true"
-                    android:title="@string/file_list_action_use_square_thumbnails_in_grid" />
+                    android:icon="@drawable/file_item_grid_thumbnail_outline"
+                    android:title="@string/file_list_action_use_square_thumbnails_in_grid"
+                    app:iconTint="@android:color/white" />
                 <item
                     android:id="@+id/action_use_portrait_mode_in_grid"
                     android:checkable="true"
-                    android:title="@string/file_list_action_use_portrait_mode_in_grid" />
+                    android:icon="@drawable/device_icon_white_24dp"
+                    android:title="@string/file_list_action_use_portrait_mode_in_grid"
+                    app:iconTint="@android:color/white" />
                 <item
                     android:id="@+id/action_item_scale"
-                    android:title="@string/file_list_action_item_scale" />
+                    android:icon="@drawable/select_all_icon_control_normal_24dp"
+                    android:title="@string/file_list_action_item_scale"
+                    app:iconTint="@android:color/white" />
                 <item
                     android:id="@+id/action_regenerate_thumbnails"
-                    android:title="@string/file_list_action_regenerate_thumbnails" />
+                    android:icon="@drawable/reset_icon_white_24dp"
+                    android:title="@string/file_list_action_regenerate_thumbnails"
+                    app:iconTint="@android:color/white" />
             </group>
             <item
                 android:id="@+id/action_view_sort_path_specific"
                 android:checkable="true"
-                android:title="@string/file_list_action_view_sort_path_specific" />
+                android:icon="@drawable/save_icon_control_normal_24dp"
+                android:title="@string/file_list_action_view_sort_path_specific"
+                app:iconTint="@android:color/white" />
         </menu>
     </item>
 
