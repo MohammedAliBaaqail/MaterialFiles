@@ -298,6 +298,10 @@
     <string name="file_list_path_error_empty">Path cannot be empty</string>
     <string name="file_list_path_error_invalid">Invalid path</string>
     <string name="file_list_action_view_sort">View and sort</string>
+    <string name="top_bar_scroll_mode_title">Top section auto-hide</string>
+    <string name="top_bar_scroll_mode_always">Always show top section</string>
+    <string name="top_bar_scroll_mode_scroll_up">Auto-hide on scroll (Show on scroll up)</string>
+    <string name="top_bar_scroll_mode_arrow">Auto-hide on scroll (Show via arrow button)</string>
     <string name="file_list_action_view_list">List</string>
     <string name="file_list_action_view_grid">Grid</string>
     <string name="file_list_action_sort_by_name">Name</string>
@@ -975,6 +979,8 @@
     <string name="settings_selection_rating_slider_summary">Display a rating slider in the selection toolbar</string>
     <string name="settings_selection_quick_tags_title">Show quick tag bar during selection</string>
     <string name="settings_selection_quick_tags_summary">Display tags below the toolbar for quick add or remove</string>
+    <string name="settings_grid_overlay_info_title">Overlay info on grid thumbnail</string>
+    <string name="settings_grid_overlay_info_summary">Display file name on top and rating/tags at the bottom inside thumbnail</string>
 </resources>
 
 

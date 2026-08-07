@@ -55,7 +55,7 @@ android {
         resValue 'string', 'file_provider_authority', applicationId + '.file_provider'
         externalNativeBuild {
             cmake {
-                arguments '-DANDROID_STL=none'
+                arguments '-DANDROID_STL=none', '-DCMAKE_SHARED_LINKER_FLAGS=-Wl,-z,max-page-size=16384'
             }
         }
     }
@@ -139,7 +139,7 @@ android {
 }
 
 dependencies {
-    implementation('com.github.bitfireAT:dav4jvm:c1bc143') {
+    implementation('com.github.bitfireAT:dav4jvm:2.1.2') {
         exclude group: 'org.ogce', module: 'xpp3'
     }
     implementation 'com.github.chrisbanes:PhotoView:2.3.0'

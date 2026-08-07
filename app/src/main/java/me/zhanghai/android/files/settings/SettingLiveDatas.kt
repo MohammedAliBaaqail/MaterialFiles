@@ -221,7 +221,13 @@ class EnumSettingLiveData<E : Enum<*>?>(
 
     override fun getDefaultValue(@StringRes defaultValueRes: Int): E =
         if (defaultValueRes != ResourcesCompat.ID_NULL) {
-            enumValues[application.getString(defaultValueRes).toInt()]
+            val stringVal = application.getString(defaultValueRes)
+            val index = stringVal.toIntOrNull()
+            if (index != null && index in enumValues.indices) {
+                enumValues[index]
+            } else {
+                enumValues.firstOrNull { it?.name == stringVal } ?: enumValues[0]
+            }
         } else {
             @Suppress("UNCHECKED_CAST")
             null as E
@@ -232,8 +238,12 @@ class EnumSettingLiveData<E : Enum<*>?>(
         key: String,
         defaultValue: E
     ): E {
-        val valueOrdinal = sharedPreferences.getString(key, null)?.toInt() ?: return defaultValue
-        return if (valueOrdinal in enumValues.indices) enumValues[valueOrdinal] else defaultValue
+        val stringVal = sharedPreferences.getString(key, null) ?: return defaultValue
+        val index = stringVal.toIntOrNull()
+        if (index != null && index in enumValues.indices) {
+            return enumValues[index]
+        }
+        return enumValues.firstOrNull { it?.name == stringVal } ?: defaultValue
     }
 
     override fun putValue(sharedPreferences: SharedPreferences, key: String, value: E) {

@@ -19,102 +19,109 @@
         app:liftOnScroll="true"
         app:liftOnScrollTargetViewId="@id/recyclerView">
 
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:layout_scrollFlags="@integer/file_list_toolbar_scroll_flags">
-
-            <me.zhanghai.android.files.ui.CrossfadeSubtitleToolbar
-                android:id="@+id/toolbar"
-                android:layout_width="match_parent"
-                android:layout_height="?actionBarSize"
-                android:paddingStart="@dimen/file_list_toolbar_padding_start"
-                android:paddingEnd="@dimen/file_list_toolbar_padding_end_with_overflow"
-                app:navigationIcon="@drawable/menu_icon_control_normal_24dp"
-                app:navigationContentDescription="@string/open_navigation_drawer"
-                app:popupTheme="?actionBarPopupTheme"
-                app:subtitleTextAppearance="@style/TextAppearance.AppCompat.Widget.ActionBar.Subtitle.Small" />
-
-            <me.zhanghai.android.files.ui.OverlayToolbar
-                android:id="@+id/overlayToolbar"
-                android:layout_width="match_parent"
-                android:layout_height="?actionBarSize"
-                android:paddingStart="@dimen/file_list_toolbar_padding_start"
-                android:paddingEnd="@dimen/file_list_toolbar_padding_end_with_overflow"
-                android:background="?colorAppBarSurface"
-                android:visibility="gone"
-                app:navigationIcon="@drawable/close_icon_control_normal_24dp"
-                app:popupTheme="?actionBarPopupTheme" />
-        </FrameLayout>
-
-        <me.zhanghai.android.files.filelist.BreadcrumbLayout
-            android:id="@+id/breadcrumbLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingStart="@dimen/content_start_margin"
-            android:paddingEnd="@dimen/screen_edge_margin"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp"
-            android:clipToPadding="false" />
-
         <LinearLayout
-            android:id="@+id/filterTagsContainer"
+            android:id="@+id/appBarContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:visibility="gone">
-            
-            <LinearLayout
+            app:layout_scrollFlags="@integer/file_list_toolbar_scroll_flags">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <me.zhanghai.android.files.ui.CrossfadeSubtitleToolbar
+                    android:id="@+id/toolbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="?actionBarSize"
+                    android:paddingStart="@dimen/file_list_toolbar_padding_start"
+                    android:paddingEnd="@dimen/file_list_toolbar_padding_end_with_overflow"
+                    app:navigationIcon="@drawable/menu_icon_control_normal_24dp"
+                    app:navigationContentDescription="@string/open_navigation_drawer"
+                    app:popupTheme="?actionBarPopupTheme"
+                    app:subtitleTextAppearance="@style/TextAppearance.AppCompat.Widget.ActionBar.Subtitle.Small" />
+
+                <me.zhanghai.android.files.ui.OverlayToolbar
+                    android:id="@+id/overlayToolbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="?actionBarSize"
+                    android:paddingStart="@dimen/file_list_toolbar_padding_start"
+                    android:paddingEnd="@dimen/file_list_toolbar_padding_end_with_overflow"
+                    android:background="?colorAppBarSurface"
+                    android:visibility="gone"
+                    app:navigationIcon="@drawable/close_icon_control_normal_24dp"
+                    app:popupTheme="?actionBarPopupTheme" />
+            </FrameLayout>
+
+            <me.zhanghai.android.files.filelist.BreadcrumbLayout
+                android:id="@+id/breadcrumbLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
                 android:paddingStart="@dimen/content_start_margin"
                 android:paddingEnd="@dimen/screen_edge_margin"
                 android:paddingTop="8dp"
-                android:paddingBottom="8dp">
-                
-                <me.zhanghai.android.files.ui.TagsView
-                    android:id="@+id/filterTagsView"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1" />
-
-                <TextView
-                    android:id="@+id/filterCountText"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:textAppearance="?attr/textAppearanceBodySmall"
-                    android:text="@string/loading" />
-                
-                <androidx.appcompat.widget.SwitchCompat
-                    android:id="@+id/filterModeSwitchButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="@string/file_tag_filter_mode_all"
-                    android:textSize="12sp" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <HorizontalScrollView
-            android:id="@+id/selectionQuickTagsBar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingStart="@dimen/content_start_margin"
-            android:paddingEnd="@dimen/screen_edge_margin"
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp"
-            android:visibility="gone"
-            android:overScrollMode="never">
+                android:paddingBottom="8dp"
+                android:clipToPadding="false" />
 
             <LinearLayout
-                android:id="@+id/selectionQuickTagsContainer"
-                android:layout_width="wrap_content"
+                android:id="@+id/filterTagsContainer"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal" />
-        </HorizontalScrollView>
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingStart="@dimen/content_start_margin"
+                    android:paddingEnd="@dimen/screen_edge_margin"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp">
+
+                    <me.zhanghai.android.files.ui.TagsView
+                        android:id="@+id/filterTagsView"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+
+                    <TextView
+                        android:id="@+id/filterCountText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:textAppearance="?attr/textAppearanceBodySmall"
+                        android:text="@string/loading" />
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/filterModeSwitchButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="@string/file_tag_filter_mode_all"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <HorizontalScrollView
+                android:id="@+id/selectionQuickTagsBar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="@dimen/content_start_margin"
+                android:paddingEnd="@dimen/screen_edge_margin"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:visibility="gone"
+                android:overScrollMode="never">
+
+                <LinearLayout
+                    android:id="@+id/selectionQuickTagsContainer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" />
+            </HorizontalScrollView>
+        </LinearLayout>
 
     </me.zhanghai.android.files.ui.CoordinatorAppBarLayout>
 </merge>

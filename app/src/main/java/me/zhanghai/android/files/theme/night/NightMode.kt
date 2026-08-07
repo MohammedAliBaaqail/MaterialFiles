@@ -11,7 +11,7 @@ enum class NightMode(val value: Int) {
     FOLLOW_SYSTEM(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM),
     OFF(AppCompatDelegate.MODE_NIGHT_NO),
     ON(AppCompatDelegate.MODE_NIGHT_YES),
-    AUTO_TIME(AppCompatDelegate.MODE_NIGHT_AUTO_TIME),
+    AUTO_TIME(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM),
     AUTO_BATTERY(AppCompatDelegate.MODE_NIGHT_AUTO_BATTERY),
     BLACK_ON(AppCompatDelegate.MODE_NIGHT_YES)
 }

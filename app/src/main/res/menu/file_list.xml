@@ -105,6 +105,12 @@
                     android:title="@string/settings_file_list_hide_info_in_grid_title"
                     app:iconTint="@android:color/white" />
                 <item
+                    android:id="@+id/action_grid_overlay_info"
+                    android:checkable="true"
+                    android:icon="@drawable/ic_image_white_24dp"
+                    android:title="@string/settings_grid_overlay_info_title"
+                    app:iconTint="@android:color/white" />
+                <item
                     android:id="@+id/action_use_square_thumbnails"
                     android:checkable="true"
                     android:icon="@drawable/badge_background_18dp"
@@ -127,6 +133,22 @@
                     android:icon="@drawable/select_all_icon_control_normal_24dp"
                     android:title="@string/file_list_action_item_scale"
                     app:iconTint="@android:color/white" />
+                <item
+                    android:title="@string/top_bar_scroll_mode_title">
+                    <menu>
+                        <group android:checkableBehavior="single">
+                            <item
+                                android:id="@+id/topBarModeAlwaysItem"
+                                android:title="@string/top_bar_scroll_mode_always" />
+                            <item
+                                android:id="@+id/topBarModeScrollUpItem"
+                                android:title="@string/top_bar_scroll_mode_scroll_up" />
+                            <item
+                                android:id="@+id/topBarModeArrowItem"
+                                android:title="@string/top_bar_scroll_mode_arrow" />
+                        </group>
+                    </menu>
+                </item>
                 <item
                     android:id="@+id/action_regenerate_thumbnails"
                     android:icon="@drawable/reset_icon_white_24dp"
@@ -151,6 +173,20 @@
         android:id="@+id/action_tag_filter_all"
         android:title="@string/file_tag_filter_mode_all"
         android:checkable="true" />
+
+    <item
+        android:id="@+id/action_create_directory"
+        android:icon="@drawable/directory_icon_white_24dp"
+        android:orderInCategory="90"
+        android:title="@string/file_list_action_create_directory"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_create_file"
+        android:icon="@drawable/file_icon_white_24dp"
+        android:orderInCategory="95"
+        android:title="@string/file_list_action_create_file"
+        app:showAsAction="never" />
 
     <item
         android:id="@+id/action_new_task"

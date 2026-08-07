@@ -48,6 +48,8 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.content.ContextCompat
+import com.google.android.material.appbar.AppBarLayout
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import androidx.core.view.GravityCompat
 import androidx.core.view.MenuProvider
 import androidx.core.view.isVisible
@@ -237,15 +239,16 @@ class FileListFragment : Fragment(),
 
     private lateinit var adapter: FileListAdapter
 
-    private val debouncedSearchRunnable = DebouncedRunnable(Handler(Looper.getMainLooper()), 1000) {
+    private val debouncedSearchRunnable = DebouncedRunnable(Handler(Looper.getMainLooper()), 300) {
         if (!isResumed || !viewModel.isSearchViewExpanded) {
             return@DebouncedRunnable
         }
         val query = viewModel.searchViewQuery
         if (query.isEmpty()) {
-            return@DebouncedRunnable
+            viewModel.stopSearching()
+        } else {
+            viewModel.search(query)
         }
-        viewModel.search(query)
     }
 
     private var currentTagFilter: Set<FileTag> = emptySet()
@@ -316,17 +319,73 @@ class FileListFragment : Fragment(),
         binding.recyclerView.setOnApplyWindowInsetsListener(
             ScrollingViewOnApplyWindowInsetsListener(binding.recyclerView, fastScroller)
         )
-        binding.speedDialView.inflate(R.menu.file_list_speed_dial)
-        binding.speedDialView.setOnActionSelectedListener {
-            when (it.id) {
-                R.id.action_create_file -> showCreateFileDialog()
-                R.id.action_create_directory -> showCreateDirectoryDialog()
-            }
-            // Returning false causes the speed dial to close without animation.
-            //return false
-            binding.speedDialView.close()
-            true
+
+        var isTopBarCollapsed = false
+        binding.appBarLayout.addOnOffsetChangedListener { _, verticalOffset ->
+            val totalRange = binding.appBarLayout.totalScrollRange
+            isTopBarCollapsed = totalRange > 0 && Math.abs(verticalOffset) >= totalRange
         }
+
+        val updateTopBarScrollFlags: (TopBarScrollMode) -> Unit = { scrollMode ->
+            val flags = when (scrollMode) {
+                TopBarScrollMode.ALWAYS_VISIBLE -> 0
+                TopBarScrollMode.AUTO_HIDE_SCROLL_UP -> AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL or AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS
+                TopBarScrollMode.AUTO_HIDE_ARROW_BUTTON -> AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL
+            }
+            for (i in 0 until binding.appBarLayout.childCount) {
+                val child = binding.appBarLayout.getChildAt(i)
+                val params = child.layoutParams as? AppBarLayout.LayoutParams
+                if (params != null) {
+                    params.scrollFlags = flags
+                    child.layoutParams = params
+                }
+            }
+            binding.appBarLayout.visibility = View.VISIBLE
+            binding.contentLayout.translationY = 0f
+            binding.appBarLayout.setExpanded(true, false)
+            binding.expandTopBarButton?.visibility = View.GONE
+        }
+
+        binding.expandTopBarButton?.setOnClickListener {
+            binding.appBarLayout.setExpanded(true, true)
+            binding.expandTopBarButton?.visibility = View.GONE
+        }
+
+        binding.recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                val scrollMode = Settings.TOP_BAR_SCROLL_MODE.valueCompat
+                if (scrollMode == TopBarScrollMode.ALWAYS_VISIBLE) {
+                    binding.expandTopBarButton?.visibility = View.GONE
+                    return
+                }
+
+                if (dy > 8) {
+                    binding.appBarLayout.setExpanded(false, true)
+                    binding.expandTopBarButton?.visibility = View.GONE
+                } else if (dy < -8) {
+                    if (scrollMode == TopBarScrollMode.AUTO_HIDE_SCROLL_UP) {
+                        binding.appBarLayout.setExpanded(true, true)
+                        binding.expandTopBarButton?.visibility = View.GONE
+                    } else if (scrollMode == TopBarScrollMode.AUTO_HIDE_ARROW_BUTTON) {
+                        if (isTopBarCollapsed) {
+                            binding.expandTopBarButton?.visibility = View.VISIBLE
+                        }
+                    }
+                }
+
+                if (!recyclerView.canScrollVertically(-1)) {
+                    binding.appBarLayout.setExpanded(true, true)
+                    binding.expandTopBarButton?.visibility = View.GONE
+                }
+            }
+        })
+
+        Settings.TOP_BAR_SCROLL_MODE.observe(viewLifecycleOwner) { scrollMode ->
+            updateTopBarScrollFlags(scrollMode)
+            updateViewSortMenuItems()
+        }
+
+        binding.speedDialView.visibility = View.GONE
         
         // Listen for folder thumbnail management results
         childFragmentManager.setFragmentResultListener(
@@ -484,6 +543,11 @@ class FileListFragment : Fragment(),
         Settings.HIDE_BREADCRUMB_PATH.observe(viewLifecycleOwner) { hideBreadcrumbPath ->
             updateBreadcrumbVisibility(hideBreadcrumbPath)
         }
+
+        // Observe grid overlay info setting
+        Settings.GRID_OVERLAY_INFO.observe(viewLifecycleOwner) { isGridOverlayInfo ->
+            adapter.isGridOverlayInfo = isGridOverlayInfo
+        }
     }
 
     override fun onResume() {
@@ -534,7 +598,12 @@ class FileListFragment : Fragment(),
                     return false
                 }
                 viewModel.searchViewQuery = query
-                debouncedSearchRunnable()
+                if (query.isEmpty()) {
+                    debouncedSearchRunnable.cancel()
+                    viewModel.stopSearching()
+                } else {
+                    debouncedSearchRunnable()
+                }
                 return false
             }
         })
@@ -705,6 +774,12 @@ class FileListFragment : Fragment(),
                 adapter.notifyDataSetChanged()
                 true
             }
+            R.id.action_grid_overlay_info -> {
+                item.isChecked = !item.isChecked
+                Settings.GRID_OVERLAY_INFO.putValue(item.isChecked)
+                adapter.notifyDataSetChanged()
+                true
+            }
             R.id.action_use_square_thumbnails -> {
                 viewModel.isSquareThumbnailsInGrid = !menuBinding.useSquareThumbnailsItem.isChecked
                 true
@@ -721,6 +796,29 @@ class FileListFragment : Fragment(),
             }
             R.id.action_use_portrait_mode_in_grid -> {
                 viewModel.isPortraitModeInGrid = !menuBinding.usePortraitModeInGridItem.isChecked
+                true
+            }
+            R.id.topBarModeAlwaysItem -> {
+                item.isChecked = true
+                Settings.TOP_BAR_SCROLL_MODE.putValue(TopBarScrollMode.ALWAYS_VISIBLE)
+                true
+            }
+            R.id.topBarModeScrollUpItem -> {
+                item.isChecked = true
+                Settings.TOP_BAR_SCROLL_MODE.putValue(TopBarScrollMode.AUTO_HIDE_SCROLL_UP)
+                true
+            }
+            R.id.topBarModeArrowItem -> {
+                item.isChecked = true
+                Settings.TOP_BAR_SCROLL_MODE.putValue(TopBarScrollMode.AUTO_HIDE_ARROW_BUTTON)
+                true
+            }
+            R.id.action_create_file -> {
+                showCreateFileDialog()
+                true
+            }
+            R.id.action_create_directory -> {
+                showCreateDirectoryDialog()
                 true
             }
             R.id.action_regenerate_thumbnails -> {
@@ -915,20 +1013,17 @@ class FileListFragment : Fragment(),
         layoutManager.spanCount = when (viewModel.viewType) {
             FileViewType.LIST -> 1
             FileViewType.GRID -> {
-                var widthDp = resources.configuration.screenWidthDp
+                var widthDp = resources.configuration.screenWidthDp.toFloat()
                 val persistentDrawerLayout = binding.persistentDrawerLayout
                 if (persistentDrawerLayout != null &&
                     persistentDrawerLayout.isDrawerOpen(GravityCompat.START)) {
-                    widthDp -= getDimensionDp(R.dimen.navigation_max_width).roundToInt()
+                    widthDp -= getDimensionDp(R.dimen.navigation_max_width) / resources.displayMetrics.density
                 }
                 
-                // With reduced margins, we can fit more items per row
-                // Use 160dp instead of 180dp per item to account for the reduced margins
-                val itemSize = 160
-                val itemScale = viewModel.itemScale / 100f
-                val scaledItemSize = (itemSize * itemScale).roundToInt()
-                val spanCount = (widthDp / scaledItemSize).coerceAtLeast(2)
-                
+                val baseItemDp = 160f
+                val scale = (viewModel.itemScale / 100f).coerceAtLeast(0.5f)
+                val baseSpanCount = (widthDp / baseItemDp).roundToInt().coerceAtLeast(2)
+                val spanCount = (baseSpanCount / scale).roundToInt().coerceAtLeast(2)
                 spanCount
             }
         }
@@ -1005,6 +1100,11 @@ class FileListFragment : Fragment(),
         menuBinding.hideInfoInGridItem.isVisible = viewType == FileViewType.GRID
         menuBinding.hideInfoInGridItem.isChecked = hideInfoInGrid
         
+        // Show or hide "Overlay info on grid thumbnail" menu item based on view type
+        val gridOverlayInfo = Settings.GRID_OVERLAY_INFO.valueCompat
+        menuBinding.gridOverlayInfoItem.isVisible = viewType == FileViewType.GRID
+        menuBinding.gridOverlayInfoItem.isChecked = gridOverlayInfo
+        
         // Handle square thumbnails menu items
         val squareThumbnailsInGrid = viewModel.isSquareThumbnailsInGrid
         // Show only one menu item - use the regular one for both views
@@ -1016,6 +1116,14 @@ class FileListFragment : Fragment(),
         val portraitModeInGrid = viewModel.isPortraitModeInGrid
         menuBinding.usePortraitModeInGridItem.isVisible = viewType == FileViewType.GRID
         menuBinding.usePortraitModeInGridItem.isChecked = portraitModeInGrid
+
+        // Update Top Bar Scroll Mode menu items
+        val topBarScrollMode = Settings.TOP_BAR_SCROLL_MODE.valueCompat
+        when (topBarScrollMode) {
+            TopBarScrollMode.ALWAYS_VISIBLE -> menuBinding.topBarModeAlwaysItem.isChecked = true
+            TopBarScrollMode.AUTO_HIDE_SCROLL_UP -> menuBinding.topBarModeScrollUpItem.isChecked = true
+            TopBarScrollMode.AUTO_HIDE_ARROW_BUTTON -> menuBinding.topBarModeArrowItem.isChecked = true
+        }
     }
 
     private fun updateSquareThumbnailsInGridMenuItem() {
@@ -2586,7 +2694,8 @@ class FileListFragment : Fragment(),
         val bottomBarLayout: ViewGroup,
         val bottomToolbar: Toolbar,
         val bottomCreateFileNameEdit: EditText,
-        val speedDialView: SpeedDialView
+        val speedDialView: SpeedDialView,
+        val expandTopBarButton: FloatingActionButton? = null
     ) {
         companion object {
             fun inflate(
@@ -2615,7 +2724,7 @@ class FileListFragment : Fragment(),
                     contentBinding.emptyView, contentBinding.swipeRefreshLayout,
                     contentBinding.recyclerView, bottomBarBinding.bottomBarLayout,
                     bottomBarBinding.bottomToolbar, bottomBarBinding.bottomCreateFileNameEdit,
-                    speedDialBinding.speedDialView
+                    speedDialBinding.speedDialView, includeBinding.expandTopBarButton
                 )
             }
         }
@@ -2640,9 +2749,13 @@ class FileListFragment : Fragment(),
         val showHiddenFilesItem: MenuItem,
         val showDateTypeItem: MenuItem,
         val hideInfoInGridItem: MenuItem,
+        val gridOverlayInfoItem: MenuItem,
         val useSquareThumbnailsItem: MenuItem,
         val squareThumbnailsInGridItem: MenuItem,
-        val usePortraitModeInGridItem: MenuItem
+        val usePortraitModeInGridItem: MenuItem,
+        val topBarModeAlwaysItem: MenuItem,
+        val topBarModeScrollUpItem: MenuItem,
+        val topBarModeArrowItem: MenuItem
     ) {
         companion object {
             fun inflate(menu: Menu, inflater: MenuInflater): MenuBinding {
@@ -2665,9 +2778,13 @@ class FileListFragment : Fragment(),
                     menu.findItem(R.id.action_show_hidden_files),
                     menu.findItem(R.id.action_show_date_type),
                     menu.findItem(R.id.action_hide_info_in_grid),
+                    menu.findItem(R.id.action_grid_overlay_info),
                     menu.findItem(R.id.action_use_square_thumbnails),
                     menu.findItem(R.id.action_square_thumbnails_in_grid),
-                    menu.findItem(R.id.action_use_portrait_mode_in_grid)
+                    menu.findItem(R.id.action_use_portrait_mode_in_grid),
+                    menu.findItem(R.id.topBarModeAlwaysItem),
+                    menu.findItem(R.id.topBarModeScrollUpItem),
+                    menu.findItem(R.id.topBarModeArrowItem)
                 )
             }
         }
@@ -2744,21 +2861,37 @@ class FileListFragment : Fragment(),
         scaleSlider.progress = progress
         scaleValueText.text = getString(R.string. file_list_action_item_scale_value, currentScale)
         
-        // Apply the scale immediately when slider changes
+        val handler = Handler(Looper.getMainLooper())
+        var pendingRunnable: Runnable? = null
+        var lastAppliedScale = currentScale
+
+        // Apply the scale efficiently when slider changes
         scaleSlider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
                 val scale = progress + 50
                 scaleValueText.text = getString(R.string.file_list_action_item_scale_value, scale)
                 
-                // Apply the scale immediately
-                if (fromUser) {
-                    viewModel.itemScale = scale
+                if (fromUser && kotlin.math.abs(scale - lastAppliedScale) >= 2) {
+                    pendingRunnable?.let { handler.removeCallbacks(it) }
+                    val runnable = Runnable {
+                        if (isAdded) {
+                            lastAppliedScale = scale
+                            viewModel.itemScale = scale
+                        }
+                    }
+                    pendingRunnable = runnable
+                    handler.postDelayed(runnable, 20)
                 }
             }
             
             override fun onStartTrackingTouch(seekBar: SeekBar) {}
             
-            override fun onStopTrackingTouch(seekBar: SeekBar) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar) {
+                pendingRunnable?.let { handler.removeCallbacks(it) }
+                val finalScale = seekBar.progress + 50
+                lastAppliedScale = finalScale
+                viewModel.itemScale = finalScale
+            }
         })
         
         AlertDialog.Builder(requireContext())

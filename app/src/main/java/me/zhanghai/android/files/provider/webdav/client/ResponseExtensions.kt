@@ -7,23 +7,29 @@ package me.zhanghai.android.files.provider.webdav.client
 
 import at.bitfire.dav4jvm.HttpUtils
 import at.bitfire.dav4jvm.Response
-import at.bitfire.dav4jvm.property.webdav.CreationDate
-import at.bitfire.dav4jvm.property.webdav.GetContentLength
-import at.bitfire.dav4jvm.property.webdav.GetLastModified
-import at.bitfire.dav4jvm.property.webdav.ResourceType
+import at.bitfire.dav4jvm.property.CreationDate
+import at.bitfire.dav4jvm.property.GetContentLength
+import at.bitfire.dav4jvm.property.GetLastModified
+import at.bitfire.dav4jvm.property.ResourceType
 import java.time.Instant
 
 val Response.creationTime: Instant?
-    get() = this[CreationDate::class.java]?.creationDate?.let { HttpUtils.parseDate(it) }
+    get() = (this.get(CreationDate::class.java) as? CreationDate)?.creationDate?.let {
+        try {
+            Instant.parse(it)
+        } catch (e: Exception) {
+            HttpUtils.parseDate(it)?.toInstant()
+        }
+    }
 
 val Response.isDirectory: Boolean
-    get() = this[ResourceType::class.java]?.types?.contains(ResourceType.COLLECTION) == true
+    get() = (this.get(ResourceType::class.java) as? ResourceType)?.types?.contains(ResourceType.COLLECTION) == true
 
 val Response.isSymbolicLink: Boolean
     get() = newLocation != null
 
 val Response.lastModifiedTime: Instant?
-    get() = this[GetLastModified::class.java]?.lastModified
+    get() = (this.get(GetLastModified::class.java) as? GetLastModified)?.lastModified?.let { Instant.ofEpochMilli(it) }
 
 val Response.size: Long
-    get() = this[GetContentLength::class.java]?.contentLength ?: 0
+    get() = (this.get(GetContentLength::class.java) as? GetContentLength)?.contentLength ?: 0

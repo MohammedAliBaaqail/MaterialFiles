@@ -20,4 +20,7 @@ target_link_libraries(syscall
         PRIVATE
         ${LOG_LIBRARY})
 
+# Support 16 KB memory page size (Android 15+ requirement)
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-z,max-page-size=16384")
+
 add_subdirectory(src/main/native)

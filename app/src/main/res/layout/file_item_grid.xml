@@ -31,8 +31,10 @@
             android:id="@+id/thumbnailLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="1dp"
-            android:layout_marginEnd="1dp"
+            android:layout_marginStart="0.5dp"
+            android:layout_marginEnd="0.5dp"
+            android:layout_marginTop="0.5dp"
+            android:layout_marginBottom="0.5dp"
             android:duplicateParentState="true"
             android:tag="@id/tag_original_height"
             app:aspectRatio="1.778">
@@ -62,8 +64,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:duplicateParentState="true"
-            android:scaleType="centerCrop"
-            app:shapeAppearance="?shapeAppearanceSmallComponent" />
+            android:scaleType="centerCrop" />
 
         <View
             android:id="@+id/thumbnailOutlineView"
@@ -71,6 +72,88 @@
             android:layout_height="wrap_content"
             android:background="@drawable/file_item_grid_thumbnail_outline"
             android:duplicateParentState="true" />
+
+        <!-- Top Overlay for File Name -->
+        <FrameLayout
+            android:id="@+id/overlayTopContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            android:background="@android:color/transparent"
+            android:paddingStart="6dp"
+            android:paddingTop="6dp"
+            android:paddingEnd="6dp"
+            android:paddingBottom="4dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/overlayNameText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:duplicateParentState="true"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:shadowColor="#FF000000"
+                android:shadowDx="1.5"
+                android:shadowDy="1.5"
+                android:shadowRadius="4.5"
+                android:textColor="@android:color/white"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+        </FrameLayout>
+
+        <!-- Bottom Overlay for Rating, Tags & Menu -->
+        <LinearLayout
+            android:id="@+id/overlayBottomContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:background="@android:color/transparent"
+            android:gravity="bottom"
+            android:orientation="horizontal"
+            android:paddingStart="2dp"
+            android:paddingTop="0dp"
+            android:paddingEnd="2dp"
+            android:paddingBottom="0dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/overlayRatingText"
+                android:layout_width="22dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="1dp"
+                android:layout_marginBottom="1dp"
+                android:gravity="center"
+                android:minWidth="22dp"
+                android:shadowColor="#FF000000"
+                android:shadowDx="1.5"
+                android:shadowDy="1.5"
+                android:shadowRadius="4.5"
+                android:textColor="#FFD700"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <me.zhanghai.android.files.ui.TagsView
+                android:id="@+id/overlayTagsView"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="1dp"
+                android:layout_marginBottom="1dp" />
+
+            <me.zhanghai.android.foregroundcompat.ForegroundImageButton
+                android:id="@+id/overlayMenuButton"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:layout_marginEnd="1dp"
+                android:layout_marginBottom="1dp"
+                android:background="@drawable/overlay_menu_button_shadow_background"
+                android:foreground="@drawable/selectable_item_background_oval"
+                android:padding="3dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/more_vertical_icon_white_24dp"
+                app:tint="@android:color/white" />
+        </LinearLayout>
     </me.zhanghai.android.files.ui.AspectRatioFrameLayout>
     </FrameLayout>
 

@@ -106,4 +106,10 @@
     <bool name="pref_default_value_show_selection_rating_slider">true</bool>
     <string name="pref_key_show_selection_quick_tags">show_selection_quick_tags</string>
     <bool name="pref_default_value_show_selection_quick_tags">true</bool>
+
+    <string name="pref_key_grid_overlay_info">grid_overlay_info</string>
+    <bool name="pref_default_value_grid_overlay_info">false</bool>
+
+    <string name="pref_key_top_bar_scroll_mode">top_bar_scroll_mode</string>
+    <string name="pref_default_value_top_bar_scroll_mode">0</string>
 </resources>

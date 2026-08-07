@@ -29,6 +29,7 @@ import me.zhanghai.android.files.provider.common.FileSystemCache
 import me.zhanghai.android.files.provider.common.PathListDirectoryStream
 import me.zhanghai.android.files.provider.common.PathObservableProvider
 import me.zhanghai.android.files.provider.common.Searchable
+import me.zhanghai.android.files.provider.common.WalkFileTreeSearchable
 import me.zhanghai.android.files.provider.common.decodedPathByteString
 import me.zhanghai.android.files.provider.common.decodedQueryByteString
 import me.zhanghai.android.files.provider.common.toByteString
@@ -288,7 +289,8 @@ object VeraCryptFileSystemProvider : FileSystemProvider(), PathObservableProvide
         intervalMillis: Long,
         listener: (List<Path>) -> Unit
     ) {
-         throw UnsupportedOperationException()
+        directory as? VeraCryptPath ?: throw ProviderMismatchException(directory.toString())
+        WalkFileTreeSearchable.search(directory, query, intervalMillis, listener)
     }
 
     internal fun unmountAll() {

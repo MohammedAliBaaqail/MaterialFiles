@@ -7,7 +7,7 @@ package me.zhanghai.android.files.provider.webdav.client
 
 import at.bitfire.dav4jvm.DavResource
 import at.bitfire.dav4jvm.exception.HttpException
-import at.bitfire.dav4jvm.property.webdav.GetContentLength
+import at.bitfire.dav4jvm.property.GetContentLength
 import me.zhanghai.android.files.provider.common.AbstractFileByteChannel
 import me.zhanghai.android.files.provider.common.EMPTY
 import me.zhanghai.android.files.provider.common.readFully
@@ -80,7 +80,7 @@ class FileByteChannel(
     @Throws(IOException::class)
     override fun onSize(): Long {
         val getContentLength =
-            Client.findProperties(resource, GetContentLength.NAME)[GetContentLength::class.java]
+            (Client.findProperties(resource, GetContentLength.NAME).get(GetContentLength::class.java) as? GetContentLength)
                 ?: throw IOException("Missing GetContentLength")
         return getContentLength.contentLength ?: throw IOException("Invalid GetContentLength")
     }

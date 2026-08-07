@@ -8,7 +8,6 @@ package me.zhanghai.android.files.provider.webdav.client
 import at.bitfire.dav4jvm.DavResource
 import at.bitfire.dav4jvm.DavResourceAccessor
 import at.bitfire.dav4jvm.QuotedStringUtils
-import at.bitfire.dav4jvm.ResponseCallback
 import at.bitfire.dav4jvm.exception.DavException
 import at.bitfire.dav4jvm.exception.HttpException
 import me.zhanghai.android.files.provider.common.DelegateOutputStream
@@ -30,9 +29,19 @@ import java.net.HttpURLConnection
 import java.nio.ByteBuffer
 import java.util.concurrent.CountDownLatch
 
+fun interface ResponseCallback {
+    fun onResponse(response: Response)
+}
+
 @Throws(DavException::class, IOException::class)
-fun DavResource.getCompat(accept: String, headers: Headers?): InputStream =
-    get(accept, headers).also { checkStatus(it) }.body!!.byteStream()
+fun DavResource.getCompat(accept: String, headers: Headers?): InputStream {
+    var responseRef: Response? = null
+    get(accept) { response ->
+        checkStatus(response)
+        responseRef = response
+    }
+    return responseRef!!.body!!.byteStream()
+}
 
 @Throws(DavException::class, IOException::class)
 fun DavResource.getRangeCompat(

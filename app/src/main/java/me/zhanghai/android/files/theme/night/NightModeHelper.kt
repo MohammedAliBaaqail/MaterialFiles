@@ -56,7 +56,16 @@ object NightModeHelper {
     }
 
     private val nightMode: Int
-        get() = Settings.NIGHT_MODE.valueCompat.value
+        get() {
+            val mode = Settings.NIGHT_MODE.valueCompat.value
+            return when (mode) {
+                AppCompatDelegate.MODE_NIGHT_NO,
+                AppCompatDelegate.MODE_NIGHT_YES,
+                AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM,
+                AppCompatDelegate.MODE_NIGHT_AUTO_BATTERY -> mode
+                else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+            }
+        }
 
     /*
      * @see androidx.appcompat.app.AppCompatDelegateImpl#updateForNightMode(int, boolean)

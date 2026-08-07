@@ -166,6 +166,17 @@ object Settings {
             R.string.pref_key_file_list_animation, R.bool.pref_default_value_file_list_animation
         )
 
+    val GRID_OVERLAY_INFO: SettingLiveData<Boolean> =
+        BooleanSettingLiveData(
+            R.string.pref_key_grid_overlay_info, R.bool.pref_default_value_grid_overlay_info
+        )
+
+    val TOP_BAR_SCROLL_MODE: SettingLiveData<me.zhanghai.android.files.filelist.TopBarScrollMode> =
+        EnumSettingLiveData(
+            R.string.pref_key_top_bar_scroll_mode, R.string.pref_default_value_top_bar_scroll_mode,
+            me.zhanghai.android.files.filelist.TopBarScrollMode::class.java
+        )
+
     val FILE_NAME_ELLIPSIZE: SettingLiveData<TextUtils.TruncateAt> =
         EnumSettingLiveData(
             R.string.pref_key_file_name_ellipsize, R.string.pref_default_value_file_name_ellipsize,

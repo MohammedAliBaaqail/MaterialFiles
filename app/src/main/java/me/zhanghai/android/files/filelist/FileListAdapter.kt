@@ -179,6 +179,14 @@ class FileListAdapter(
             _selectionMode = value
         }
 
+    var isGridOverlayInfo: Boolean = Settings.GRID_OVERLAY_INFO.valueCompat
+        set(value) {
+            if (field != value) {
+                field = value
+                notifyDataSetChanged()
+            }
+        }
+
     // Initialize repository lazily
     private val metadataRepository: VideoMetadataRepository by lazy {
         VideoMetadataRepository(application)
@@ -315,6 +323,7 @@ class FileListAdapter(
             popupMenu = PopupMenu(menuButton.context, menuButton)
                 .apply { menuInflater.inflate(R.menu.file_item, menu) }
             menuButton.setOnClickListener { popupMenu.show() }
+            overlayMenuButton?.setOnClickListener { popupMenu.show() }
         }
     }
 
@@ -733,20 +742,27 @@ class FileListAdapter(
             }
         }
         
-        holder.nameText.text = file.name
-
-        // Check if we need to hide file info in grid view
         val isGridView = viewType == FileViewType.GRID
         val hideInfoInGrid = isGridView && Settings.FILE_LIST_HIDE_INFO_IN_GRID.valueCompat
-        
-        // Handle the info container visibility for grid view
-        holder.infoContainer?.isVisible = !hideInfoInGrid
-        
-        // Ensure rating is always visible with consistent spacing
+        val isOverlayMode = isGridView && isGridOverlayInfo
+
+        holder.infoContainer?.isVisible = !hideInfoInGrid && !isOverlayMode
+        holder.overlayTopContainer?.isVisible = isOverlayMode
+        holder.overlayBottomContainer?.isVisible = isOverlayMode
+
+        val fileName = file.name
+        holder.nameText.text = fileName
+        holder.overlayNameText?.text = fileName
+
         val rating = FileRatingManager.getRating(file.path)
+        val ratingString = if (rating > 0) rating.toString() else ""
         holder.ratingText?.apply {
-            text = if (rating > 0) rating.toString() else ""
-            isVisible = true // Always visible for consistent layout
+            text = ratingString
+            isVisible = true
+        }
+        holder.overlayRatingText?.apply {
+            text = ratingString
+            isVisible = rating > 0
         }
         
         // Always update tags view regardless of view type
@@ -868,37 +884,34 @@ class FileListAdapter(
     }
 
     private fun updateTagsView(holder: ViewHolder, file: FileItem) {
+        val bindTags: (List<FileTag>, TagsView, Boolean) -> Unit = { tags, tagsView, isOverlay ->
+            if (tags.isNotEmpty()) {
+                tagsView.visibility = View.VISIBLE
+                tagsView.setTags(tags)
+                tagsView.setOnTagClickListener { tag -> listener.onTagClick(tag) }
+            } else {
+                tagsView.visibility = if (isOverlay) View.INVISIBLE else View.GONE
+            }
+        }
+
         // Use in-memory tag cache first for instant UI, then refresh in background if needed
         val cached = me.zhanghai.android.files.file.FileTagCache.get(file.path)
         if (cached != null) {
-            holder.tagsView?.apply {
-                if (cached.isNotEmpty()) {
-                    visibility = View.VISIBLE
-                    setTags(cached)
-                    setOnTagClickListener { tag -> listener.onTagClick(tag) }
-                } else {
-                    visibility = View.GONE
-                }
-            }
+            holder.tagsView?.let { bindTags(cached, it, false) }
+            holder.overlayTagsView?.let { bindTags(cached, it, true) }
             return
         }
         holder.tagsView?.visibility = View.GONE
+        holder.overlayTagsView?.visibility = View.INVISIBLE
         val viewPosition = holder.bindingAdapterPosition
         if (viewPosition == RecyclerView.NO_POSITION) return
         adapterScope.launch(kotlinx.coroutines.Dispatchers.Default) {
-        val tags = FileTagManager.getTagsForFile(file.path)
+            val tags = FileTagManager.getTagsForFile(file.path)
             me.zhanghai.android.files.file.FileTagCache.put(file.path, tags)
             withContext(kotlinx.coroutines.Dispatchers.Main) {
                 if (holder.bindingAdapterPosition == viewPosition) {
-        holder.tagsView?.apply {
-            if (tags.isNotEmpty()) {
-                visibility = View.VISIBLE
-                setTags(tags)
-                            setOnTagClickListener { tag -> listener.onTagClick(tag) }
-            } else {
-                visibility = View.GONE
-                        }
-                    }
+                    holder.tagsView?.let { bindTags(tags, it, false) }
+                    holder.overlayTagsView?.let { bindTags(tags, it, true) }
                 }
             }
         }
@@ -906,10 +919,15 @@ class FileListAdapter(
 
     private fun applyItemScale(holder: ViewHolder) {
         val scale = itemScale / 100f
-        
-        // Apply the scale - don't use scaleX/scaleY as that could cause overlap issues
-        // Instead, adjust layout parameters
-        
+
+        if (viewType == FileViewType.GRID) {
+            val context = holder.itemView.context
+            val paddingPx = (0.5f * context.resources.displayMetrics.density).toInt().coerceAtLeast(1)
+            holder.itemLayout.setPadding(paddingPx, paddingPx, paddingPx, paddingPx)
+        } else {
+            holder.itemLayout.setPadding(0, 0, 0, 0)
+        }
+
         // Scale the icon layout
         holder.iconLayout?.let { layout ->
             val params = layout.layoutParams
@@ -947,8 +965,6 @@ class FileListAdapter(
                 
                 // Critical: when scaling in grid view, maintain aspect ratio
                 if (viewType == FileViewType.GRID) {
-                    // Apply the current ratio setting again to force a re-measurement
-                    // that will maintain the aspect ratio with the new height
                     val ratio = layout.ratio
                     layout.ratio = ratio
                 }
@@ -1166,7 +1182,13 @@ class FileListAdapter(
         val ratingText: TextView?,
         val infoContainer: View?,
         val thumbnailLayout: AspectRatioFrameLayout?,
-        val thumbnailClickArea: View?
+        val thumbnailClickArea: View?,
+        val overlayTopContainer: View? = null,
+        val overlayNameText: TextView? = null,
+        val overlayBottomContainer: View? = null,
+        val overlayRatingText: TextView? = null,
+        val overlayTagsView: TagsView? = null,
+        val overlayMenuButton: ImageButton? = null
     ) : RecyclerView.ViewHolder(root) {
         constructor(binding: FileItemListBinding) : this(
             binding.root,
@@ -1207,7 +1229,13 @@ class FileListAdapter(
             binding.ratingText,
             binding.infoContainer,
             binding.thumbnailLayout,
-            binding.thumbnailClickArea
+            binding.thumbnailClickArea,
+            binding.overlayTopContainer,
+            binding.overlayNameText,
+            binding.overlayBottomContainer,
+            binding.overlayRatingText,
+            binding.overlayTagsView,
+            binding.overlayMenuButton
         )
 
         lateinit var popupMenu: PopupMenu
