@@ -7,13 +7,18 @@ package me.zhanghai.android.files.filelist
 
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
+import android.os.Handler
+import android.os.Looper
 import android.text.TextUtils
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import me.zhanghai.android.files.file.isImage
+import me.zhanghai.android.files.file.isVideo
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
@@ -86,6 +91,7 @@ class FileListAdapter(
 ) : AnimatedListAdapter<FileItem, FileListAdapter.ViewHolder>(FileItemCallback()),
     PopupTextProvider {
     private var isSearching = false
+    private var quickPreviewPopup: QuickPreviewPopup? = null
 
     private lateinit var _viewType: FileViewType
     var viewType: FileViewType
@@ -472,6 +478,87 @@ class FileListAdapter(
                 // Return true to consume the event
                 true
             }
+        }
+
+        // Configure Quick Peek touch gesture for media files
+        val isMedia = file.mimeType.isImage || file.mimeType.isVideo
+        val quickPreviewEnabled = Settings.QUICK_PREVIEW_ENABLED.valueCompat
+
+        if (quickPreviewEnabled && isMedia) {
+            // Disable default selection on long click for media files when Quick Preview is ON
+            holder.itemLayout.setOnLongClickListener { true }
+            holder.thumbnailClickArea?.setOnLongClickListener { true }
+            holder.thumbnailImage.setOnLongClickListener { true }
+
+            val touchListener = object : View.OnTouchListener {
+                private var downX = 0f
+                private var downY = 0f
+                private var isLongPressActive = false
+                private val handler = Handler(Looper.getMainLooper())
+                private var currentView: View? = null
+                private val longPressRunnable = Runnable {
+                    isLongPressActive = true
+                    currentView?.parent?.requestDisallowInterceptTouchEvent(true)
+                    if (quickPreviewPopup == null) {
+                        quickPreviewPopup = QuickPreviewPopup(holder.itemView.context)
+                    }
+                    quickPreviewPopup?.show(holder.itemView, file)
+                }
+
+                override fun onTouch(v: View, event: MotionEvent): Boolean {
+                    currentView = v
+                    when (event.actionMasked) {
+                        MotionEvent.ACTION_DOWN -> {
+                            downX = event.rawX
+                            downY = event.rawY
+                            isLongPressActive = false
+                            handler.postDelayed(longPressRunnable, 250)
+                        }
+                        MotionEvent.ACTION_MOVE -> {
+                            val dx = event.rawX - downX
+                            val dy = event.rawY - downY
+                            if (!isLongPressActive && (Math.abs(dx) > 25 || Math.abs(dy) > 25)) {
+                                handler.removeCallbacks(longPressRunnable)
+                            } else if (isLongPressActive && quickPreviewPopup?.isShowing() == true) {
+                                v.parent?.requestDisallowInterceptTouchEvent(true)
+                                if (dy < -100 && quickPreviewPopup?.isLocked == false) {
+                                    quickPreviewPopup?.lockPreview()
+                                }
+                                if (dy > 30f) {
+                                    quickPreviewPopup?.updatePlaybackSpeed(dy)
+                                } else {
+                                    quickPreviewPopup?.resetPlaybackSpeed()
+                                    if (Math.abs(dx) > 15) {
+                                        quickPreviewPopup?.onDragDelta(dx)
+                                    }
+                                }
+                                return true
+                            }
+                        }
+                        MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                            handler.removeCallbacks(longPressRunnable)
+                            v.parent?.requestDisallowInterceptTouchEvent(false)
+                            if (isLongPressActive) {
+                                quickPreviewPopup?.onTouchUp()
+                                if (quickPreviewPopup?.isLocked != true) {
+                                    quickPreviewPopup?.dismiss()
+                                }
+                                isLongPressActive = false
+                                return true
+                            }
+                        }
+                    }
+                    return false
+                }
+            }
+
+            holder.itemView.setOnTouchListener(touchListener)
+            holder.thumbnailClickArea?.setOnTouchListener(touchListener)
+            holder.thumbnailImage.setOnTouchListener(touchListener)
+        } else {
+            holder.itemView.setOnTouchListener(null)
+            holder.thumbnailClickArea?.setOnTouchListener(null)
+            holder.thumbnailImage.setOnTouchListener(null)
         }
 
         // Remove any potentially conflicting click listeners

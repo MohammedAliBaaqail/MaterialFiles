@@ -177,6 +177,11 @@ object Settings {
             me.zhanghai.android.files.filelist.TopBarScrollMode::class.java
         )
 
+    val QUICK_PREVIEW_ENABLED: SettingLiveData<Boolean> =
+        BooleanSettingLiveData(
+            R.string.pref_key_quick_preview_enabled, R.bool.pref_default_value_quick_preview_enabled
+        )
+
     val FILE_NAME_ELLIPSIZE: SettingLiveData<TextUtils.TruncateAt> =
         EnumSettingLiveData(
             R.string.pref_key_file_name_ellipsize, R.string.pref_default_value_file_name_ellipsize,

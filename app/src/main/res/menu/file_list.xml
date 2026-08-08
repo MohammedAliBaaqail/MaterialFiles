@@ -20,6 +20,14 @@
         app:showAsAction="always|collapseActionView" />
 
     <item
+        android:id="@+id/action_quick_preview"
+        android:checkable="true"
+        android:icon="@drawable/ic_eye_white_24dp"
+        android:orderInCategory="110"
+        android:title="@string/file_list_action_quick_preview"
+        app:showAsAction="always" />
+
+    <item
         android:id="@+id/action_filter_tags"
         android:icon="@drawable/tags_icon_control_normal_24dp"
         android:orderInCategory="150"

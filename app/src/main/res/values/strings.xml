@@ -302,6 +302,7 @@
     <string name="top_bar_scroll_mode_always">Always show top section</string>
     <string name="top_bar_scroll_mode_scroll_up">Auto-hide on scroll (Show on scroll up)</string>
     <string name="top_bar_scroll_mode_arrow">Auto-hide on scroll (Show via arrow button)</string>
+    <string name="file_list_action_quick_preview">Quick Peek preview</string>
     <string name="file_list_action_view_list">List</string>
     <string name="file_list_action_view_grid">Grid</string>
     <string name="file_list_action_sort_by_name">Name</string>

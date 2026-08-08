@@ -385,6 +385,11 @@ class FileListFragment : Fragment(),
             updateViewSortMenuItems()
         }
 
+        Settings.QUICK_PREVIEW_ENABLED.observe(viewLifecycleOwner) {
+            updateQuickPreviewMenuItem()
+            adapter.notifyDataSetChanged()
+        }
+
         binding.speedDialView.visibility = View.GONE
         
         // Listen for folder thumbnail management results
@@ -624,10 +629,30 @@ class FileListFragment : Fragment(),
         updateViewSortMenuItems()
         updateSelectAllMenuItem()
         updateShowHiddenFilesMenuItem()
+        updateQuickPreviewMenuItem()
+    }
+
+    private fun updateQuickPreviewMenuItem() {
+        if (!this::menuBinding.isInitialized) return
+        val item = menuBinding.menu.findItem(R.id.action_quick_preview) ?: return
+        val enabled = Settings.QUICK_PREVIEW_ENABLED.valueCompat
+        item.isChecked = enabled
+        item.setIcon(if (enabled) R.drawable.ic_eye_white_24dp else R.drawable.ic_eye_off_white_24dp)
+        item.title = if (enabled) {
+            getString(R.string.file_list_action_quick_preview) + " (On)"
+        } else {
+            getString(R.string.file_list_action_quick_preview) + " (Off)"
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
+            R.id.action_quick_preview -> {
+                val newState = !item.isChecked
+                item.isChecked = newState
+                Settings.QUICK_PREVIEW_ENABLED.putValue(newState)
+                true
+            }
             android.R.id.home -> {
                 binding.drawerLayout?.openDrawer(GravityCompat.START)
                 if (binding.persistentDrawerLayout != null) {
