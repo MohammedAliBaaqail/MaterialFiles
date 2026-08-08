@@ -77,19 +77,31 @@ class QuickPreviewPopup(private val context: Context) {
         }
     }
 
+    private fun getExtraHeightPx(): Int {
+        val density = context.resources.displayMetrics.density
+        // Title header height (~32dp) + Seek container height (~40dp) = 72dp
+        return (72 * density).toInt()
+    }
+
     private fun adjustContainerAspectRatio(contentWidth: Int, contentHeight: Int) {
         if (contentWidth <= 0 || contentHeight <= 0) return
         currentAspectRatio = contentWidth.toFloat() / contentHeight.toFloat()
         val displayMetrics = context.resources.displayMetrics
-        val maxW = (displayMetrics.widthPixels * 0.88).toInt()
-        val maxH = (displayMetrics.heightPixels * 0.70).toInt()
+        val extraHeight = getExtraHeightPx()
 
+        val maxW = (displayMetrics.widthPixels * 0.92).toInt()
+        val maxH = (displayMetrics.heightPixels * 0.80).toInt()
+
+        // Fit video width edge-to-edge without left/right empty space:
+        // H_vid = W_vid / ratio
+        // H_card = H_vid + extraHeight
         var targetW = maxW
-        var targetH = (targetW / currentAspectRatio).toInt()
+        var targetH = (targetW / currentAspectRatio).toInt() + extraHeight
 
         if (targetH > maxH) {
             targetH = maxH
-            targetW = (targetH * currentAspectRatio).toInt()
+            val hVid = (targetH - extraHeight).coerceAtLeast(100)
+            targetW = (hVid * currentAspectRatio).toInt()
         }
 
         containerCard?.layoutParams = FrameLayout.LayoutParams(targetW, targetH).apply {
@@ -176,11 +188,12 @@ class QuickPreviewPopup(private val context: Context) {
                             hasMoved = true
                             if (isCornerResize) {
                                 val displayMetrics = context.resources.displayMetrics
+                                val extraHeight = getExtraHeightPx()
                                 val newW = (initialCardWidth + dx.toInt()).coerceIn(
-                                    (displayMetrics.widthPixels * 0.30).toInt(),
+                                    (displayMetrics.widthPixels * 0.35).toInt(),
                                     (displayMetrics.widthPixels * 0.95).toInt()
                                 )
-                                val newH = (newW / currentAspectRatio.coerceAtLeast(0.2f)).toInt()
+                                val newH = (newW / currentAspectRatio.coerceAtLeast(0.2f)).toInt() + extraHeight
                                 containerCard?.layoutParams = FrameLayout.LayoutParams(newW, newH).apply {
                                     gravity = Gravity.CENTER
                                 }
@@ -240,11 +253,11 @@ class QuickPreviewPopup(private val context: Context) {
         }
         rootView = root
 
-        // Main preview container card
+        // Main preview container card (0 outer padding so media spans edge-to-edge)
         val container = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(Color.parseColor("#1E1E1E"))
-            setPadding(24, 24, 24, 24)
+            setPadding(0, 16, 0, 16)
             elevation = 16f
         }
         containerCard = container
@@ -257,18 +270,18 @@ class QuickPreviewPopup(private val context: Context) {
         }
         root.addView(container, cardLayoutParams)
 
-        // Title Header
+        // Title Header (Padding inside header text)
         titleText = TextView(context).apply {
             text = file.name
             setTextColor(Color.WHITE)
             textSize = 15f
             maxLines = 1
             ellipsize = android.text.TextUtils.TruncateAt.END
-            setPadding(0, 0, 0, 16)
+            setPadding(24, 0, 24, 12)
         }
         container.addView(titleText)
 
-        // Media Frame
+        // Media Frame (0 padding, full width)
         val mediaFrame = FrameLayout(context).apply {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -291,7 +304,7 @@ class QuickPreviewPopup(private val context: Context) {
         // Seek Bar Container (for Videos)
         seekContainer = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(0, 16, 0, 0)
+            setPadding(24, 12, 24, 0)
             visibility = View.GONE
         }
         container.addView(seekContainer)
