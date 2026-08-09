@@ -37,14 +37,14 @@ internal class VeraCryptByteChannel(
         var lastException: IOException? = null
         var io: RandomAccessIO? = null
         // Increase retries to 10 times with slightly longer wait for container stability
-        for (i in 0 until 10) {
+        for (i in 0 until 15) {
             try {
                 io = innerPath.getFile().getRandomAccessIO(mode)
                 break
             } catch (e: IOException) {
                 lastException = e
-                if (e.javaClass.name.endsWith("FileInUseException")) {
-                    Thread.sleep(150L + (i * 50)) // Increasing backoff
+                if (i < 14) {
+                    Thread.sleep(80L + (i * 30))
                     continue
                 }
                 throw e

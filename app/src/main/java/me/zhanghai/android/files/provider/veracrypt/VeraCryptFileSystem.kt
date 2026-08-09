@@ -67,14 +67,13 @@ class VeraCryptFileSystem(
             innerFs?.let { return it }
             
             Logger.debug("Mounting VeraCrypt container: $containerFile")
-            val container = EdsContainer(DelegatingEdsPath(containerFile))
             var lastException: Exception? = null
             
             if (passwords.isNotEmpty()) {
                 val currentPasswords = passwords.toList()
-                passwords.clear()
                 for (pass in currentPasswords) {
                     try {
+                        val container = EdsContainer(DelegatingEdsPath(containerFile))
                         container.open(pass)
                         Logger.debug("Successfully opened container header.")
                         edsContainer = container
@@ -82,9 +81,9 @@ class VeraCryptFileSystem(
                         val fs = container.getEncryptedFS()
                         Logger.debug("File system loaded successfully.")
                         innerFs = fs
-                        // Cache the successful password
-                        passwords.add(pass)
-                        // Record mount time
+                        if (!passwords.any { it.contentEquals(pass) }) {
+                            passwords.add(pass)
+                        }
                         VeraCryptMountManager.onMounted(containerFile, VeraCryptMountManager.getTimeoutSeconds(containerFile))
                         return fs
                     } catch (e: Exception) {

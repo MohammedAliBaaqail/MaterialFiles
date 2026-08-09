@@ -92,6 +92,7 @@ class FileListAdapter(
     PopupTextProvider {
     private var isSearching = false
     private var quickPreviewPopup: QuickPreviewPopup? = null
+    private var imageViewerPopup: ImageViewerPopup? = null
 
     private lateinit var _viewType: FileViewType
     var viewType: FileViewType
@@ -393,20 +394,33 @@ class FileListAdapter(
         }
 
         
+        val openFileAction = { targetView: View ->
+            if ((file.mimeType.isImage || file.mimeType.isVideo) &&
+                me.zhanghai.android.files.file.VideoPreviewPositionManager.getForceFullScreenMedia()) {
+                if (file.mimeType.isImage) {
+                    val popup = ImageViewerPopup(targetView.context)
+                    popup.show(targetView, file, list)
+                    popup.openFullScreen()
+                } else {
+                    val popup = QuickPreviewPopup(targetView.context)
+                    popup.show(targetView, file, list)
+                    popup.openFullScreen()
+                }
+            } else {
+                listener.openFile(file)
+            }
+        }
+
         holder.itemLayout.apply {
             setOnClickListener {
                 if (selectedFiles.isEmpty()) {
-                    listener.openFile(file)
+                    openFileAction(this)
                 } else {
                     selectFile(file)
                 }
             }
             setOnLongClickListener {
-                if (selectedFiles.isEmpty()) {
-                    selectFile(file)
-                } else {
-                    listener.openFile(file)
-                }
+                selectFile(file)
                 true
             }
         }
@@ -433,7 +447,7 @@ class FileListAdapter(
             clickArea.setOnClickListener { view ->
                 Log.d("FileListAdapter", "Thumbnail area clicked for file: ${file.name}")
                 if (selectedFiles.isEmpty()) {
-                    listener.openFile(file)
+                    openFileAction(view)
                 } else {
                     selectFile(file)
                 }
@@ -442,18 +456,13 @@ class FileListAdapter(
             // Add robust long-click handler that matches main item behavior
             clickArea.setOnLongClickListener { view ->
                 Log.d("FileListAdapter", "Thumbnail area long-clicked for file: ${file.name}")
-                if (selectedFiles.isEmpty()) {
-                    selectFile(file)
-                } else {
-                    listener.openFile(file)
-                }
-                // Return true to indicate the long-click was handled and shouldn't propagate
+                selectFile(file)
                 true
             }
         }
 
         // Force thumbnail clickable state by also setting listener on the image itself as a fallback
-        holder.thumbnailImage.let { thumbnailImage ->
+        holder.thumbnailImage?.let { thumbnailImage ->
             thumbnailImage.isClickable = true
             thumbnailImage.isFocusable = true
             thumbnailImage.isLongClickable = true
@@ -461,7 +470,7 @@ class FileListAdapter(
             thumbnailImage.setOnClickListener { view ->
                 Log.d("FileListAdapter", "Thumbnail image directly clicked for file: ${file.name}")
                 if (selectedFiles.isEmpty()) {
-                    listener.openFile(file)
+                    openFileAction(view)
                 } else {
                     selectFile(file)
                 }
@@ -470,12 +479,7 @@ class FileListAdapter(
             // Also add a long-click listener directly to the image
             thumbnailImage.setOnLongClickListener { view ->
                 Log.d("FileListAdapter", "Thumbnail image directly long-clicked for file: ${file.name}")
-                if (selectedFiles.isEmpty()) {
-                    selectFile(file)
-                } else {
-                    listener.openFile(file)
-                }
-                // Return true to consume the event
+                selectFile(file)
                 true
             }
         }
@@ -493,16 +497,25 @@ class FileListAdapter(
             val touchListener = object : View.OnTouchListener {
                 private var downX = 0f
                 private var downY = 0f
+                private var dragStartX = 0f
                 private var isLongPressActive = false
                 private val handler = Handler(Looper.getMainLooper())
                 private var currentView: View? = null
                 private val longPressRunnable = Runnable {
                     isLongPressActive = true
+                    dragStartX = downX
                     currentView?.parent?.requestDisallowInterceptTouchEvent(true)
-                    if (quickPreviewPopup == null) {
-                        quickPreviewPopup = QuickPreviewPopup(holder.itemView.context)
+                    if (file.mimeType.isImage) {
+                        if (imageViewerPopup == null) {
+                            imageViewerPopup = ImageViewerPopup(holder.itemView.context)
+                        }
+                        imageViewerPopup?.show(holder.itemView, file, list)
+                    } else {
+                        if (quickPreviewPopup == null) {
+                            quickPreviewPopup = QuickPreviewPopup(holder.itemView.context)
+                        }
+                        quickPreviewPopup?.show(holder.itemView, file, list)
                     }
-                    quickPreviewPopup?.show(holder.itemView, file)
                 }
 
                 override fun onTouch(v: View, event: MotionEvent): Boolean {
@@ -511,8 +524,10 @@ class FileListAdapter(
                         MotionEvent.ACTION_DOWN -> {
                             downX = event.rawX
                             downY = event.rawY
+                            dragStartX = downX
                             isLongPressActive = false
                             handler.postDelayed(longPressRunnable, 250)
+                            return true
                         }
                         MotionEvent.ACTION_MOVE -> {
                             val dx = event.rawX - downX
@@ -521,16 +536,11 @@ class FileListAdapter(
                                 handler.removeCallbacks(longPressRunnable)
                             } else if (isLongPressActive && quickPreviewPopup?.isShowing() == true) {
                                 v.parent?.requestDisallowInterceptTouchEvent(true)
-                                if (dy < -100 && quickPreviewPopup?.isLocked == false) {
-                                    quickPreviewPopup?.lockPreview()
+                                if (dy < -100 && quickPreviewPopup?.isFullScreen == false) {
+                                    quickPreviewPopup?.openFullScreen()
                                 }
-                                if (dy > 30f) {
-                                    quickPreviewPopup?.updatePlaybackSpeed(dy)
-                                } else {
-                                    quickPreviewPopup?.resetPlaybackSpeed()
-                                    if (Math.abs(dx) > 15) {
-                                        quickPreviewPopup?.onDragDelta(dx)
-                                    }
+                                if (Math.abs(dx) > 10) {
+                                    quickPreviewPopup?.onDragDeltaRaw(event.rawX)
                                 }
                                 return true
                             }
@@ -540,15 +550,21 @@ class FileListAdapter(
                             v.parent?.requestDisallowInterceptTouchEvent(false)
                             if (isLongPressActive) {
                                 quickPreviewPopup?.onTouchUp()
-                                if (quickPreviewPopup?.isLocked != true) {
+                                if (quickPreviewPopup?.isFullScreen != true) {
                                     quickPreviewPopup?.dismiss()
                                 }
                                 isLongPressActive = false
                                 return true
+                            } else if (event.actionMasked == MotionEvent.ACTION_UP) {
+                                val dx = Math.abs(event.rawX - downX)
+                                val dy = Math.abs(event.rawY - downY)
+                                if (dx < 25 && dy < 25) {
+                                    v.performClick()
+                                }
                             }
                         }
                     }
-                    return false
+                    return true
                 }
             }
 

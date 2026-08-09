@@ -28,6 +28,14 @@
         app:showAsAction="always" />
 
     <item
+        android:id="@+id/action_force_full_screen_media"
+        android:checkable="true"
+        android:icon="@drawable/video_icon_white_24dp"
+        android:orderInCategory="115"
+        android:title="Always Open Media in Full Screen Player"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_filter_tags"
         android:icon="@drawable/tags_icon_control_normal_24dp"
         android:orderInCategory="150"

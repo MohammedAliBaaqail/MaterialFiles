@@ -630,6 +630,13 @@ class FileListFragment : Fragment(),
         updateSelectAllMenuItem()
         updateShowHiddenFilesMenuItem()
         updateQuickPreviewMenuItem()
+        updateForceFullScreenMediaMenuItem()
+    }
+
+    private fun updateForceFullScreenMediaMenuItem() {
+        if (!this::menuBinding.isInitialized) return
+        val item = menuBinding.menu.findItem(R.id.action_force_full_screen_media) ?: return
+        item.isChecked = me.zhanghai.android.files.file.VideoPreviewPositionManager.getForceFullScreenMedia()
     }
 
     private fun updateQuickPreviewMenuItem() {
@@ -651,6 +658,12 @@ class FileListFragment : Fragment(),
                 val newState = !item.isChecked
                 item.isChecked = newState
                 Settings.QUICK_PREVIEW_ENABLED.putValue(newState)
+                true
+            }
+            R.id.action_force_full_screen_media -> {
+                val newState = !item.isChecked
+                item.isChecked = newState
+                me.zhanghai.android.files.file.VideoPreviewPositionManager.setForceFullScreenMedia(newState)
                 true
             }
             android.R.id.home -> {

@@ -17,6 +17,8 @@ import kotlin.concurrent.write
 object VideoPreviewPositionManager {
     private const val TAG = "VideoPreviewPositionManager"
     private const val PREFS_NAME = "video_preview_positions"
+    private const val KEY_LAST_SPEED = "__last_preview_speed__"
+    private const val KEY_FORCE_FULL_SCREEN_MEDIA = "__force_full_screen_media__"
 
     private val lock = ReentrantReadWriteLock()
     private val prefs: SharedPreferences by lazy {
@@ -40,6 +42,31 @@ object VideoPreviewPositionManager {
         lock.write {
             positionMap[pathString] = positionMs
             prefs.edit { putInt(pathString, positionMs) }
+        }
+    }
+
+    fun getLastSpeed(): Float {
+        lock.read {
+            return prefs.getFloat(KEY_LAST_SPEED, 1.5f)
+        }
+    }
+
+    fun setLastSpeed(speed: Float) {
+        if (speed < 0.5f || speed > 5.0f) return
+        lock.write {
+            prefs.edit { putFloat(KEY_LAST_SPEED, speed) }
+        }
+    }
+
+    fun getForceFullScreenMedia(): Boolean {
+        lock.read {
+            return prefs.getBoolean(KEY_FORCE_FULL_SCREEN_MEDIA, false)
+        }
+    }
+
+    fun setForceFullScreenMedia(enabled: Boolean) {
+        lock.write {
+            prefs.edit { putBoolean(KEY_FORCE_FULL_SCREEN_MEDIA, enabled) }
         }
     }
 
