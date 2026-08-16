@@ -46,12 +46,84 @@ class VeraCryptFileSystem(
     private var isOpen = true
     private var passwords = mutableListOf<ByteArray>()
     private var edsContainer: EdsContainer? = null
+    @Volatile
     private var innerFs: EdsFileSystem? = null
     val isOpened: Boolean
-        get() = synchronized(lock) { innerFs != null }
+        get() = innerFs != null
 
     val isMountExpired: Boolean
         get() = VeraCryptMountManager.isMountExpired(containerFile)
+
+    private val activeChannels = java.util.Collections.newSetFromMap(java.util.WeakHashMap<VeraCryptByteChannel, Boolean>())
+
+    internal fun registerChannel(channel: VeraCryptByteChannel) {
+        synchronized(lock) {
+            activeChannels.add(channel)
+        }
+    }
+
+    internal fun unregisterChannel(channel: VeraCryptByteChannel) {
+        synchronized(lock) {
+            activeChannels.remove(channel)
+        }
+    }
+
+    internal fun closeIoForPath(internalPath: String) {
+        synchronized(lock) {
+            for (channel in activeChannels.toList()) {
+                if (channel.internalPathString == internalPath) {
+                    try { channel.closeIo() } catch (_: Exception) {}
+                }
+            }
+        }
+    }
+
+    fun invalidateInnerFs() {
+        synchronized(lock) {
+            innerFs = null
+            for (channel in activeChannels.toList()) {
+                try { channel.closeIo() } catch (_: Exception) {}
+            }
+            activeChannels.clear()
+            try {
+                edsContainer?.close()
+            } catch (_: Exception) {}
+            edsContainer = null
+        }
+    }
+
+    fun <T> withLock(block: (EdsFileSystem) -> T): T {
+        synchronized(lock) {
+            var retries = 0
+            while (true) {
+                val fs = try {
+                    getInnerFs()
+                } catch (e: Exception) {
+                    if (retries < 1 && passwords.isNotEmpty()) {
+                        invalidateInnerFs()
+                        retries++
+                        continue
+                    }
+                    throw e
+                }
+
+                return try {
+                    block(fs)
+                } catch (e: Exception) {
+                    val msg = e.message ?: ""
+                    if ((msg.contains("-5") || msg.contains("cluster", ignoreCase = true) || msg.contains("dirty node", ignoreCase = true)) && passwords.isNotEmpty()) {
+                        Logger.debug("Detected broken FS state: $msg, auto-invalidating innerFs for transparent recovery")
+                        invalidateInnerFs()
+                        if (retries < 1) {
+                            retries++
+                            continue
+                        }
+                    }
+                    throw e
+                }
+            }
+        }
+    }
 
     @Throws(IOException::class)
     fun getInnerFs(): EdsFileSystem {
@@ -67,28 +139,31 @@ class VeraCryptFileSystem(
             innerFs?.let { return it }
             
             Logger.debug("Mounting VeraCrypt container: $containerFile")
+            val container = EdsContainer(DelegatingEdsPath(containerFile))
             var lastException: Exception? = null
             
             if (passwords.isNotEmpty()) {
                 val currentPasswords = passwords.toList()
                 for (pass in currentPasswords) {
-                    try {
-                        val container = EdsContainer(DelegatingEdsPath(containerFile))
-                        container.open(pass)
-                        Logger.debug("Successfully opened container header.")
-                        edsContainer = container
-                        Logger.debug("Loading embedded file system...")
-                        val fs = container.getEncryptedFS()
-                        Logger.debug("File system loaded successfully.")
-                        innerFs = fs
-                        if (!passwords.any { it.contentEquals(pass) }) {
-                            passwords.add(pass)
+                    for (attempt in 0 until 3) {
+                        try {
+                            container.open(pass)
+                            Logger.debug("Successfully opened container header.")
+                            edsContainer = container
+                            Logger.debug("Loading embedded file system...")
+                            val fs = container.getEncryptedFS()
+                            Logger.debug("File system loaded successfully.")
+                            innerFs = fs
+                            // Record mount time
+                            VeraCryptMountManager.onMounted(containerFile, VeraCryptMountManager.getTimeoutSeconds(containerFile))
+                            return fs
+                        } catch (e: Exception) {
+                            Logger.debug("Failed to mount container (attempt ${attempt + 1}) with password: ${e.message}")
+                            lastException = e
+                            if (attempt < 2) {
+                                try { Thread.sleep(20) } catch (_: Exception) {}
+                            }
                         }
-                        VeraCryptMountManager.onMounted(containerFile, VeraCryptMountManager.getTimeoutSeconds(containerFile))
-                        return fs
-                    } catch (e: Exception) {
-                        Logger.debug("Failed to mount container with password: ${e.message}")
-                        lastException = e
                     }
                 }
             }
@@ -143,7 +218,13 @@ class VeraCryptFileSystem(
     private fun clearCachedState() {
         synchronized(lock) {
             innerFs = null
-            edsContainer?.close()
+            for (channel in activeChannels.toList()) {
+                try { channel.closeIo() } catch (_: Exception) {}
+            }
+            activeChannels.clear()
+            try {
+                edsContainer?.close()
+            } catch (_: Exception) {}
             edsContainer = null
             passwords.clear()
             VeraCryptMountManager.clearMount(containerFile)
@@ -166,17 +247,21 @@ class VeraCryptFileSystem(
         VeraCryptFileAttributeView.SUPPORTED_NAMES
 
     override fun getPath(first: String, vararg more: String): VeraCryptPath {
-        val path = ByteStringBuilder(first.toByteString())
-            .apply { more.forEach { append(SEPARATOR).append(it.toByteString()) } }
-            .toByteString()
-        return VeraCryptPath(this, path)
+        val pathBuilder = ByteStringBuilder(first.toByteString())
+        for (segment in more) {
+            pathBuilder.append(SEPARATOR_BYTE_STRING)
+            pathBuilder.append(segment.toByteString())
+        }
+        return rootDirectory.resolve(pathBuilder.toByteString())
     }
 
     override fun getPath(first: ByteString, vararg more: ByteString): VeraCryptPath {
-        val path = ByteStringBuilder(first)
-            .apply { more.forEach { append(SEPARATOR).append(it) } }
-            .toByteString()
-        return VeraCryptPath(this, path)
+        val pathBuilder = ByteStringBuilder(first)
+        for (segment in more) {
+            pathBuilder.append(SEPARATOR_BYTE_STRING)
+            pathBuilder.append(segment)
+        }
+        return rootDirectory.resolve(pathBuilder.toByteString())
     }
 
     override fun getPathMatcher(syntaxAndPattern: String): PathMatcher {
@@ -187,20 +272,7 @@ class VeraCryptFileSystem(
         throw UnsupportedOperationException()
     }
 
-    @Throws(IOException::class)
-    override fun newWatchService(): WatchService {
-        if (!isOpen) throw ClosedFileSystemException()
-        return LocalWatchService()
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-        other as VeraCryptFileSystem
-        return containerFile == other.containerFile
-    }
-
-    override fun hashCode(): Int = containerFile.hashCode()
+    override fun newWatchService(): WatchService = LocalWatchService()
 
     override fun describeContents(): Int = 0
 
@@ -209,13 +281,16 @@ class VeraCryptFileSystem(
     }
 
     companion object {
-        const val SEPARATOR = '/'.code.toByte()
-        val SEPARATOR_BYTE_STRING = SEPARATOR.toByteString()
+        const val SEPARATOR_CHAR = '/'
         const val SEPARATOR_STRING = "/"
+        val SEPARATOR_BYTE_STRING = SEPARATOR_STRING.toByteString()
+        const val SEPARATOR_BYTE = '/'.code.toByte()
+        const val SEPARATOR = SEPARATOR_BYTE
 
         @JvmField
         val CREATOR = object : Parcelable.Creator<VeraCryptFileSystem> {
             override fun createFromParcel(source: Parcel): VeraCryptFileSystem {
+                @Suppress("DEPRECATION")
                 val containerFile = source.readParcelable<Parcelable>(Path::class.java.classLoader) as Path
                 return VeraCryptFileSystemProvider.getOrNewFileSystem(containerFile)
             }

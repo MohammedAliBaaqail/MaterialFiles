@@ -34,23 +34,30 @@ class VideoMetadataRepository(context: Context) {
     private val executor = Executors.newFixedThreadPool(2)
     private val metadataDispatcher = executor.asCoroutineDispatcher()
 
+    // Single-threaded dispatcher for VeraCrypt volumes to prevent Stagefright binder timeouts (0x80000000)
+    private val veraCryptExecutor = Executors.newSingleThreadExecutor()
+    private val veraCryptDispatcher = veraCryptExecutor.asCoroutineDispatcher()
+
     init {
         val database = AppDatabase.getDatabase(context)
         videoMetadataDao = database.videoMetadataDao()
     }
 
-    suspend fun getVideoDuration(path: Path): Long? {
+    suspend fun getVideoDuration(path: Path): Long? = withContext(Dispatchers.IO) {
         val pathString = path.pathString
         val attributes = path.readAttributes<BasicFileAttributes>(BasicFileAttributes::class.java)
         
         // Check if we have cached metadata that's still valid
         val metadata = videoMetadataDao.getByPath(pathString)
         if (metadata != null && metadata.lastModified == attributes.lastModifiedTime().toMillis()) {
-            return metadata.durationMillis
+            return@withContext metadata.durationMillis
         }
 
-        // Extract duration using limited concurrency dispatcher
-        return withContext(metadataDispatcher) {
+        val isVeraCrypt = path is me.zhanghai.android.files.provider.veracrypt.VeraCryptPath || path.fileSystem is me.zhanghai.android.files.provider.veracrypt.VeraCryptFileSystem
+        val targetDispatcher = if (isVeraCrypt) veraCryptDispatcher else metadataDispatcher
+
+        // Extract duration using single-thread for VeraCrypt or limited concurrency dispatcher for local
+        withContext(targetDispatcher) {
             try {
                 MediaMetadataRetriever().use { retriever ->
                     retriever.setDataSource(path)
@@ -82,7 +89,7 @@ class VideoMetadataRepository(context: Context) {
         }
     }
 
-    suspend fun getThumbnailPath(path: Path): String? {
+    suspend fun getThumbnailPath(path: Path): String? = withContext(Dispatchers.IO) {
         val pathString = path.pathString
         val attributes = path.readAttributes<BasicFileAttributes>(BasicFileAttributes::class.java)
         
@@ -106,7 +113,7 @@ class VideoMetadataRepository(context: Context) {
             if (thumbnailFile.exists() && thumbnailFile.length() > 0) {
                 // If this is a custom thumbnail (manually selected), always use it
                 if (thumbnailFile.name.contains("_custom")) {
-                    return metadata.thumbnailPath
+                    return@withContext metadata.thumbnailPath
                 }
                 
                 // Check if we need to regenerate based on scale changes
@@ -119,13 +126,16 @@ class VideoMetadataRepository(context: Context) {
                     Log.d(TAG, "Scale changed significantly: $existingScale -> $effectiveScale, regenerating thumbnail")
                     // Continue to regenerate
                 } else {
-                    return metadata.thumbnailPath
+                    return@withContext metadata.thumbnailPath
                 }
             }
         }
 
+        val isVeraCrypt = path is me.zhanghai.android.files.provider.veracrypt.VeraCryptPath || path.fileSystem is me.zhanghai.android.files.provider.veracrypt.VeraCryptFileSystem
+        val targetDispatcher = if (isVeraCrypt) veraCryptDispatcher else metadataDispatcher
+
         // Generate thumbnail
-        return withContext(metadataDispatcher) {
+        withContext(targetDispatcher) {
             try {
                 MediaMetadataRetriever().use { retriever ->
                     retriever.setDataSource(path)
@@ -142,7 +152,7 @@ class VideoMetadataRepository(context: Context) {
                     val targetWidth = (baseWidth * scaleMultiplier).toInt().coerceAtMost(max(width, height).takeIf { it > 0 } ?: 1024)
                     val targetHeight = if (width > 0) (targetWidth.toFloat() / width * height).toInt() else targetWidth
                     
-                    Log.d(TAG, "Extracting thumbnail for $pathString at target size $targetWidth x $targetHeight")
+                    Log.d(TAG, "Extracting thumbnail for $pathString at target size $targetWidth x $targetHeight (isVeraCrypt=$isVeraCrypt)")
                     
                     // Check if video has embedded picture via metadata hint before trying to extract it
                     val hasImage = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
@@ -166,10 +176,15 @@ class VideoMetadataRepository(context: Context) {
                     
                     // If no embedded picture, get a video frame
                     val frame = if (embeddedPicture == null) {
-                        // Request a frame at 1/3 of the video duration
-                        val frameTimeMicros = TimeUnit.MICROSECONDS.convert(
-                            durationMillis / 3, TimeUnit.MILLISECONDS
-                        )
+                        // Request a frame at 0 microseconds for VeraCrypt/slow paths to avoid expensive seeking,
+                        // or at 1/3 of the video duration for fast local files
+                        val frameTimeMicros = if (isVeraCrypt) {
+                            0L
+                        } else {
+                            TimeUnit.MICROSECONDS.convert(
+                                durationMillis / 3, TimeUnit.MILLISECONDS
+                            )
+                        }
                         
                         Log.d(TAG, "Extracting keyframe at $frameTimeMicros micros for $pathString")
                         
@@ -297,7 +312,7 @@ class VideoMetadataRepository(context: Context) {
     }
 
     // Get video dimensions with efficient caching
-    suspend fun getVideoDimensions(path: Path): Pair<Int, Int>? {
+    suspend fun getVideoDimensions(path: Path): Pair<Int, Int>? = withContext(Dispatchers.IO) {
         val pathString = path.pathString
         val attributes = path.readAttributes<BasicFileAttributes>(BasicFileAttributes::class.java)
         
@@ -305,11 +320,11 @@ class VideoMetadataRepository(context: Context) {
         val metadata = videoMetadataDao.getByPath(pathString)
         if (metadata != null && metadata.lastModified == attributes.lastModifiedTime().toMillis() && 
             metadata.width != null && metadata.height != null) {
-            return Pair(metadata.width, metadata.height)
+            return@withContext Pair(metadata.width, metadata.height)
         }
 
         // Extract dimensions if not cached
-        return withContext(metadataDispatcher) {
+        withContext(metadataDispatcher) {
             try {
                 MediaMetadataRetriever().use { retriever ->
                     retriever.setDataSource(path)

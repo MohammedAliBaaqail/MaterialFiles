@@ -39,6 +39,7 @@ import me.zhanghai.android.files.file.FileItem
 import me.zhanghai.android.files.file.fileProviderUri
 import me.zhanghai.android.files.file.isImage
 import me.zhanghai.android.files.file.isVideo
+import me.zhanghai.android.files.util.valueCompat
 import kotlin.math.max
 import kotlin.math.min
 
@@ -68,6 +69,7 @@ class QuickPreviewPopup(private val context: Context) {
     private var topBackButton: ImageView? = null
     private var topAspectButton: ImageView? = null
     private var topSpeedButton: ImageView? = null
+    private var topSpeedBadgeText: TextView? = null
     private var topMoreButton: ImageView? = null
 
     private var bottomControlBar: LinearLayout? = null
@@ -90,6 +92,7 @@ class QuickPreviewPopup(private val context: Context) {
     private var dualSliderCard: LinearLayout? = null
     private var speedHudLayout: LinearLayout? = null
     private var speedProgressBar: ProgressBar? = null
+    private var speedHudValueText: TextView? = null
 
     private var seekHudLayout: LinearLayout? = null
     private var seekLabelText: TextView? = null
@@ -207,6 +210,15 @@ class QuickPreviewPopup(private val context: Context) {
         return Pair(displayMetrics.widthPixels, displayMetrics.heightPixels)
     }
 
+    private fun getMinPlaybackSpeed(): Float {
+        return me.zhanghai.android.files.file.VideoPreviewPositionManager.getMinSpeed()
+    }
+
+    private fun getMaxPlaybackSpeed(): Float {
+        val minS = getMinPlaybackSpeed()
+        return me.zhanghai.android.files.file.VideoPreviewPositionManager.getMaxSpeed().coerceAtLeast(minS)
+    }
+
     private fun showSpeedHud(speed: Float) {
         if (!isFullScreen || !isVideo) return
         mainHandler.removeCallbacks(hideHudRunnable)
@@ -216,8 +228,21 @@ class QuickPreviewPopup(private val context: Context) {
         speedHudLayout?.visibility = View.VISIBLE
         seekHudLayout?.visibility = View.GONE
 
-        val progressVal = ((speed - 1.0f) / 3.0f * 300).toInt().coerceIn(0, 300)
+        val minS = getMinPlaybackSpeed()
+        val maxS = getMaxPlaybackSpeed()
+        val progressVal = if (maxS > minS) {
+            (((speed - minS) / (maxS - minS)) * 1000).toInt().coerceIn(0, 1000)
+        } else 0
+        speedProgressBar?.max = 1000
         speedProgressBar?.progress = progressVal
+
+        val formattedSpeed = if (speed % 1.0f == 0f || ((speed * 10) % 1.0f == 0f)) {
+            String.format(java.util.Locale.US, "%.1fx", speed)
+        } else {
+            String.format(java.util.Locale.US, "%.2fx", speed)
+        }
+        speedHudValueText?.text = formattedSpeed
+        topSpeedBadgeText?.text = formattedSpeed
         dualSliderCard?.bringToFront()
     }
 
@@ -393,7 +418,18 @@ class QuickPreviewPopup(private val context: Context) {
         val targetVisibility = if (visible && !isControlsLocked) View.VISIBLE else View.GONE
         topControlBar?.visibility = targetVisibility
         bottomControlBar?.visibility = if (isVideo) targetVisibility else View.GONE
-        topSpeedButton?.visibility = if (isVideo) View.VISIBLE else View.GONE
+        topSpeedButton?.visibility = if (isVideo) targetVisibility else View.GONE
+        topSpeedBadgeText?.visibility = if (isVideo) targetVisibility else View.GONE
+
+        // Update badge with current playback speed every time controls become visible
+        if (visible && isVideo) {
+            val formattedSpeed = if (currentSpeed % 1.0f == 0f || ((currentSpeed * 10) % 1.0f == 0f)) {
+                String.format(java.util.Locale.US, "%.1fx", currentSpeed)
+            } else {
+                String.format(java.util.Locale.US, "%.2fx", currentSpeed)
+            }
+            topSpeedBadgeText?.text = formattedSpeed
+        }
 
         if (visible) {
             seekTimelineHudCard?.visibility = View.GONE
@@ -622,9 +658,21 @@ class QuickPreviewPopup(private val context: Context) {
 
     private fun showSpeedMenu(anchor: View) {
         val popup = PopupMenu(context, anchor)
-        val speeds = listOf(0.25f, 0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f, 3.0f, 4.0f)
-        for (s in speeds) {
-            popup.menu.add("${s}x")
+        val minS = getMinPlaybackSpeed()
+        val maxS = getMaxPlaybackSpeed()
+        val candidateSpeeds = listOf(0.1f, 0.25f, 0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f, 2.5f, 3.0f, 4.0f, 5.0f, 6.0f)
+        val validSpeeds = (candidateSpeeds + listOf(minS, maxS))
+            .filter { it in minS..maxS }
+            .distinct()
+            .sorted()
+
+        for (s in validSpeeds) {
+            val label = if (s % 1.0f == 0f || ((s * 10) % 1.0f == 0f)) {
+                String.format(java.util.Locale.US, "%.1fx", s)
+            } else {
+                String.format(java.util.Locale.US, "%.2fx", s)
+            }
+            popup.menu.add(label)
         }
         popup.setOnMenuItemClickListener { item ->
             val speedVal = item.title.toString().removeSuffix("x").toFloatOrNull() ?: 1.0f
@@ -651,6 +699,7 @@ class QuickPreviewPopup(private val context: Context) {
         popup.menu.add(if (isAudioMuted) "Unmute Audio" else "Mute Audio")
         popup.menu.add("Rotate 90°")
         popup.menu.add("Repeat Mode")
+        if (isVideo) popup.menu.add("Speed Range Settings")
         popup.setOnMenuItemClickListener { item ->
             when (item.title) {
                 "Unmute Audio", "Mute Audio" -> {
@@ -670,15 +719,114 @@ class QuickPreviewPopup(private val context: Context) {
                     }
                     updateRepeatButtonUI()
                 }
+                "Speed Range Settings" -> showSpeedRangeDialog()
             }
             true
         }
         popup.show()
     }
 
+    private fun showSpeedRangeDialog() {
+        val density = context.resources.displayMetrics.density
+
+        val dialogLayout = android.widget.LinearLayout(context).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setPadding((20 * density).toInt(), (16 * density).toInt(), (20 * density).toInt(), (12 * density).toInt())
+            setBackgroundColor(android.graphics.Color.parseColor("#1E2030"))
+        }
+
+        val title = android.widget.TextView(context).apply {
+            text = "Speed Slider Range"
+            setTextColor(android.graphics.Color.WHITE)
+            textSize = 17f
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            setPadding(0, 0, 0, (14 * density).toInt())
+        }
+        dialogLayout.addView(title)
+
+        // Snap to nearest 0.1 to satisfy RangeSlider stepSize validation
+        val snapToStep: (Float) -> Float = { v -> (Math.round(v * 10) / 10.0f).coerceIn(0.1f, 6.0f) }
+        val currentMin = snapToStep(me.zhanghai.android.files.file.VideoPreviewPositionManager.getMinSpeed())
+        val currentMax = snapToStep(me.zhanghai.android.files.file.VideoPreviewPositionManager.getMaxSpeed())
+            .coerceAtLeast(currentMin)
+
+        // Label showing selected range
+        val rangeLabel = android.widget.TextView(context).apply {
+            val minStr = String.format(java.util.Locale.US, "%.1f", currentMin)
+            val maxStr = String.format(java.util.Locale.US, "%.1f", currentMax)
+            text = "Range: ${minStr}x  →  ${maxStr}x"
+            setTextColor(android.graphics.Color.parseColor("#B0B8D0"))
+            textSize = 14f
+            gravity = android.view.Gravity.CENTER_HORIZONTAL
+            setPadding(0, 0, 0, (10 * density).toInt())
+        }
+        dialogLayout.addView(rangeLabel)
+
+        // Use Material RangeSlider for dual-thumb selection (stepSize=0.1, max 6.0f)
+        val rangeSlider = com.google.android.material.slider.RangeSlider(context).apply {
+            valueFrom = 0.1f
+            valueTo = 6.0f
+            stepSize = 0.1f
+            // Values MUST be set after stepSize and must align to 0.1 steps
+            values = listOf(currentMin, currentMax)
+            setLabelFormatter { value ->
+                String.format(java.util.Locale.US, "%.1fx", value)
+            }
+            val colorAccent = android.graphics.Color.parseColor("#7C85FC")
+            trackActiveTintList = android.content.res.ColorStateList.valueOf(colorAccent)
+            thumbTintList = android.content.res.ColorStateList.valueOf(colorAccent)
+            addOnChangeListener { slider, _, _ ->
+                val vals = slider.values
+                val lo = vals[0]
+                val hi = vals[1]
+                val minStr2 = String.format(java.util.Locale.US, "%.1f", lo)
+                val maxStr2 = String.format(java.util.Locale.US, "%.1f", hi)
+                rangeLabel.text = "Range: ${minStr2}x  →  ${maxStr2}x"
+            }
+        }
+        dialogLayout.addView(rangeSlider)
+
+        val hintText = android.widget.TextView(context).apply {
+            text = "Drag both thumbs to set the min and max speed for the speed slider."
+            setTextColor(android.graphics.Color.parseColor("#607090"))
+            textSize = 11.5f
+            setPadding(0, (6 * density).toInt(), 0, (2 * density).toInt())
+        }
+        dialogLayout.addView(hintText)
+
+        // Device speed limit note
+        val limitNote = android.widget.TextView(context).apply {
+            text = "⚠️ Android MediaPlayer typically supports speeds up to ~6x. Speeds above that may have no effect on some devices."
+            setTextColor(android.graphics.Color.parseColor("#C09040"))
+            textSize = 10.5f
+            setPadding(0, (4 * density).toInt(), 0, 0)
+        }
+        dialogLayout.addView(limitNote)
+
+        val dialog = android.app.AlertDialog.Builder(context)
+            .setView(dialogLayout)
+            .setPositiveButton("Apply") { _, _ ->
+                val vals = rangeSlider.values
+                val newMin = snapToStep(vals[0])
+                val newMax = snapToStep(vals[1]).coerceAtLeast(newMin)
+                me.zhanghai.android.files.file.VideoPreviewPositionManager.setMinSpeed(newMin)
+                me.zhanghai.android.files.file.VideoPreviewPositionManager.setMaxSpeed(newMax)
+            }
+            .setNegativeButton("Cancel", null)
+            .create()
+
+        dialog.window?.setBackgroundDrawable(
+            android.graphics.drawable.ColorDrawable(android.graphics.Color.parseColor("#1E2030"))
+        )
+        dialog.show()
+    }
+
     fun applySavedSpeed() {
         if (!isVideo || mediaPlayerRef == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return
-        val savedSpeed = me.zhanghai.android.files.file.VideoPreviewPositionManager.getLastSpeed()
+        var savedSpeed = me.zhanghai.android.files.file.VideoPreviewPositionManager.getLastSpeed()
+        if (savedSpeed == 1.0f) {
+            savedSpeed = 2.0f
+        }
         currentSpeed = savedSpeed
         try {
             mediaPlayerRef?.let { mp ->
@@ -696,7 +844,9 @@ class QuickPreviewPopup(private val context: Context) {
     fun updatePlaybackSpeedHorizontal(dxPx: Float) {
         if (!isVideo || mediaPlayerRef == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return
         val savedSpeed = me.zhanghai.android.files.file.VideoPreviewPositionManager.getLastSpeed()
-        val targetSpeed = (savedSpeed + (dxPx / 150f)).coerceIn(1.0f, 4.0f)
+        val minS = getMinPlaybackSpeed()
+        val maxS = getMaxPlaybackSpeed()
+        val targetSpeed = (savedSpeed + (dxPx / 150f)).coerceIn(minS, maxS)
 
         if (Math.abs(targetSpeed - currentSpeed) > 0.05f || currentSpeed != targetSpeed) {
             currentSpeed = targetSpeed
@@ -857,7 +1007,9 @@ class QuickPreviewPopup(private val context: Context) {
 
                         // SPEED_LOCK MODE (STRICTLY LEFT AND RIGHT DRAG ONLY FOR VIDEO)
                         if (gestureState == GestureState.SPEED_LOCK && isVideo) {
-                            val targetSpeed = (initialHoldSpeed + (dx / 150f)).coerceIn(1.0f, 4.0f)
+                            val minS = getMinPlaybackSpeed()
+                            val maxS = getMaxPlaybackSpeed()
+                            val targetSpeed = (initialHoldSpeed + (dx / 150f)).coerceIn(minS, maxS)
                             if (Math.abs(targetSpeed - currentSpeed) > 0.05f || currentSpeed != targetSpeed) {
                                 currentSpeed = targetSpeed
                                 try {
@@ -896,8 +1048,8 @@ class QuickPreviewPopup(private val context: Context) {
                                 gestureState = GestureState.SEEKING
                                 startDrag()
                                 onDragDeltaRaw(event.rawX)
-                            } else if (!isPressAndHold) {
-                                // FAST SWIPE ONLY: Adjust Volume or Brightness
+                            } else if (!isPressAndHold && isVideo) {
+                                // FAST SWIPE ONLY: Adjust Volume or Brightness (VIDEO ONLY)
                                 if (isRightSide) {
                                     gestureState = GestureState.VOLUME
                                 } else {
@@ -1164,6 +1316,17 @@ class QuickPreviewPopup(private val context: Context) {
         }
         topControlBar?.addView(topSpeedButton)
 
+        topSpeedBadgeText = TextView(context).apply {
+            currentSpeed = 1.0f
+            text = "1.0x"
+            setTextColor(Color.WHITE)
+            textSize = 12f
+            visibility = if (isVideo) View.VISIBLE else View.GONE
+            setPadding(0, 0, 8.toPx(), 0)
+            setOnClickListener { showSpeedMenu(topSpeedButton ?: it) }
+        }
+        topControlBar?.addView(topSpeedBadgeText)
+
         topMoreButton = ImageView(context).apply {
             setImageResource(R.drawable.more_vertical_icon_white_24dp)
             setColorFilter(Color.WHITE)
@@ -1381,17 +1544,27 @@ class QuickPreviewPopup(private val context: Context) {
 
         speedProgressBar = ProgressBar(context, null, android.R.attr.progressBarStyleHorizontal).apply {
             layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
+                0,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                1f
             )
-            max = 300
-            progress = 50
+            max = 1000
+            progress = 0
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 progressTintList = android.content.res.ColorStateList.valueOf(Color.WHITE)
                 progressBackgroundTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#555555"))
             }
         }
         speedHudLayout?.addView(speedProgressBar)
+
+        speedHudValueText = TextView(context).apply {
+            text = "1.0x"
+            setTextColor(Color.WHITE)
+            textSize = 14f
+            setTypeface(null, android.graphics.Typeface.BOLD)
+            setPadding(12, 0, 0, 0)
+        }
+        speedHudLayout?.addView(speedHudValueText)
 
         seekHudLayout = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
@@ -1842,6 +2015,7 @@ class QuickPreviewPopup(private val context: Context) {
         dualSliderCard = null
         speedHudLayout = null
         speedProgressBar = null
+        speedHudValueText = null
         seekHudLayout = null
         seekLabelText = null
         seekProgressBar = null
@@ -1858,6 +2032,7 @@ class QuickPreviewPopup(private val context: Context) {
         topBackButton = null
         topAspectButton = null
         topSpeedButton = null
+        topSpeedBadgeText = null
         topMoreButton = null
         bottomControlBar = null
         fullTimeText = null

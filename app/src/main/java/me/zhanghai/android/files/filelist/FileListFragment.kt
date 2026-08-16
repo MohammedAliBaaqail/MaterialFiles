@@ -941,7 +941,7 @@ class FileListFragment : Fragment(),
         when {
             stateful is Failure -> binding.toolbar.setSubtitle(R.string.error)
             stateful is Loading && !isSearching -> binding.toolbar.setSubtitle(R.string.loading)
-            else -> binding.toolbar.subtitle = getSubtitle(files!!)
+            else -> updateSubtitle(files!!)
         }
         val hasFiles = !files.isNullOrEmpty()
         binding.swipeRefreshLayout.isRefreshing = stateful is Loading && (hasFiles || isSearching)
@@ -983,24 +983,8 @@ class FileListFragment : Fragment(),
         }
     }
 
-    private fun getSubtitle(files: List<FileItem>): String {
+    private fun updateSubtitle(files: List<FileItem>) {
         val path = viewModel.currentPath
-        val fileStoreSubtitle = try {
-            val fileStore = path.getFileStore()
-            val totalSpace = fileStore.totalSpace
-            if (totalSpace > 0) {
-                val freeSpace = fileStore.usableSpace
-                val freeSpaceString = freeSpace.asFileSize().formatHumanReadable(requireContext())
-                val totalSpaceString = totalSpace.asFileSize().formatHumanReadable(requireContext())
-                getString(R.string.navigation_storage_subtitle_format, freeSpaceString, totalSpaceString)
-            } else {
-                null
-            }
-        } catch (e: Exception) {
-            null
-        }
-
-        // Prefer cached total item count for current folder if available, to avoid fluctuation
         val itemCountSubtitle = me.zhanghai.android.files.file.FolderItemCountManager
             .getItemCountIfPresent(path)
             ?.let { total ->
@@ -1034,10 +1018,27 @@ class FileListFragment : Fragment(),
                 }
             }
 
-        return if (fileStoreSubtitle != null) {
-            fileStoreSubtitle + getString(R.string.file_list_subtitle_separator) + itemCountSubtitle
-        } else {
-            itemCountSubtitle
+        binding.toolbar.subtitle = itemCountSubtitle
+
+        // Asynchronously check fileStore space off the main UI thread to prevent ANR stalls
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val fileStore = path.getFileStore()
+                val totalSpace = fileStore.totalSpace
+                if (totalSpace > 0) {
+                    val freeSpace = fileStore.usableSpace
+                    val ctx = context ?: return@launch
+                    val freeSpaceString = freeSpace.asFileSize().formatHumanReadable(ctx)
+                    val totalSpaceString = totalSpace.asFileSize().formatHumanReadable(ctx)
+                    val fileStoreSubtitle = getString(R.string.navigation_storage_subtitle_format, freeSpaceString, totalSpaceString)
+                    val fullSubtitle = fileStoreSubtitle + getString(R.string.file_list_subtitle_separator) + itemCountSubtitle
+                    withContext(Dispatchers.Main) {
+                        if (viewModel.currentPath == path && isAdded) {
+                            binding.toolbar.subtitle = fullSubtitle
+                        }
+                    }
+                }
+            } catch (_: Exception) {}
         }
     }
 

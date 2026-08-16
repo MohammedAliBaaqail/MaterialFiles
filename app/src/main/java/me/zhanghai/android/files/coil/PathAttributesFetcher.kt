@@ -123,27 +123,26 @@ class PathAttributesFetcher(
                 )
             }
             mimeType.isMedia && path.isMediaMetadataRetrieverCompatible -> {
-                val embeddedPicture = try {
-                    MediaMetadataRetriever().use { retriever ->
-                        retriever.setDataSource(path)
-                        retriever.embeddedPicture
-                    }
-                } catch (e: Exception) {
-                    MediaLogger.logException(e)
-                    null
-                }
-                if (embeddedPicture != null) {
-                    return SourceResult(
-                        ImageSource(
-                            embeddedPicture.inputStream().source().buffer(), options.context
-                        ), null, path.dataSource
-                    )
-                }
                 if (mimeType.isVideo) {
                     try {
                         return videoFrameFetcherFactory.create(path, options, imageLoader).fetch()
-                    } catch (e: Exception) {
-                        e.printStackTrace()
+                    } catch (_: Exception) {
+                    }
+                } else {
+                    val embeddedPicture = try {
+                        MediaMetadataRetriever().use { retriever ->
+                            retriever.setDataSource(path)
+                            retriever.embeddedPicture
+                        }
+                    } catch (_: Exception) {
+                        null
+                    }
+                    if (embeddedPicture != null) {
+                        return SourceResult(
+                            ImageSource(
+                                embeddedPicture.inputStream().source().buffer(), options.context
+                            ), null, path.dataSource
+                        )
                     }
                 }
             }

@@ -23,31 +23,31 @@ internal class VeraCryptFileAttributeView(
     override fun name(): String = "veracrypt"
 
     @Throws(IOException::class)
-    override fun readAttributes(): PosixFileAttributes {
-        val innerFs = path.getFileSystem().getInnerFs()
-        val innerPath = innerFs.getPath(path.internalPathString)
-        if (!innerPath.exists()) {
-            throw NoSuchFileException(path.toString())
-        }
-        val stat = if (innerPath.isDirectory) {
-            val dir = innerPath.getDirectory()
-            com.sovworks.eds.fs.util.FileStat().apply {
-                fileName = innerPath.pathDesc
-                isDir = true
-                size = 0
-                modTime = try { dir.lastModified.time } catch (e: Exception) { 0L }
+    override fun readAttributes(): PosixFileAttributes =
+        path.getFileSystem().withLock { innerFs ->
+            val innerPath = innerFs.getPath(path.internalPathString)
+            if (!innerPath.exists()) {
+                throw NoSuchFileException(path.toString())
             }
-        } else {
-            val file = innerPath.getFile()
-            com.sovworks.eds.fs.util.FileStat().apply {
-                fileName = innerPath.pathDesc
-                isDir = false
-                size = try { file.size } catch (e: Exception) { 0L }
-                modTime = try { file.lastModified.time } catch (e: Exception) { 0L }
+            val stat = if (innerPath.isDirectory) {
+                val dir = innerPath.getDirectory()
+                com.sovworks.eds.fs.util.FileStat().apply {
+                    fileName = innerPath.pathDesc
+                    isDir = true
+                    size = 0
+                    modTime = try { dir.lastModified.time } catch (_: Exception) { 0L }
+                }
+            } else {
+                val file = innerPath.getFile()
+                com.sovworks.eds.fs.util.FileStat().apply {
+                    fileName = innerPath.pathDesc
+                    isDir = false
+                    size = try { file.size } catch (_: Exception) { 0L }
+                    modTime = try { file.lastModified.time } catch (_: Exception) { 0L }
+                }
             }
+            VeraCryptFileAttributes.from(path.getFileSystem().containerFile, path.internalPathString, stat)
         }
-        return VeraCryptFileAttributes.from(path.getFileSystem().containerFile, path.internalPathString, stat)
-    }
 
     override fun setTimes(
         lastModifiedTime: java8.nio.file.attribute.FileTime?,
@@ -55,10 +55,11 @@ internal class VeraCryptFileAttributeView(
         createTime: java8.nio.file.attribute.FileTime?
     ) {
         if (lastModifiedTime == null) return
-        val innerFs = path.getFileSystem().getInnerFs()
-        val innerPath = innerFs.getPath(path.internalPathString)
-        val record = if (innerPath.isDirectory) innerPath.getDirectory() else innerPath.getFile()
-        record.lastModified = Date(lastModifiedTime.toMillis())
+        path.getFileSystem().withLock { innerFs ->
+            val innerPath = innerFs.getPath(path.internalPathString)
+            val record = if (innerPath.isDirectory) innerPath.getDirectory() else innerPath.getFile()
+            record.lastModified = Date(lastModifiedTime.toMillis())
+        }
     }
 
     override fun setOwner(owner: PosixUser) {

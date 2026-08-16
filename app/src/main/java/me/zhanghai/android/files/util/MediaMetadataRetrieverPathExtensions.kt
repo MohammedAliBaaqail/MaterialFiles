@@ -51,22 +51,40 @@ private class PathMediaDataSource(private val channel: SeekableByteChannel) : Me
     @Throws(IOException::class)
     override fun readAt(position: Long, buffer: ByteArray, offset: Int, size: Int): Int {
         synchronized(lock) {
-            channel.position(position)
-            return channel.read(ByteBuffer.wrap(buffer, offset, size))
+            for (attempt in 0 until 3) {
+                try {
+                    channel.position(position)
+                    return channel.read(ByteBuffer.wrap(buffer, offset, size))
+                } catch (e: IOException) {
+                    if (attempt == 2) throw e
+                    try { Thread.sleep(25L) } catch (_: InterruptedException) {}
+                }
+            }
+            return -1
         }
     }
 
     @Throws(IOException::class)
     override fun getSize(): Long {
         synchronized(lock) {
-            return channel.size()
+            for (attempt in 0 until 3) {
+                try {
+                    return channel.size()
+                } catch (e: IOException) {
+                    if (attempt == 2) throw e
+                    try { Thread.sleep(25L) } catch (_: InterruptedException) {}
+                }
+            }
+            return -1L
         }
     }
 
     @Throws(IOException::class)
     override fun close() {
         synchronized(lock) {
-            channel.close()
+            try {
+                channel.close()
+            } catch (_: Exception) {}
         }
     }
 }

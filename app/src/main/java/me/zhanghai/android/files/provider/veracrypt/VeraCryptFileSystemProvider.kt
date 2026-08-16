@@ -61,7 +61,7 @@ object VeraCryptFileSystemProvider : FileSystemProvider(), PathObservableProvide
     }
 
     override fun newFileSystem(file: Path, env: Map<String, *>): FileSystem {
-        val fs = newFileSystem(file)
+        val fs = fileSystems.getOrCreate(file) { newFileSystem(file) }
         updateActiveFileSystems()
         return fs
     }
@@ -129,34 +129,50 @@ object VeraCryptFileSystemProvider : FileSystemProvider(), PathObservableProvide
     ): DirectoryStream<Path> {
         directory as? VeraCryptPath ?: throw ProviderMismatchException(directory.toString())
         val fs = directory.getFileSystem()
-        val innerFs = fs.getInnerFs()
-        val innerPath = innerFs.getPath(directory.internalPathString)
-        val dir = innerPath.getDirectory()
-        val contents = dir.list()
-        val children = contents.use { it.map { p -> fs.getPath(p.pathString) } }
+        val children = fs.withLock { innerFs ->
+            val innerPath = innerFs.getPath(directory.internalPathString)
+            val dir = innerPath.getDirectory()
+            val contents = dir.list()
+            contents.use { it.map { p -> fs.getPath(p.pathString) } }
+        }
         return PathListDirectoryStream(children, filter)
     }
 
     override fun createDirectory(directory: Path, vararg attributes: FileAttribute<*>) {
         directory as? VeraCryptPath ?: throw ProviderMismatchException(directory.toString())
         val fs = directory.getFileSystem()
-        val innerFs = fs.getInnerFs()
         val parentPath = directory.parent ?: throw IOException("Cannot create root directory")
-        val innerParentPath = innerFs.getPath(parentPath.internalPathString)
-        innerParentPath.getDirectory().createDirectory(directory.fileName.toString())
+        fs.withLock { innerFs ->
+            val innerParentPath = innerFs.getPath(parentPath.internalPathString)
+            innerParentPath.getDirectory().createDirectory(directory.fileName.toString())
+        }
         LocalWatchService.onEntryCreated(directory)
     }
 
     override fun delete(path: Path) {
         path as? VeraCryptPath ?: throw ProviderMismatchException(path.toString())
-        val innerFs = path.getFileSystem().getInnerFs()
-        val innerPath = innerFs.getPath(path.internalPathString)
-        val record = if (innerPath.isDirectory) {
-            innerPath.getDirectory()
-        } else {
-            innerPath.getFile()
+        val fs = path.getFileSystem()
+        fs.closeIoForPath(path.internalPathString)
+        fs.withLock { innerFs ->
+            val innerPath = innerFs.getPath(path.internalPathString)
+            if (!innerPath.exists()) {
+                return@withLock
+            }
+            val record = if (innerPath.isDirectory) {
+                innerPath.getDirectory()
+            } else {
+                innerPath.getFile()
+            }
+            try {
+                record.delete()
+            } catch (e: Exception) {
+                val msg = e.message ?: ""
+                if (msg.contains("-2") || !innerPath.exists()) {
+                    return@withLock
+                }
+                throw e
+            }
         }
-        record.delete()
         LocalWatchService.onEntryDeleted(path)
     }
 
@@ -167,22 +183,20 @@ object VeraCryptFileSystemProvider : FileSystemProvider(), PathObservableProvide
             throw IOException("Copying between different VeraCrypt file systems is not supported natively")
         }
         val fs = source.fileSystem
-        val innerFs = fs.getInnerFs()
-        val innerSourcePath = innerFs.getPath(source.internalPathString)
         val parentTarget = target.parent ?: throw IOException("Cannot copy to root without a name")
-        val innerParentTarget = innerFs.getPath(parentTarget.internalPathString)
-        
-        if (innerSourcePath.isDirectory) {
-            // For directories, we'd need a recursive copy. 
-            // Standard nio copy(source, target) for directories usually only creates the target directory.
-            innerParentTarget.getDirectory().createDirectory(target.fileName.toString())
-        } else {
-            val sourceFile = innerSourcePath.getFile()
-            val targetDir = innerParentTarget.getDirectory()
-            val targetFile = targetDir.createFile(target.fileName.toString())
-            sourceFile.getInputStream().use { input ->
-                targetFile.getOutputStream().use { output ->
-                    input.copyTo(output)
+        fs.withLock { innerFs ->
+            val innerSourcePath = innerFs.getPath(source.internalPathString)
+            val innerParentTarget = innerFs.getPath(parentTarget.internalPathString)
+            if (innerSourcePath.isDirectory) {
+                innerParentTarget.getDirectory().createDirectory(target.fileName.toString())
+            } else {
+                val sourceFile = innerSourcePath.getFile()
+                val targetDir = innerParentTarget.getDirectory()
+                val targetFile = targetDir.createFile(target.fileName.toString())
+                sourceFile.getInputStream().use { input ->
+                    targetFile.getOutputStream().use { output ->
+                        input.copyTo(output)
+                    }
                 }
             }
         }
@@ -197,22 +211,19 @@ object VeraCryptFileSystemProvider : FileSystemProvider(), PathObservableProvide
         }
         
         val fs = source.fileSystem
-        val innerFs = fs.getInnerFs()
-        val innerSourcePath = innerFs.getPath(source.internalPathString)
-        val sourceRecord = if (innerSourcePath.isDirectory) innerSourcePath.getDirectory() else innerSourcePath.getFile()
-        
         val sourceParent = source.parent
         val targetParent = target.parent
-        
-        // If parent is different, move it first
-        if (sourceParent != targetParent) {
-            val innerTargetParent = innerFs.getPath(targetParent?.internalPathString ?: "/")
-            sourceRecord.moveTo(innerTargetParent.getDirectory())
-        }
-        
-        // If name is different, rename it
-        if (source.fileName != target.fileName) {
-            sourceRecord.rename(target.fileName.toString())
+
+        fs.withLock { innerFs ->
+            val innerSourcePath = innerFs.getPath(source.internalPathString)
+            val sourceRecord = if (innerSourcePath.isDirectory) innerSourcePath.getDirectory() else innerSourcePath.getFile()
+            if (sourceParent != targetParent) {
+                val innerTargetParent = innerFs.getPath(targetParent?.internalPathString ?: "/")
+                sourceRecord.moveTo(innerTargetParent.getDirectory())
+            }
+            if (source.fileName != target.fileName) {
+                sourceRecord.rename(target.fileName.toString())
+            }
         }
         LocalWatchService.onEntryDeleted(source)
         LocalWatchService.onEntryCreated(target)
@@ -229,8 +240,11 @@ object VeraCryptFileSystemProvider : FileSystemProvider(), PathObservableProvide
 
     override fun checkAccess(path: Path, vararg modes: AccessMode) {
         path as? VeraCryptPath ?: throw ProviderMismatchException(path.toString())
-        if (!path.getFileSystem().getInnerFs().getPath(path.toString()).exists()) {
-             throw IOException("File not found")
+        val exists = path.getFileSystem().withLock { innerFs ->
+            innerFs.getPath(path.internalPathString).exists()
+        }
+        if (!exists) {
+            throw IOException("File not found")
         }
     }
 

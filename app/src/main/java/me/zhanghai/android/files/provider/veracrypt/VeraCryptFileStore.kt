@@ -21,11 +21,27 @@ internal class VeraCryptFileStore(
 
     @Throws(IOException::class)
     override fun getTotalSpace(): Long =
-        if (fileSystem.isOpened) fileSystem.getInnerFs().getRootPath().getDirectory().getTotalSpace() else 0
+        if (fileSystem.isOpened) {
+            try {
+                fileSystem.withLock { innerFs ->
+                    innerFs.getRootPath().getDirectory().getTotalSpace()
+                }
+            } catch (_: Exception) {
+                0L
+            }
+        } else 0L
 
     @Throws(IOException::class)
     override fun getUsableSpace(): Long =
-        if (fileSystem.isOpened) fileSystem.getInnerFs().getRootPath().getDirectory().getFreeSpace() else 0
+        if (fileSystem.isOpened) {
+            try {
+                fileSystem.withLock { innerFs ->
+                    innerFs.getRootPath().getDirectory().getFreeSpace()
+                }
+            } catch (_: Exception) {
+                0L
+            }
+        } else 0L
 
     @Throws(IOException::class)
     override fun getUnallocatedSpace(): Long = getUsableSpace()

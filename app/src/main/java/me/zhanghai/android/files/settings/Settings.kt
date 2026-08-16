@@ -249,4 +249,16 @@ object Settings {
             R.string.pref_key_hide_breadcrumb_path,
             R.bool.pref_default_value_hide_breadcrumb_path
         )
+
+    val VIDEO_PLAYER_MIN_SPEED: SettingLiveData<String> =
+        StringSettingLiveData(
+            R.string.pref_key_video_player_min_speed,
+            R.string.pref_default_value_video_player_min_speed
+        )
+
+    val VIDEO_PLAYER_MAX_SPEED: SettingLiveData<String> =
+        StringSettingLiveData(
+            R.string.pref_key_video_player_max_speed,
+            R.string.pref_default_value_video_player_max_speed
+        )
 }

@@ -92,7 +92,6 @@ class FileListAdapter(
     PopupTextProvider {
     private var isSearching = false
     private var quickPreviewPopup: QuickPreviewPopup? = null
-    private var imageViewerPopup: ImageViewerPopup? = null
 
     private lateinit var _viewType: FileViewType
     var viewType: FileViewType
@@ -397,15 +396,9 @@ class FileListAdapter(
         val openFileAction = { targetView: View ->
             if ((file.mimeType.isImage || file.mimeType.isVideo) &&
                 me.zhanghai.android.files.file.VideoPreviewPositionManager.getForceFullScreenMedia()) {
-                if (file.mimeType.isImage) {
-                    val popup = ImageViewerPopup(targetView.context)
-                    popup.show(targetView, file, list)
-                    popup.openFullScreen()
-                } else {
-                    val popup = QuickPreviewPopup(targetView.context)
-                    popup.show(targetView, file, list)
-                    popup.openFullScreen()
-                }
+                val popup = QuickPreviewPopup(targetView.context)
+                popup.show(targetView, file, list)
+                popup.openFullScreen()
             } else {
                 listener.openFile(file)
             }
@@ -505,17 +498,10 @@ class FileListAdapter(
                     isLongPressActive = true
                     dragStartX = downX
                     currentView?.parent?.requestDisallowInterceptTouchEvent(true)
-                    if (file.mimeType.isImage) {
-                        if (imageViewerPopup == null) {
-                            imageViewerPopup = ImageViewerPopup(holder.itemView.context)
-                        }
-                        imageViewerPopup?.show(holder.itemView, file, list)
-                    } else {
-                        if (quickPreviewPopup == null) {
-                            quickPreviewPopup = QuickPreviewPopup(holder.itemView.context)
-                        }
-                        quickPreviewPopup?.show(holder.itemView, file, list)
+                    if (quickPreviewPopup == null) {
+                        quickPreviewPopup = QuickPreviewPopup(holder.itemView.context)
                     }
+                    quickPreviewPopup?.show(holder.itemView, file, list)
                 }
 
                 override fun onTouch(v: View, event: MotionEvent): Boolean {
@@ -959,8 +945,8 @@ class FileListAdapter(
         if (file.mimeType.isVideo && file.path.isMediaMetadataRetrieverCompatible) {
             val viewPosition = holder.bindingAdapterPosition
             if (viewPosition != RecyclerView.NO_POSITION) {
-                // Launch coroutine to get duration from repository
-                adapterScope.launch {
+                // Launch coroutine on IO dispatcher to avoid blocking the main UI thread
+                adapterScope.launch(Dispatchers.IO) {
                     val durationMillis = try {
                         metadataRepository.getVideoDuration(file.path)
                     } catch (e: Exception) {
@@ -979,7 +965,11 @@ class FileListAdapter(
                             size, 
                             formattedDuration.takeIf { it.isNotEmpty() } // Only add if not empty
                         )
-                        holder.descriptionText?.text = updatedParts.joinToString(descriptionSeparator)
+                        withContext(Dispatchers.Main) {
+                            if (holder.bindingAdapterPosition == viewPosition) {
+                                holder.descriptionText?.text = updatedParts.joinToString(descriptionSeparator)
+                            }
+                        }
                     }
                 }
             }

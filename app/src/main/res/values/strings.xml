@@ -982,6 +982,9 @@
     <string name="settings_selection_quick_tags_summary">Display tags below the toolbar for quick add or remove</string>
     <string name="settings_grid_overlay_info_title">Overlay info on grid thumbnail</string>
     <string name="settings_grid_overlay_info_summary">Display file name on top and rating/tags at the bottom inside thumbnail</string>
+    <string name="settings_video_player_speed_category_title">Video Player Playback Speed</string>
+    <string name="settings_video_player_min_speed_title">Minimum speed slider speed</string>
+    <string name="settings_video_player_max_speed_title">Maximum speed slider speed</string>
 </resources>
 
 
