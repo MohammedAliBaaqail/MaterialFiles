@@ -21,6 +21,11 @@ object VideoPreviewPositionManager {
     private const val KEY_MIN_SPEED = "__min_preview_speed__"
     private const val KEY_MAX_SPEED = "__max_preview_speed__"
     private const val KEY_FORCE_FULL_SCREEN_MEDIA = "__force_full_screen_media__"
+    private const val KEY_SEEK_STEP_SECONDS = "__seek_step_seconds__"
+    private const val KEY_GESTURE_SEEK_SPEED = "__gesture_seek_speed__"
+    private const val KEY_GESTURE_SEEK_SPEED_2_FINGERS = "__gesture_seek_speed_2_fingers__"
+    private const val KEY_EXACT_SEEK_MODE = "__exact_seek_mode__"
+    private const val KEY_SHOW_GESTURE_SPEED_INDICATOR = "__show_gesture_speed_indicator__"
 
     private val lock = ReentrantReadWriteLock()
     private val prefs: SharedPreferences by lazy {
@@ -93,6 +98,59 @@ object VideoPreviewPositionManager {
         }
     }
 
+    fun getSeekStepSeconds(): Int {
+        lock.read {
+            return prefs.getInt(KEY_SEEK_STEP_SECONDS, 10).coerceIn(1, 60)
+        }
+    }
+
+    fun setSeekStepSeconds(seconds: Int) {
+        val coerced = seconds.coerceIn(1, 60)
+        lock.write {
+            prefs.edit { putInt(KEY_SEEK_STEP_SECONDS, coerced) }
+        }
+    }
+
+    fun getGestureSeekSpeed(): Float {
+        lock.read {
+            val raw = prefs.getFloat(KEY_GESTURE_SEEK_SPEED, 1.0f).coerceIn(0.1f, 3.0f)
+            return roundSpeed(raw)
+        }
+    }
+
+    fun setGestureSeekSpeed(speed: Float) {
+        val coerced = roundSpeed(speed.coerceIn(0.1f, 3.0f))
+        lock.write {
+            prefs.edit { putFloat(KEY_GESTURE_SEEK_SPEED, coerced) }
+        }
+    }
+
+    fun getTwoFingerGestureSeekSpeed(): Float {
+        lock.read {
+            val raw = prefs.getFloat(KEY_GESTURE_SEEK_SPEED_2_FINGERS, 0.2f).coerceIn(0.1f, 3.0f)
+            return roundSpeed(raw)
+        }
+    }
+
+    fun setTwoFingerGestureSeekSpeed(speed: Float) {
+        val coerced = roundSpeed(speed.coerceIn(0.1f, 3.0f))
+        lock.write {
+            prefs.edit { putFloat(KEY_GESTURE_SEEK_SPEED_2_FINGERS, coerced) }
+        }
+    }
+
+    fun getExactSeekMode(): Boolean {
+        lock.read {
+            return prefs.getBoolean(KEY_EXACT_SEEK_MODE, false)
+        }
+    }
+
+    fun setExactSeekMode(enabled: Boolean) {
+        lock.write {
+            prefs.edit { putBoolean(KEY_EXACT_SEEK_MODE, enabled) }
+        }
+    }
+
     fun getForceFullScreenMedia(): Boolean {
         lock.read {
             return prefs.getBoolean(KEY_FORCE_FULL_SCREEN_MEDIA, false)
@@ -102,6 +160,18 @@ object VideoPreviewPositionManager {
     fun setForceFullScreenMedia(enabled: Boolean) {
         lock.write {
             prefs.edit { putBoolean(KEY_FORCE_FULL_SCREEN_MEDIA, enabled) }
+        }
+    }
+
+    fun getShowGestureSpeedIndicator(): Boolean {
+        lock.read {
+            return prefs.getBoolean(KEY_SHOW_GESTURE_SPEED_INDICATOR, true)
+        }
+    }
+
+    fun setShowGestureSpeedIndicator(enabled: Boolean) {
+        lock.write {
+            prefs.edit { putBoolean(KEY_SHOW_GESTURE_SPEED_INDICATOR, enabled) }
         }
     }
 

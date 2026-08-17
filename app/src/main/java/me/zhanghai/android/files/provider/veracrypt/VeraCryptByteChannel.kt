@@ -25,6 +25,7 @@ internal class VeraCryptByteChannel(
 
     private var buffer: ByteArray? = null
     private var bufferSize = 0
+    private var activeIo: com.sovworks.eds.fs.RandomAccessIO? = null
 
     val internalPathString: String
         get() = path.internalPathString
@@ -33,10 +34,30 @@ internal class VeraCryptByteChannel(
         path.getFileSystem().registerChannel(this)
     }
 
+    private fun getOrCreateIo(innerFs: EdsFileSystem, isWrite: Boolean): com.sovworks.eds.fs.RandomAccessIO {
+        var currentIo = activeIo
+        if (currentIo == null) {
+            val innerPath = innerFs.getPath(path.internalPathString)
+            if (innerPath.isDirectory) {
+                throw IOException("Path is a directory: $path")
+            }
+            val io = innerPath.getFile().getRandomAccessIO(
+                if (isWrite) AccessMode.ReadWrite else AccessMode.Read
+            ) ?: throw IOException("Failed to open RandomAccessIO for path: $path")
+            currentIo = io
+            activeIo = io
+        }
+        return currentIo
+    }
+
     fun closeIo() {
         synchronized(path.getFileSystem()) {
             buffer = null
             bufferSize = 0
+            try {
+                activeIo?.close()
+            } catch (_: Exception) {}
+            activeIo = null
         }
     }
 
@@ -87,26 +108,16 @@ internal class VeraCryptByteChannel(
                 }
             }
 
-            // Fallback for write mode or files larger than 8MB: direct I/O with immediate handle closure per call
-            val innerPath = innerFs.getPath(path.internalPathString)
-            if (innerPath.isDirectory) {
-                throw IOException("Path is a directory: $path")
+            // Fallback for write mode or files larger than 8MB: direct I/O with active handle reuse
+            val io = getOrCreateIo(innerFs, valIsWrite)
+            io.seek(position)
+            val array = ByteArray(remaining)
+            val read = io.read(array, 0, array.size)
+            if (read > 0) {
+                dst.put(array, 0, read)
+                position += read
             }
-            val io = innerPath.getFile().getRandomAccessIO(
-                if (valIsWrite) AccessMode.ReadWrite else AccessMode.Read
-            )
-            try {
-                io.seek(position)
-                val array = ByteArray(remaining)
-                val read = io.read(array, 0, array.size)
-                if (read > 0) {
-                    dst.put(array, 0, read)
-                    position += read
-                }
-                if (read == 0 || read == -1) -1 else read
-            } finally {
-                try { io.close() } catch (_: Exception) {}
-            }
+            if (read == 0 || read == -1) -1 else read
         }
 
     override fun write(src: ByteBuffer): Int =
@@ -114,21 +125,13 @@ internal class VeraCryptByteChannel(
             if (closed) throw ClosedChannelException()
             val remaining = src.remaining()
             if (remaining > 0) {
-                val innerPath = innerFs.getPath(path.internalPathString)
-                if (innerPath.isDirectory) {
-                    throw IOException("Path is a directory: $path")
-                }
-                val io = innerPath.getFile().getRandomAccessIO(AccessMode.ReadWrite)
-                try {
-                    io.seek(position)
-                    val array = ByteArray(remaining)
-                    src.get(array)
-                    io.write(array, 0, array.size)
-                    position += remaining
-                    remaining
-                } finally {
-                    try { io.close() } catch (_: Exception) {}
-                }
+                val io = getOrCreateIo(innerFs, true)
+                io.seek(position)
+                val array = ByteArray(remaining)
+                src.get(array)
+                io.write(array, 0, array.size)
+                position += remaining
+                remaining
             } else {
                 0
             }
@@ -159,17 +162,10 @@ internal class VeraCryptByteChannel(
     override fun truncate(size: Long): SeekableByteChannel {
         path.getFileSystem().withLock { innerFs ->
             if (closed) throw ClosedChannelException()
-            val innerPath = innerFs.getPath(path.internalPathString)
-            val io = innerPath.getFile().getRandomAccessIO(
-                if (valIsWrite) AccessMode.ReadWrite else AccessMode.Read
-            )
-            try {
-                io.setLength(size)
-                if (position > size) {
-                    position = size
-                }
-            } finally {
-                try { io.close() } catch (_: Exception) {}
+            val io = getOrCreateIo(innerFs, valIsWrite)
+            io.setLength(size)
+            if (position > size) {
+                position = size
             }
         }
         return this
@@ -184,6 +180,10 @@ internal class VeraCryptByteChannel(
             closed = true
             buffer = null
             bufferSize = 0
+            try {
+                activeIo?.close()
+            } catch (_: Exception) {}
+            activeIo = null
             path.getFileSystem().unregisterChannel(this)
         }
     }

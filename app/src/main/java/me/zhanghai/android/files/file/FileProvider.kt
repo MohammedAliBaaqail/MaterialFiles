@@ -258,6 +258,12 @@ class FileProvider : ContentProvider() {
         private var offset = 0L
         private var released = false
 
+        // Buffer cache for accelerated sequential & random streaming (especially over VeraCrypt/proxies)
+        private val bufferSize = 1024 * 1024 // 1 MB buffer
+        private var cacheBuffer: ByteArray? = null
+        private var cacheOffset = -1L
+        private var cacheLength = 0
+
         @Throws(ErrnoException::class)
         override fun onGetSize(): Long {
             ensureNotReleased()
@@ -271,34 +277,83 @@ class FileProvider : ContentProvider() {
         @Throws(ErrnoException::class)
         override fun onRead(offset: Long, size: Int, data: ByteArray): Int {
             ensureNotReleased()
-            if (this.offset != offset) {
-                try {
-                    channel.position(offset)
-                } catch (e: IOException) {
-                    throw e.toErrnoException()
+            if (size <= 0) return 0
+
+            // 1. If requested data is entirely within our cached buffer, serve directly from RAM:
+            if (cacheBuffer != null && cacheOffset >= 0 && offset >= cacheOffset && offset + size <= cacheOffset + cacheLength) {
+                val bufferOffset = (offset - cacheOffset).toInt()
+                System.arraycopy(cacheBuffer!!, bufferOffset, data, 0, size)
+                return size
+            }
+
+            // 2. If requested read is larger than bufferSize, read directly without caching:
+            if (size >= bufferSize) {
+                if (this.offset != offset) {
+                    try {
+                        channel.position(offset)
+                    } catch (e: IOException) {
+                        throw e.toErrnoException()
+                    }
+                    this.offset = offset
                 }
+                val directBuffer = ByteBuffer.wrap(data, 0, size)
+                while (directBuffer.hasRemaining()) {
+                    val channelSize = try {
+                        channel.read(directBuffer)
+                    } catch (e: IOException) {
+                        throw e.toErrnoException()
+                    }
+                    if (channelSize == -1) break
+                    this.offset += channelSize
+                }
+                cacheOffset = -1L
+                cacheLength = 0
+                return (this.offset - offset).toInt()
+            }
+
+            // 3. Fill read-ahead cache buffer from channel in one contiguous read pass
+            if (cacheBuffer == null) {
+                cacheBuffer = ByteArray(bufferSize)
+            }
+            val buf = cacheBuffer!!
+
+            try {
+                channel.position(offset)
                 this.offset = offset
+            } catch (e: IOException) {
+                throw e.toErrnoException()
             }
-            val buffer = ByteBuffer.wrap(data, 0, size)
-            // Unlike ReadableByteChannel which may not fill the buffer and returns -1 upon
-            // end-of-stream, we need to read as much as we can unless end-of-stream is reached.
-            while (buffer.hasRemaining()) {
-                val channelSize = try {
-                    channel.read(buffer)
+
+            val readAheadBuffer = ByteBuffer.wrap(buf)
+            var totalRead = 0
+            while (readAheadBuffer.hasRemaining()) {
+                val readBytes = try {
+                    channel.read(readAheadBuffer)
                 } catch (e: IOException) {
                     throw e.toErrnoException()
                 }
-                if (channelSize == -1) {
-                    break
-                }
-                this.offset += channelSize
+                if (readBytes == -1) break
+                totalRead += readBytes
+                this.offset += readBytes
             }
-            return (this.offset - offset).toInt()
+
+            cacheOffset = offset
+            cacheLength = totalRead
+
+            if (totalRead == 0) {
+                return 0
+            }
+
+            val bytesToCopy = Math.min(size, totalRead)
+            System.arraycopy(buf, 0, data, 0, bytesToCopy)
+            return bytesToCopy
         }
 
         @Throws(ErrnoException::class)
         override fun onWrite(offset: Long, size: Int, data: ByteArray): Int {
             ensureNotReleased()
+            cacheOffset = -1L
+            cacheLength = 0
             if (this.offset != offset) {
                 try {
                     channel.position(offset)

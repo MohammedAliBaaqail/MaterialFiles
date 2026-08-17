@@ -17,7 +17,8 @@ fun InputStream.copyTo(
     intervalMillis: Long,
     listener: ((Long) -> Unit)?
 ) {
-    val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+    // 512 KB buffer for high-throughput stream copying (especially into encrypted/virtual containers)
+    val buffer = ByteArray(512 * 1024)
     var lastProgressMillis = System.currentTimeMillis()
     var copiedSize = 0L
     while (true) {

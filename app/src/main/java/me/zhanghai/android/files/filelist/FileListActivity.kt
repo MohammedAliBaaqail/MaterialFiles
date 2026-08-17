@@ -25,6 +25,14 @@ class FileListActivity : AppActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        if (!isTaskRoot
+            && intent.hasCategory(Intent.CATEGORY_LAUNCHER)
+            && intent.action != null
+            && intent.action == Intent.ACTION_MAIN) {
+            finish()
+            return
+        }
+
         // Calls ensureSubDecor().
         findViewById<View>(android.R.id.content)
         if (savedInstanceState == null) {
@@ -34,6 +42,11 @@ class FileListActivity : AppActivity() {
             fragment = supportFragmentManager.findFragmentById(android.R.id.content)
                 as FileListFragment
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
     }
 
     override fun onKeyShortcut(keyCode: Int, event: KeyEvent): Boolean {

@@ -39,6 +39,17 @@ import me.zhanghai.android.files.file.FileItem
 import me.zhanghai.android.files.file.fileProviderUri
 import me.zhanghai.android.files.file.isImage
 import me.zhanghai.android.files.file.isVideo
+import android.graphics.Bitmap
+import android.media.MediaMetadataRetriever
+import java.io.File
+import java.io.FileOutputStream
+import java8.nio.file.Path
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import me.zhanghai.android.files.provider.common.VideoMetadataRepository
+import me.zhanghai.android.files.util.setDataSource
 import me.zhanghai.android.files.util.valueCompat
 import kotlin.math.max
 import kotlin.math.min
@@ -68,6 +79,7 @@ class QuickPreviewPopup(private val context: Context) {
     private var topTitleText: TextView? = null
     private var topBackButton: ImageView? = null
     private var topAspectButton: ImageView? = null
+    private var topThumbnailButton: ImageView? = null
     private var topSpeedButton: ImageView? = null
     private var topSpeedBadgeText: TextView? = null
     private var topMoreButton: ImageView? = null
@@ -109,25 +121,35 @@ class QuickPreviewPopup(private val context: Context) {
     private var seekTimelineHudCard: LinearLayout? = null
     private var seekTimelineText: TextView? = null
     private var seekTimelineProgressBar: ProgressBar? = null
+    private var seekTimelineSpeedBadge: TextView? = null
+
+    // Double Tap Animation Overlay Views
+    private var leftDoubleTapCard: LinearLayout? = null
+    private var leftDoubleTapText: TextView? = null
+    private var rightDoubleTapCard: LinearLayout? = null
+    private var rightDoubleTapText: TextView? = null
 
     private var currentFilePathString: String = ""
+    private var currentPath: Path? = null
     private var currentPlaylist: List<FileItem> = emptyList()
     private var repeatMode: RepeatMode = RepeatMode.ALL
     private var isVideo = false
     private var videoDurationMs = 0
+    private var currentSeekPositionMs = 0
+    private var isPausedByUser = false
+    private var isControlsLocked = false
+    private var areControlsVisible = true
+    private var isUserDragging = false
+    private var isTouchOnSeekBar = false
+    private var isActivelyMovingFinger = false
+    private var lastActivePointerCount = 1
     private var dragStartFingerX = 0f
     private var dragStartSeekPositionMs = 0
-    private var currentSeekPositionMs = 0
-    private var isUserDragging = false
-    private var isActivelyMovingFinger = false
-    private var isPausedByUser = false
+    private var lastSeekTimestampMs = 0L
     private var currentAspectRatio = 1.0f
     private var currentSpeed = 1.0f
     private var gestureState = GestureState.NONE
-    private var lastSeekTimestampMs = 0L
     private var aspectRatioMode = AspectRatioMode.FIT
-    private var isControlsLocked = false
-    private var areControlsVisible = true
     private var isAudioMuted = false
     private var videoRotationDegree = 0f
 
@@ -137,6 +159,11 @@ class QuickPreviewPopup(private val context: Context) {
     // Legacy property alias for compatibility
     val isLocked: Boolean
         get() = isFullScreen
+
+    private var singleTapToggleRunnable: Runnable? = null
+    private var lastTapTimeMs = 0L
+    private var lastTapX = 0f
+    private var lastTapY = 0f
 
     private val mainHandler = Handler(Looper.getMainLooper())
     private val hideHudRunnable = Runnable {
@@ -153,12 +180,14 @@ class QuickPreviewPopup(private val context: Context) {
 
     private val resetActiveMovingRunnable = Runnable {
         isActivelyMovingFinger = false
+        isUserDragging = false
+        isTouchOnSeekBar = false
     }
 
     private val updateProgressRunnable = object : Runnable {
         override fun run() {
             videoView?.let { v ->
-                if (!isActivelyMovingFinger) {
+                if (!isActivelyMovingFinger && !isTouchOnSeekBar) {
                     val pos = v.currentPosition
                     if (pos >= 0) {
                         currentSeekPositionMs = pos
@@ -418,6 +447,7 @@ class QuickPreviewPopup(private val context: Context) {
         val targetVisibility = if (visible && !isControlsLocked) View.VISIBLE else View.GONE
         topControlBar?.visibility = targetVisibility
         bottomControlBar?.visibility = if (isVideo) targetVisibility else View.GONE
+        topThumbnailButton?.visibility = if (isVideo) targetVisibility else View.GONE
         topSpeedButton?.visibility = if (isVideo) targetVisibility else View.GONE
         topSpeedBadgeText?.visibility = if (isVideo) targetVisibility else View.GONE
 
@@ -429,6 +459,10 @@ class QuickPreviewPopup(private val context: Context) {
                 String.format(java.util.Locale.US, "%.2fx", currentSpeed)
             }
             topSpeedBadgeText?.text = formattedSpeed
+
+            val pos = videoView?.currentPosition ?: currentSeekPositionMs
+            if (pos > 0) currentSeekPositionMs = pos
+            updateSeekDisplay(currentSeekPositionMs)
         }
 
         if (visible) {
@@ -454,28 +488,67 @@ class QuickPreviewPopup(private val context: Context) {
         }
     }
 
+    private fun performSeek(targetMs: Int) {
+        videoView?.let { v ->
+            val mp = mediaPlayerRef
+            val isExact = me.zhanghai.android.files.file.VideoPreviewPositionManager.getExactSeekMode()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && mp != null) {
+                try {
+                    val mode = if (isExact) MediaPlayer.SEEK_CLOSEST else MediaPlayer.SEEK_CLOSEST_SYNC
+                    mp.seekTo(targetMs.toLong(), mode)
+                    if (!isPausedByUser) {
+                        mp.start()
+                    }
+                    return
+                } catch (_: Exception) {}
+            }
+            try {
+                v.seekTo(targetMs)
+                if (!isPausedByUser) {
+                    v.start()
+                }
+            } catch (_: Exception) {}
+        }
+    }
+
+    private fun getSeekStepMs(): Int =
+        me.zhanghai.android.files.file.VideoPreviewPositionManager.getSeekStepSeconds() * 1000
+
     private fun seekRelative(offsetMs: Int) {
         videoView?.let { v ->
             val dur = if (videoDurationMs > 0) videoDurationMs else v.duration
             val targetMs = (v.currentPosition + offsetMs).coerceIn(0, dur)
-            v.seekTo(targetMs)
+            performSeek(targetMs)
             currentSeekPositionMs = targetMs
             updateSeekDisplay(targetMs)
+            val isForward = offsetMs > 0
+            val stepSec = Math.abs(offsetMs) / 1000
+            if (isFullScreen) {
+                showDoubleTapAnimation(isForward, stepSec)
+                showDoubleTapSeekHud(isForward, stepSec)
+            }
         }
     }
 
     private fun playFile(file: FileItem) {
         currentFilePathString = file.path.toString()
+        currentPath = file.path
         originalFileName = file.name
         topTitleText?.text = file.name
         titleText?.text = file.name
 
         try {
-            val contentUri = file.path.fileProviderUri
             progressView?.visibility = View.VISIBLE
-            videoView?.setVideoURI(contentUri)
+            val fileObj = try { file.path.toFile() } catch (_: Exception) { null }
+            if (fileObj != null && fileObj.exists() && fileObj.canRead()) {
+                videoView?.setVideoPath(fileObj.absolutePath)
+            } else {
+                val contentUri = file.path.fileProviderUri
+                videoView?.setVideoURI(contentUri)
+            }
         } catch (e: Exception) {
             e.printStackTrace()
+            progressView?.visibility = View.GONE
         }
     }
 
@@ -699,19 +772,30 @@ class QuickPreviewPopup(private val context: Context) {
         popup.menu.add(if (isAudioMuted) "Unmute Audio" else "Mute Audio")
         popup.menu.add("Rotate 90°")
         popup.menu.add("Repeat Mode")
-        if (isVideo) popup.menu.add("Speed Range Settings")
+        if (isVideo) popup.menu.add("Set Frame as Thumbnail")
+        if (isVideo) {
+            val stepSec = me.zhanghai.android.files.file.VideoPreviewPositionManager.getSeekStepSeconds()
+            popup.menu.add("Seek Step (${stepSec}s)")
+            val speed1 = me.zhanghai.android.files.file.VideoPreviewPositionManager.getGestureSeekSpeed()
+            val speed2 = me.zhanghai.android.files.file.VideoPreviewPositionManager.getTwoFingerGestureSeekSpeed()
+            popup.menu.add(String.format(java.util.Locale.US, "Gesture Sliding Speed (1F: %.1fx, 2F: %.1fx)", speed1, speed2))
+            val isExact = me.zhanghai.android.files.file.VideoPreviewPositionManager.getExactSeekMode()
+            popup.menu.add(if (isExact) "Seeking: Exact (Accurate) Frame" else "Seeking: Keyframe (Fast)")
+            popup.menu.add("Speed Range Settings")
+        }
         popup.setOnMenuItemClickListener { item ->
-            when (item.title) {
-                "Unmute Audio", "Mute Audio" -> {
+            val title = item.title.toString()
+            when {
+                title == "Unmute Audio" || title == "Mute Audio" -> {
                     isAudioMuted = !isAudioMuted
                     mediaPlayerRef?.setVolume(if (isAudioMuted) 0f else 1f, if (isAudioMuted) 0f else 1f)
                 }
-                "Rotate 90°" -> {
+                title == "Rotate 90°" -> {
                     videoRotationDegree = (videoRotationDegree + 90f) % 360f
                     videoView?.rotation = videoRotationDegree
                     imageView?.rotation = videoRotationDegree
                 }
-                "Repeat Mode" -> {
+                title == "Repeat Mode" -> {
                     repeatMode = when (repeatMode) {
                         RepeatMode.ALL -> RepeatMode.ONE
                         RepeatMode.ONE -> RepeatMode.OFF
@@ -719,11 +803,351 @@ class QuickPreviewPopup(private val context: Context) {
                     }
                     updateRepeatButtonUI()
                 }
-                "Speed Range Settings" -> showSpeedRangeDialog()
+                title == "Set Frame as Thumbnail" -> captureCurrentFrameAsThumbnail()
+                title.startsWith("Seek Step") -> showSeekStepDialog()
+                title.startsWith("Gesture Sliding Speed") -> showGestureSpeedDialog()
+                title.startsWith("Seeking:") -> {
+                    val newExact = !me.zhanghai.android.files.file.VideoPreviewPositionManager.getExactSeekMode()
+                    me.zhanghai.android.files.file.VideoPreviewPositionManager.setExactSeekMode(newExact)
+                    val modeName = if (newExact) "Exact (Accurate) Frame" else "Keyframe (Fast)"
+                    Toast.makeText(context, "Seeking Mode: $modeName", Toast.LENGTH_SHORT).show()
+                }
+                title == "Speed Range Settings" -> showSpeedRangeDialog()
             }
             true
         }
         popup.show()
+    }
+
+    private fun showSeekStepDialog() {
+        val density = context.resources.displayMetrics.density
+        val currentStep = me.zhanghai.android.files.file.VideoPreviewPositionManager.getSeekStepSeconds().coerceIn(1, 30).toFloat()
+
+        val dialogLayout = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding((20 * density).toInt(), (16 * density).toInt(), (20 * density).toInt(), (12 * density).toInt())
+            setBackgroundColor(Color.parseColor("#1E2030"))
+        }
+
+        val title = TextView(context).apply {
+            text = "Forward / Backward Step Duration"
+            setTextColor(Color.WHITE)
+            textSize = 17f
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            setPadding(0, 0, 0, (8 * density).toInt())
+        }
+        dialogLayout.addView(title)
+
+        val valueLabel = TextView(context).apply {
+            text = "Step Duration: ${currentStep.toInt()}s"
+            setTextColor(Color.parseColor("#7C85FC"))
+            textSize = 15f
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            gravity = Gravity.CENTER_HORIZONTAL
+            setPadding(0, 0, 0, (8 * density).toInt())
+        }
+        dialogLayout.addView(valueLabel)
+
+        val slider = com.google.android.material.slider.Slider(context).apply {
+            valueFrom = 1.0f
+            valueTo = 30.0f
+            stepSize = 1.0f
+            value = currentStep
+            setLabelFormatter { value -> "${value.toInt()}s" }
+            val colorAccent = Color.parseColor("#7C85FC")
+            trackActiveTintList = android.content.res.ColorStateList.valueOf(colorAccent)
+            thumbTintList = android.content.res.ColorStateList.valueOf(colorAccent)
+            addOnChangeListener { _, value, _ ->
+                valueLabel.text = "Step Duration: ${value.toInt()}s"
+            }
+        }
+        dialogLayout.addView(slider)
+
+        val hint = TextView(context).apply {
+            text = "Controls the forward / backward jump duration (1s to 30s) used by the on-screen buttons and double-tap gestures."
+            setTextColor(Color.parseColor("#607090"))
+            textSize = 11.5f
+            setPadding(0, (6 * density).toInt(), 0, 0)
+        }
+        dialogLayout.addView(hint)
+
+        val dialog = android.app.AlertDialog.Builder(context)
+            .setView(dialogLayout)
+            .setPositiveButton("Apply") { _, _ ->
+                val newSec = slider.value.toInt().coerceIn(1, 30)
+                me.zhanghai.android.files.file.VideoPreviewPositionManager.setSeekStepSeconds(newSec)
+                Toast.makeText(context, "Seek step set to ${newSec}s", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .create()
+
+        dialog.show()
+    }
+
+    private fun showGestureSpeedDialog() {
+        val density = context.resources.displayMetrics.density
+        val currentSpeed1 = me.zhanghai.android.files.file.VideoPreviewPositionManager.getGestureSeekSpeed().coerceIn(0.1f, 3.0f)
+        val currentSpeed2 = me.zhanghai.android.files.file.VideoPreviewPositionManager.getTwoFingerGestureSeekSpeed().coerceIn(0.1f, 3.0f)
+
+        val dialogLayout = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding((20 * density).toInt(), (16 * density).toInt(), (20 * density).toInt(), (12 * density).toInt())
+            setBackgroundColor(Color.parseColor("#1E2030"))
+        }
+
+        val title = TextView(context).apply {
+            text = "Screen Gesture Sliding Speed"
+            setTextColor(Color.WHITE)
+            textSize = 17f
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            setPadding(0, 0, 0, (12 * density).toInt())
+        }
+        dialogLayout.addView(title)
+
+        // 1-Finger Section
+        val label1 = TextView(context).apply {
+            val speedStr = String.format(java.util.Locale.US, "%.1fx", currentSpeed1)
+            text = "1-Finger Speed: $speedStr"
+            setTextColor(Color.parseColor("#7C85FC"))
+            textSize = 14.5f
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            setPadding(0, 0, 0, (4 * density).toInt())
+        }
+        dialogLayout.addView(label1)
+
+        val slider1 = com.google.android.material.slider.Slider(context).apply {
+            valueFrom = 0.1f
+            valueTo = 3.0f
+            stepSize = 0.1f
+            value = (Math.round(currentSpeed1 * 10) / 10.0f).coerceIn(0.1f, 3.0f)
+            setLabelFormatter { value -> String.format(java.util.Locale.US, "%.1fx", value) }
+            val colorAccent = Color.parseColor("#7C85FC")
+            trackActiveTintList = android.content.res.ColorStateList.valueOf(colorAccent)
+            thumbTintList = android.content.res.ColorStateList.valueOf(colorAccent)
+            addOnChangeListener { _, value, _ ->
+                val v = Math.round(value * 10) / 10.0f
+                label1.text = String.format(java.util.Locale.US, "1-Finger Speed: %.1fx", v)
+            }
+        }
+        dialogLayout.addView(slider1)
+
+        // 2-Fingers Section
+        val label2 = TextView(context).apply {
+            val speedStr = String.format(java.util.Locale.US, "%.1fx", currentSpeed2)
+            text = "2-Fingers Speed: $speedStr"
+            setTextColor(Color.parseColor("#4DEEEA"))
+            textSize = 14.5f
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            setPadding(0, (10 * density).toInt(), 0, (4 * density).toInt())
+        }
+        dialogLayout.addView(label2)
+
+        val slider2 = com.google.android.material.slider.Slider(context).apply {
+            valueFrom = 0.1f
+            valueTo = 3.0f
+            stepSize = 0.1f
+            value = (Math.round(currentSpeed2 * 10) / 10.0f).coerceIn(0.1f, 3.0f)
+            setLabelFormatter { value -> String.format(java.util.Locale.US, "%.1fx", value) }
+            val colorAccent = Color.parseColor("#4DEEEA")
+            trackActiveTintList = android.content.res.ColorStateList.valueOf(colorAccent)
+            thumbTintList = android.content.res.ColorStateList.valueOf(colorAccent)
+            addOnChangeListener { _, value, _ ->
+                val v = Math.round(value * 10) / 10.0f
+                label2.text = String.format(java.util.Locale.US, "2-Fingers Speed: %.1fx", v)
+            }
+        }
+        dialogLayout.addView(slider2)
+
+        val hint = TextView(context).apply {
+            text = "Slide with 1 finger for primary speed. Touching with a 2nd finger dynamically switches to 2-finger speed, and releasing it returns to 1-finger speed."
+            setTextColor(Color.parseColor("#8090B0"))
+            textSize = 11.5f
+            setPadding(0, (8 * density).toInt(), 0, (6 * density).toInt())
+        }
+        dialogLayout.addView(hint)
+
+        // Show Indicator Checkbox Option
+        val showIndicatorCurrent = me.zhanghai.android.files.file.VideoPreviewPositionManager.getShowGestureSpeedIndicator()
+        val checkboxRow = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, (10 * density).toInt(), 0, (4 * density).toInt())
+        }
+
+        val checkbox = com.google.android.material.checkbox.MaterialCheckBox(context).apply {
+            isChecked = showIndicatorCurrent
+            buttonTintList = android.content.res.ColorStateList.valueOf(Color.parseColor("#7C85FC"))
+        }
+        checkboxRow.addView(checkbox)
+
+        val checkboxTextLayout = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding((6 * density).toInt(), 0, 0, 0)
+        }
+        val checkboxTitle = TextView(context).apply {
+            text = "Show sliding speed indicator"
+            setTextColor(Color.WHITE)
+            textSize = 14f
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+        }
+        val checkboxSubtitle = TextView(context).apply {
+            text = "Displays current speed & finger indicator on screen while sliding"
+            setTextColor(Color.parseColor("#8090B0"))
+            textSize = 11.5f
+        }
+        checkboxTextLayout.addView(checkboxTitle)
+        checkboxTextLayout.addView(checkboxSubtitle)
+        checkboxRow.addView(checkboxTextLayout)
+        checkboxRow.setOnClickListener {
+            checkbox.isChecked = !checkbox.isChecked
+        }
+        dialogLayout.addView(checkboxRow)
+
+        val dialog = android.app.AlertDialog.Builder(context)
+            .setView(dialogLayout)
+            .setPositiveButton("Apply") { _, _ ->
+                val newSpeed1 = Math.round(slider1.value * 10) / 10.0f
+                val newSpeed2 = Math.round(slider2.value * 10) / 10.0f
+                val newShowIndicator = checkbox.isChecked
+                me.zhanghai.android.files.file.VideoPreviewPositionManager.setGestureSeekSpeed(newSpeed1)
+                me.zhanghai.android.files.file.VideoPreviewPositionManager.setTwoFingerGestureSeekSpeed(newSpeed2)
+                me.zhanghai.android.files.file.VideoPreviewPositionManager.setShowGestureSpeedIndicator(newShowIndicator)
+                Toast.makeText(context, String.format(java.util.Locale.US, "Gesture speeds: 1-Finger %.1fx, 2-Fingers %.1fx (Indicator: %s)", newSpeed1, newSpeed2, if (newShowIndicator) "On" else "Off"), Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .create()
+
+        dialog.show()
+    }
+
+    private fun showDoubleTapAnimation(isForward: Boolean, stepSec: Int) {
+        val card = (if (isForward) rightDoubleTapCard else leftDoubleTapCard) ?: return
+        val otherCard = if (isForward) leftDoubleTapCard else rightDoubleTapCard
+        val textView = if (isForward) rightDoubleTapText else leftDoubleTapText
+
+        otherCard?.visibility = View.GONE
+        otherCard?.animate()?.cancel()
+
+        val prefix = if (isForward) "+" else "-"
+        textView?.text = "$prefix${stepSec}s"
+
+        card.apply {
+            animate()?.cancel()
+            visibility = View.VISIBLE
+            alpha = 0f
+            scaleX = 0.6f
+            scaleY = 0.6f
+            bringToFront()
+            animate()
+                .alpha(1f)
+                .scaleX(1.15f)
+                .scaleY(1.15f)
+                .setDuration(160)
+                .withEndAction {
+                    animate()
+                        .scaleX(1.0f)
+                        .scaleY(1.0f)
+                        .setDuration(100)
+                        .withEndAction {
+                            postDelayed({
+                                animate()
+                                    .alpha(0f)
+                                    .scaleX(0.7f)
+                                    .scaleY(0.7f)
+                                    .setDuration(220)
+                                    .withEndAction {
+                                        visibility = View.GONE
+                                    }
+                                    .start()
+                            }, 450)
+                        }
+                        .start()
+                }
+                .start()
+        }
+    }
+
+    private fun showDoubleTapSeekHud(isForward: Boolean, seconds: Int) {
+        if (!isFullScreen || !isVideo) return
+        mainHandler.removeCallbacks(hideHudRunnable)
+        verticalHudCard?.visibility = View.GONE
+        speedHudLayout?.visibility = View.GONE
+        seekHudLayout?.visibility = View.VISIBLE
+        dualSliderCard?.visibility = View.VISIBLE
+        seekTimelineHudCard?.visibility = View.GONE
+
+        val symbol = if (isForward) "⏩ +${seconds}s" else "⏪ -${seconds}s"
+        seekLabelText?.text = symbol
+        val dur = if (videoDurationMs > 0) videoDurationMs else (videoView?.duration ?: 0)
+        if (dur > 0) {
+            val progressVal = ((currentSeekPositionMs.toFloat() / dur) * 1000).toInt().coerceIn(0, 1000)
+            seekProgressBar?.max = 1000
+            seekProgressBar?.progress = progressVal
+        }
+        dualSliderCard?.bringToFront()
+        mainHandler.postDelayed(hideHudRunnable, 1000L)
+    }
+
+    private fun captureCurrentFrameAsThumbnail() {
+        val targetPath = currentPath ?: return
+        val posMs = (if (currentSeekPositionMs > 0) currentSeekPositionMs else (videoView?.currentPosition ?: 0)).toLong()
+        Toast.makeText(context, "Capturing current frame for thumbnail...", Toast.LENGTH_SHORT).show()
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                var extractedBitmap: Bitmap? = null
+                MediaMetadataRetriever().use { retriever ->
+                    retriever.setDataSource(targetPath)
+                    val timeMicros = posMs * 1000L
+                    extractedBitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+                        retriever.getScaledFrameAtTime(
+                            timeMicros,
+                            MediaMetadataRetriever.OPTION_CLOSEST,
+                            1920,
+                            1080
+                        ) ?: retriever.getFrameAtTime(timeMicros, MediaMetadataRetriever.OPTION_CLOSEST)
+                    } else {
+                        retriever.getFrameAtTime(timeMicros, MediaMetadataRetriever.OPTION_CLOSEST)
+                    }
+                }
+
+                if (extractedBitmap != null) {
+                    val hash = java.security.MessageDigest.getInstance("SHA-256")
+                        .digest(targetPath.toString().toByteArray())
+                        .joinToString("") { "%02x".format(it) }
+
+                    val thumbnailDir = File(context.filesDir, "video_thumbnails")
+                    thumbnailDir.mkdirs()
+                    val thumbnailFile = File(thumbnailDir, "${hash}_custom.jpg")
+
+                    thumbnailDir.listFiles()?.forEach { f ->
+                        if (f.name.startsWith(hash) && f.absolutePath != thumbnailFile.absolutePath) {
+                            f.delete()
+                        }
+                    }
+
+                    FileOutputStream(thumbnailFile).use { out ->
+                        extractedBitmap!!.compress(Bitmap.CompressFormat.JPEG, 95, out)
+                    }
+
+                    val repo = VideoMetadataRepository(context)
+                    repo.updateThumbnailPath(targetPath, thumbnailFile.absolutePath)
+
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "Thumbnail set to current frame!", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "Could not capture frame at current position", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Error setting thumbnail: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
     }
 
     private fun showSpeedRangeDialog() {
@@ -971,6 +1395,7 @@ class QuickPreviewPopup(private val context: Context) {
 
                 when (event.actionMasked) {
                     MotionEvent.ACTION_DOWN -> {
+                        lastActivePointerCount = 1
                         downX = event.rawX
                         downY = event.rawY
                         touchDownTimeMs = System.currentTimeMillis()
@@ -991,10 +1416,30 @@ class QuickPreviewPopup(private val context: Context) {
 
                         mainHandler.removeCallbacks(longPressSpeedRunnable)
                         if (isFullScreen && isVideo) {
-                            mainHandler.postDelayed(longPressSpeedRunnable, 180)
+                            mainHandler.postDelayed(longPressSpeedRunnable, 380L)
+                        }
+                    }
+                    MotionEvent.ACTION_POINTER_DOWN -> {
+                        mainHandler.removeCallbacks(longPressSpeedRunnable)
+                        if (gestureState == GestureState.SEEKING && isVideo) {
+                            lastActivePointerCount = event.pointerCount
+                            dragStartFingerX = getAveragePointerX(event)
+                            dragStartSeekPositionMs = currentSeekPositionMs
+                            onDragDeltaRaw(dragStartFingerX, event.pointerCount)
+                        }
+                    }
+                    MotionEvent.ACTION_POINTER_UP -> {
+                        if (gestureState == GestureState.SEEKING && isVideo) {
+                            val remainingCount = (event.pointerCount - 1).coerceAtLeast(1)
+                            lastActivePointerCount = remainingCount
+                            dragStartFingerX = getRemainingPointerX(event)
+                            dragStartSeekPositionMs = currentSeekPositionMs
+                            onDragDeltaRaw(dragStartFingerX, remainingCount)
                         }
                     }
                     MotionEvent.ACTION_MOVE -> {
+                        val pointerCount = event.pointerCount
+                        val currentX = getAveragePointerX(event)
                         val dx = event.rawX - downX
                         val dy = event.rawY - downY
                         val absDx = Math.abs(dx)
@@ -1030,13 +1475,13 @@ class QuickPreviewPopup(private val context: Context) {
 
                         // SEEKING MODE FOR VIDEO
                         if (gestureState == GestureState.SEEKING && isVideo) {
-                            onDragDeltaRaw(event.rawX)
+                            onDragDeltaRaw(currentX, pointerCount)
                             return true
                         }
 
                         // INITIAL GESTURE SELECTION
                         if (gestureState == GestureState.NONE && (absDx > 20 || absDy > 20)) {
-                            val isPressAndHold = holdDurationMs >= 180L
+                            val isPressAndHold = holdDurationMs >= 380L
 
                             if (dy < -100f && !isFullScreen) {
                                 openFullScreen()
@@ -1047,7 +1492,7 @@ class QuickPreviewPopup(private val context: Context) {
                             } else if (absDx > absDy && isVideo) {
                                 gestureState = GestureState.SEEKING
                                 startDrag()
-                                onDragDeltaRaw(event.rawX)
+                                onDragDeltaRaw(currentX, pointerCount)
                             } else if (!isPressAndHold && isVideo) {
                                 // FAST SWIPE ONLY: Adjust Volume or Brightness (VIDEO ONLY)
                                 if (isRightSide) {
@@ -1096,7 +1541,8 @@ class QuickPreviewPopup(private val context: Context) {
                         verticalHudCard?.visibility = View.GONE
                         seekTimelineHudCard?.visibility = View.GONE
 
-                        val dt = System.currentTimeMillis() - touchDownTimeMs
+                        val now = System.currentTimeMillis()
+                        val dt = now - touchDownTimeMs
                         val dx = event.rawX - downX
                         val dy = event.rawY - downY
                         val absDx = Math.abs(dx)
@@ -1121,13 +1567,41 @@ class QuickPreviewPopup(private val context: Context) {
                             }
                         }
 
-                        // SINGLE TAP TO TOGGLE VIDEO CONTROLS
-                        if (isVideo && isFullScreen && dt < 200 && absDx < 15 && absDy < 15 && gestureState == GestureState.NONE) {
-                            setControlsVisible(!areControlsVisible)
+                        val wasSeeking = (gestureState == GestureState.SEEKING)
+                        val isTap = (isVideo && isFullScreen && dt < 280 && absDx < 25 && absDy < 25 && gestureState == GestureState.NONE)
+
+                        // SINGLE TAP / DOUBLE TAP HANDLING FOR FULLSCREEN VIDEO
+                        if (isTap) {
+                            if (now - lastTapTimeMs < 350L && Math.abs(event.rawX - lastTapX) < 120 && Math.abs(event.rawY - lastTapY) < 120) {
+                                // DOUBLE TAP: Left = rewind, Right = fast forward
+                                singleTapToggleRunnable?.let { mainHandler.removeCallbacks(it) }
+                                singleTapToggleRunnable = null
+                                lastTapTimeMs = 0L
+
+                                val isRight = event.rawX > (screenWidth / 2f)
+                                val stepSec = me.zhanghai.android.files.file.VideoPreviewPositionManager.getSeekStepSeconds()
+                                val stepMs = stepSec * 1000
+                                if (isRight) {
+                                    seekRelative(stepMs)
+                                } else {
+                                    seekRelative(-stepMs)
+                                }
+                            } else {
+                                // First tap: schedule controls toggle
+                                lastTapTimeMs = now
+                                lastTapX = event.rawX
+                                lastTapY = event.rawY
+                                singleTapToggleRunnable?.let { mainHandler.removeCallbacks(it) }
+                                val toggleTask = Runnable {
+                                    setControlsVisible(!areControlsVisible)
+                                }
+                                singleTapToggleRunnable = toggleTask
+                                mainHandler.postDelayed(toggleTask, 280L)
+                            }
                         }
 
                         resetPlaybackSpeed()
-                        onTouchUp()
+                        onTouchUp(wasSeeking)
                         gestureState = GestureState.NONE
                     }
                 }
@@ -1157,6 +1631,7 @@ class QuickPreviewPopup(private val context: Context) {
         aspectRatioMode = AspectRatioMode.FIT
         originalFileName = file.name
         currentFilePathString = file.path.toString()
+        currentPath = file.path
         currentPlaylist = playlist
         isVideo = file.mimeType.isVideo
 
@@ -1306,6 +1781,16 @@ class QuickPreviewPopup(private val context: Context) {
         }
         topControlBar?.addView(topAspectButton)
 
+        topThumbnailButton = ImageView(context).apply {
+            setImageResource(R.drawable.camera_icon_white_24dp)
+            setColorFilter(Color.WHITE)
+            layoutParams = LinearLayout.LayoutParams(34.toPx(), 34.toPx())
+            setPadding(7.toPx(), 7.toPx(), 7.toPx(), 7.toPx())
+            visibility = if (isVideo) View.VISIBLE else View.GONE
+            setOnClickListener { captureCurrentFrameAsThumbnail() }
+        }
+        topControlBar?.addView(topThumbnailButton)
+
         topSpeedButton = ImageView(context).apply {
             setImageResource(R.drawable.ic_speed_white_24dp)
             setColorFilter(Color.WHITE)
@@ -1388,21 +1873,44 @@ class QuickPreviewPopup(private val context: Context) {
             setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                     if (fromUser && videoDurationMs > 0) {
-                        val targetMs = ((progress / 1000f) * videoDurationMs).toInt()
+                        val targetMs = ((progress / 1000f) * videoDurationMs).toInt().coerceIn(0, videoDurationMs)
                         currentSeekPositionMs = targetMs
-                        updateSeekDisplay(targetMs)
+                        val currentSec = (targetMs / 1000).coerceAtLeast(0)
+                        val totalSec = (videoDurationMs / 1000).coerceAtLeast(0)
+                        val currentStr = String.format("%02d:%02d", currentSec / 60, currentSec % 60)
+                        val totalStr = String.format("%02d:%02d", totalSec / 60, totalSec % 60)
+                        val speedText = if (currentSpeed > 1.05f) {
+                            String.format(java.util.Locale.US, "  |  ⚡ %.1fx Speed", currentSpeed)
+                        } else {
+                            ""
+                        }
+                        timeText?.text = "$currentStr / $totalStr$speedText"
+                        fullTimeText?.text = "$currentStr / $totalStr$speedText"
+                        seekTimelineText?.text = "$currentStr / $totalStr"
+                        seekBarProgress?.progress = progress
+                        seekTimelineProgressBar?.progress = progress
+
+                        val now = System.currentTimeMillis()
+                        if (now - lastSeekTimestampMs > 50L) {
+                            lastSeekTimestampMs = now
+                            performSeek(targetMs)
+                        }
                     }
                 }
 
                 override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                    isTouchOnSeekBar = true
                     isUserDragging = true
+                    mainHandler.removeCallbacks(hideControlsRunnable)
                 }
 
                 override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                    isTouchOnSeekBar = false
                     isUserDragging = false
-                    videoView?.seekTo(currentSeekPositionMs)
-                    if (!isPausedByUser) {
-                        videoView?.start()
+                    performSeek(currentSeekPositionMs)
+                    updateSeekDisplay(currentSeekPositionMs)
+                    if (areControlsVisible && !isControlsLocked) {
+                        mainHandler.postDelayed(hideControlsRunnable, 4000)
                     }
                 }
             })
@@ -1437,7 +1945,7 @@ class QuickPreviewPopup(private val context: Context) {
                 marginEnd = 4.toPx()
             }
             setPadding(10.toPx(), 10.toPx(), 10.toPx(), 10.toPx())
-            setOnClickListener { seekRelative(-10000) }
+            setOnClickListener { seekRelative(-getSeekStepMs()) }
         }
         mediaKeysRow.addView(rewindButton)
 
@@ -1461,7 +1969,7 @@ class QuickPreviewPopup(private val context: Context) {
                 marginEnd = 4.toPx()
             }
             setPadding(10.toPx(), 10.toPx(), 10.toPx(), 10.toPx())
-            setOnClickListener { seekRelative(10000) }
+            setOnClickListener { seekRelative(getSeekStepMs()) }
         }
         mediaKeysRow.addView(forwardButton)
 
@@ -1705,6 +2213,89 @@ class QuickPreviewPopup(private val context: Context) {
         }
         seekTimelineHudCard?.addView(seekTimelineProgressBar)
 
+        seekTimelineSpeedBadge = TextView(context).apply {
+            text = "⚡ 1.0x (1F)"
+            setTextColor(Color.parseColor("#7C85FC"))
+            textSize = 12f
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            setPadding(10.toPx(), 0, 0, 0)
+            setShadowLayer(4f, 0f, 2f, Color.BLACK)
+            visibility = View.GONE
+        }
+        seekTimelineHudCard?.addView(seekTimelineSpeedBadge)
+
+        // DOUBLE TAP ANIMATION OVERLAYS (Left & Right)
+        val doubleTapCardShape = android.graphics.drawable.GradientDrawable().apply {
+            shape = android.graphics.drawable.GradientDrawable.OVAL
+            setColor(Color.parseColor("#99111111"))
+        }
+
+        leftDoubleTapCard = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            background = doubleTapCardShape
+            setPadding(18.toPx(), 18.toPx(), 18.toPx(), 18.toPx())
+            visibility = View.GONE
+            elevation = 95f
+        }
+        val leftDoubleTapParams = FrameLayout.LayoutParams(
+            100.toPx(),
+            100.toPx()
+        ).apply {
+            gravity = Gravity.START or Gravity.CENTER_VERTICAL
+            marginStart = 48.toPx()
+        }
+        root.addView(leftDoubleTapCard, leftDoubleTapParams)
+
+        val leftIcon = ImageView(context).apply {
+            setImageResource(R.drawable.ic_replay_10_white_24dp)
+            setColorFilter(Color.WHITE)
+            layoutParams = LinearLayout.LayoutParams(36.toPx(), 36.toPx())
+        }
+        leftDoubleTapCard?.addView(leftIcon)
+
+        leftDoubleTapText = TextView(context).apply {
+            text = "10s"
+            setTextColor(Color.WHITE)
+            textSize = 13f
+            setTypeface(null, android.graphics.Typeface.BOLD)
+            gravity = Gravity.CENTER
+        }
+        leftDoubleTapCard?.addView(leftDoubleTapText)
+
+        rightDoubleTapCard = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            background = doubleTapCardShape
+            setPadding(18.toPx(), 18.toPx(), 18.toPx(), 18.toPx())
+            visibility = View.GONE
+            elevation = 95f
+        }
+        val rightDoubleTapParams = FrameLayout.LayoutParams(
+            100.toPx(),
+            100.toPx()
+        ).apply {
+            gravity = Gravity.END or Gravity.CENTER_VERTICAL
+            marginEnd = 48.toPx()
+        }
+        root.addView(rightDoubleTapCard, rightDoubleTapParams)
+
+        val rightIcon = ImageView(context).apply {
+            setImageResource(R.drawable.ic_forward_10_white_24dp)
+            setColorFilter(Color.WHITE)
+            layoutParams = LinearLayout.LayoutParams(36.toPx(), 36.toPx())
+        }
+        rightDoubleTapCard?.addView(rightIcon)
+
+        rightDoubleTapText = TextView(context).apply {
+            text = "10s"
+            setTextColor(Color.WHITE)
+            textSize = 13f
+            setTypeface(null, android.graphics.Typeface.BOLD)
+            gravity = Gravity.CENTER
+        }
+        rightDoubleTapCard?.addView(rightDoubleTapText)
+
         // Loading Spinner
         progressView = ProgressBar(context).apply {
             layoutParams = FrameLayout.LayoutParams(
@@ -1768,14 +2359,27 @@ class QuickPreviewPopup(private val context: Context) {
                 } catch (_: Exception) {}
 
                 mp.setOnCompletionListener {
+                    val currentPos = videoView?.currentPosition ?: 0
+                    val dur = if (videoDurationMs > 0) videoDurationMs else (videoView?.duration ?: 0)
+                    val isNearEnd = (dur > 3000 && currentPos >= dur - 2500) || (dur in 1..3000 && currentPos > 0)
+                    if (!isNearEnd) {
+                        // Premature completion triggered by a timestamp discontinuity or demuxer packet stall!
+                        // Do NOT jump to start or skip video! Try nudging forward slightly to recover stream.
+                        try {
+                            if (currentPos > 0) {
+                                performSeek(currentPos + 500)
+                            }
+                        } catch (_: Exception) {}
+                        return@setOnCompletionListener
+                    }
                     when (repeatMode) {
                         RepeatMode.ONE -> {
-                            videoView?.seekTo(0)
+                            performSeek(0)
                             videoView?.start()
                         }
                         RepeatMode.ALL -> {
                             if (!playNextVideoInFolder()) {
-                                videoView?.seekTo(0)
+                                performSeek(0)
                                 videoView?.start()
                             }
                         }
@@ -1788,8 +2392,28 @@ class QuickPreviewPopup(private val context: Context) {
 
                 progressView?.visibility = View.GONE
                 videoDurationMs = mp.duration
+                if (videoDurationMs <= 0) {
+                    kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                        try {
+                            MediaMetadataRetriever().use { mmr ->
+                                mmr.setDataSource(file.path)
+                                val durStr = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+                                if (!durStr.isNullOrEmpty()) {
+                                    val parsed = durStr.toIntOrNull() ?: 0
+                                    if (parsed > 0) {
+                                        mainHandler.post {
+                                            videoDurationMs = parsed
+                                            updateSeekDisplay(videoView?.currentPosition ?: 0)
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (_: Exception) {}
+                    }
+                }
+
                 val savedPos = me.zhanghai.android.files.file.VideoPreviewPositionManager.getPosition(currentFilePathString)
-                val initialPos = if (savedPos in 1 until mp.duration) savedPos else 0
+                val initialPos = if (videoDurationMs > 0 && savedPos in 1 until videoDurationMs) savedPos else 0
 
                 dragStartSeekPositionMs = initialPos
                 currentSeekPositionMs = initialPos
@@ -1798,24 +2422,48 @@ class QuickPreviewPopup(private val context: Context) {
                 }
 
                 if (initialPos > 0) {
-                    video.seekTo(initialPos)
+                    try {
+                        performSeek(initialPos)
+                    } catch (_: Exception) {}
                 }
                 updateSeekDisplay(initialPos)
                 adjustContainerAspectRatio(mp.videoWidth, mp.videoHeight)
                 if (!isPausedByUser) {
-                    video.start()
+                    try {
+                        video.start()
+                    } catch (_: Exception) {}
                 }
                 mainHandler.post(updateProgressRunnable)
             }
 
-            video.setOnErrorListener { _, _, _ ->
+            video.setOnInfoListener { _, what, _ ->
+                if (what == MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START) {
+                    progressView?.visibility = View.GONE
+                }
+                false
+            }
+
+            video.setOnErrorListener { _, what, extra ->
                 progressView?.visibility = View.GONE
+                android.util.Log.w("QuickPreviewPopup", "MediaPlayer error: what=$what, extra=$extra")
+                val pos = currentSeekPositionMs
+                if (pos > 0) {
+                    try {
+                        performSeek(pos + 1000)
+                        return@setOnErrorListener true
+                    } catch (_: Exception) {}
+                }
                 true
             }
 
             try {
-                val contentUri = file.path.fileProviderUri
-                video.setVideoURI(contentUri)
+                val fileObj = try { file.path.toFile() } catch (_: Exception) { null }
+                if (fileObj != null && fileObj.exists() && fileObj.canRead()) {
+                    video.setVideoPath(fileObj.absolutePath)
+                } else {
+                    val contentUri = file.path.fileProviderUri
+                    video.setVideoURI(contentUri)
+                }
             } catch (e: Exception) {
                 progressView?.visibility = View.GONE
             }
@@ -1865,39 +2513,64 @@ class QuickPreviewPopup(private val context: Context) {
 
     private fun Int.toPx(): Int = (this * context.resources.displayMetrics.density).toInt()
 
-    fun onDragDeltaRaw(rawX: Float) {
+    private fun getAveragePointerX(event: MotionEvent): Float {
+        var sum = 0f
+        val count = event.pointerCount
+        if (count == 0) return event.rawX
+        for (i in 0 until count) {
+            sum += event.getX(i)
+        }
+        val offsetX = event.rawX - event.x
+        return (sum / count) + offsetX
+    }
+
+    private fun getRemainingPointerX(event: MotionEvent): Float {
+        val actionIndex = event.actionIndex
+        var sum = 0f
+        var count = 0
+        for (i in 0 until event.pointerCount) {
+            if (i != actionIndex) {
+                sum += event.getX(i)
+                count++
+            }
+        }
+        if (count == 0) return event.rawX
+        val offsetX = event.rawX - event.x
+        return (sum / count) + offsetX
+    }
+
+    fun onDragDeltaRaw(rawX: Float, pointerCount: Int = 1) {
         if (!isVideo || videoView == null) return
         val dur = if (videoDurationMs > 0) videoDurationMs else (videoView?.duration ?: 0)
         if (dur <= 0) return
 
         mainHandler.removeCallbacks(resetActiveMovingRunnable)
-        if (!isActivelyMovingFinger) {
+        if (!isActivelyMovingFinger || lastActivePointerCount != pointerCount) {
             dragStartFingerX = rawX
             val pos = videoView?.currentPosition ?: 0
-            dragStartSeekPositionMs = if (pos > 0) pos else currentSeekPositionMs
+            dragStartSeekPositionMs = if (currentSeekPositionMs > 0) currentSeekPositionMs else pos
             isActivelyMovingFinger = true
+            lastActivePointerCount = pointerCount
         }
         isUserDragging = true
 
         val screenWidth = context.resources.displayMetrics.widthPixels.toFloat().coerceAtLeast(1f)
+        val gestureSpeed = if (pointerCount >= 2) {
+            me.zhanghai.android.files.file.VideoPreviewPositionManager.getTwoFingerGestureSeekSpeed()
+        } else {
+            me.zhanghai.android.files.file.VideoPreviewPositionManager.getGestureSeekSpeed()
+        }
         val dxFromSegment = rawX - dragStartFingerX
-        val deltaMs = ((dxFromSegment / screenWidth) * dur).toInt()
+        val deltaMs = ((dxFromSegment / screenWidth) * dur * gestureSpeed).toInt()
         val targetMs = min(max(0, dragStartSeekPositionMs + deltaMs), dur)
 
         currentSeekPositionMs = targetMs
-        updateSeekDisplay(targetMs)
+        updateSeekDisplay(targetMs, gestureSpeed, pointerCount)
 
         val now = System.currentTimeMillis()
-        if (now - lastSeekTimestampMs > 80L) {
+        if (now - lastSeekTimestampMs > 50L) {
             lastSeekTimestampMs = now
-            try {
-                videoView?.seekTo(targetMs)
-                if (!isPausedByUser) {
-                    videoView?.start()
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            performSeek(targetMs)
         }
 
         if (isFullScreen) {
@@ -1912,7 +2585,7 @@ class QuickPreviewPopup(private val context: Context) {
         onDragDeltaRaw(rootX + deltaPx)
     }
 
-    fun onTouchUp() {
+    fun onTouchUp(wasSeeking: Boolean = false) {
         mainHandler.removeCallbacks(resetActiveMovingRunnable)
         mainHandler.removeCallbacks(hideHudRunnable)
         dualSliderCard?.visibility = View.GONE
@@ -1920,31 +2593,32 @@ class QuickPreviewPopup(private val context: Context) {
         seekHudLayout?.visibility = View.GONE
         verticalHudCard?.visibility = View.GONE
         seekTimelineHudCard?.visibility = View.GONE
+        seekTimelineSpeedBadge?.visibility = View.GONE
 
+        val didSeek = isUserDragging || isActivelyMovingFinger || wasSeeking
         isActivelyMovingFinger = false
+        isUserDragging = false
+        isTouchOnSeekBar = false
         resetPlaybackSpeed()
 
-        if (isUserDragging && gestureState == GestureState.SEEKING && isVideo) {
-            try {
-                if (videoView != null) {
-                    videoView?.seekTo(currentSeekPositionMs)
-                    if (!isPausedByUser) {
-                        videoView?.start()
-                    }
-                }
-            } catch (_: Exception) {}
-        }
-        isUserDragging = false
-
         if (isVideo) {
+            if (didSeek) {
+                performSeek(currentSeekPositionMs)
+            }
             val pos = videoView?.currentPosition ?: currentSeekPositionMs
-            currentSeekPositionMs = if (pos > 0) pos else currentSeekPositionMs
+            if (pos > 0 && !didSeek) {
+                currentSeekPositionMs = pos
+            }
             dragStartSeekPositionMs = currentSeekPositionMs
             updateSeekDisplay(currentSeekPositionMs)
         }
     }
 
-    private fun updateSeekDisplay(positionMs: Int) {
+    private fun updateSeekDisplay(
+        positionMs: Int,
+        activeGestureSpeed: Float? = null,
+        activePointerCount: Int = 1
+    ) {
         if (!isVideo) return
         val dur = if (videoDurationMs > 0) videoDurationMs else (videoView?.duration ?: 0)
         if (dur <= 0) return
@@ -1954,7 +2628,12 @@ class QuickPreviewPopup(private val context: Context) {
         val currentStr = String.format("%02d:%02d", currentSec / 60, currentSec % 60)
         val totalStr = String.format("%02d:%02d", totalSec / 60, totalSec % 60)
 
-        val speedText = if (currentSpeed > 1.05f) {
+        val showIndicator = me.zhanghai.android.files.file.VideoPreviewPositionManager.getShowGestureSpeedIndicator()
+
+        val speedText = if (isUserDragging && showIndicator && activeGestureSpeed != null) {
+            val fingersLabel = if (activePointerCount >= 2) "2-Fingers" else "1-Finger"
+            String.format(java.util.Locale.US, "  |  ⚡ %.1fx Speed (%s)", activeGestureSpeed, fingersLabel)
+        } else if (currentSpeed > 1.05f) {
             String.format(java.util.Locale.US, "  |  ⚡ %.1fx Speed", currentSpeed)
         } else {
             ""
@@ -1962,11 +2641,29 @@ class QuickPreviewPopup(private val context: Context) {
 
         timeText?.text = "$currentStr / $totalStr$speedText"
         fullTimeText?.text = "$currentStr / $totalStr$speedText"
+
+        if (isUserDragging && showIndicator && activeGestureSpeed != null) {
+            val isTwoFingers = activePointerCount >= 2
+            val badgeColor = if (isTwoFingers) "#4DEEEA" else "#7C85FC"
+            val badgeText = String.format(
+                java.util.Locale.US,
+                "⚡ %.1fx (%s)",
+                activeGestureSpeed,
+                if (isTwoFingers) "2-Fingers" else "1-Finger"
+            )
+            seekTimelineSpeedBadge?.text = badgeText
+            seekTimelineSpeedBadge?.setTextColor(Color.parseColor(badgeColor))
+            seekTimelineSpeedBadge?.visibility = View.VISIBLE
+        } else {
+            seekTimelineSpeedBadge?.visibility = View.GONE
+        }
         seekTimelineText?.text = "$currentStr / $totalStr"
 
-        val progress = ((positionMs.toFloat() / dur) * 1000).toInt()
+        val progress = ((positionMs.toFloat() / dur) * 1000).toInt().coerceIn(0, 1000)
         seekBarProgress?.progress = progress
-        fullSeekBar?.progress = progress
+        if (!isTouchOnSeekBar) {
+            fullSeekBar?.progress = progress
+        }
         seekTimelineProgressBar?.progress = progress
         if (videoView?.isPlaying == true) {
             playPauseButton?.setImageResource(R.drawable.ic_pause_white_24dp)
@@ -1998,10 +2695,14 @@ class QuickPreviewPopup(private val context: Context) {
         isFullScreen = false
         isUserDragging = false
         isActivelyMovingFinger = false
+        isUserDragging = false
         isPausedByUser = false
         isControlsLocked = false
         areControlsVisible = true
         gestureState = GestureState.NONE
+        singleTapToggleRunnable?.let { mainHandler.removeCallbacks(it) }
+        singleTapToggleRunnable = null
+        lastTapTimeMs = 0L
         mainHandler.removeCallbacks(updateProgressRunnable)
         mainHandler.removeCallbacks(hideHudRunnable)
         mainHandler.removeCallbacks(hideControlsRunnable)
@@ -2027,10 +2728,12 @@ class QuickPreviewPopup(private val context: Context) {
         seekTimelineHudCard = null
         seekTimelineText = null
         seekTimelineProgressBar = null
+        seekTimelineSpeedBadge = null
         topControlBar = null
         topTitleText = null
         topBackButton = null
         topAspectButton = null
+        topThumbnailButton = null
         topSpeedButton = null
         topSpeedBadgeText = null
         topMoreButton = null

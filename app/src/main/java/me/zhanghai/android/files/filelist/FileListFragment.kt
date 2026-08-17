@@ -1820,6 +1820,7 @@ class FileListFragment : Fragment(),
 
     private fun onPasteStateChanged(pasteState: PasteState) {
         updateBottomToolbar()
+        adapter.notifyDataSetChanged()
     }
 
     private fun updateBottomToolbar() {
@@ -1909,8 +1910,13 @@ class FileListFragment : Fragment(),
                     onBottomActionModeFinished()
                 }
             })
+        } else {
+            binding.persistentBarLayout.showBar(binding.bottomBarLayout, false)
         }
     }
+
+    override val pasteState: PasteState
+        get() = viewModel.pasteState
 
     private fun onBottomToolbarNavigationIconClicked() {
         val pickOptions = viewModel.pickOptions
@@ -1958,7 +1964,7 @@ class FileListFragment : Fragment(),
         }
     }
 
-    private fun pasteFiles(targetDirectory: Path) {
+    override fun pasteFiles(targetDirectory: Path) {
         val pasteState = viewModel.pasteState
         if (viewModel.pasteState.copy) {
             FileJobService.copy(

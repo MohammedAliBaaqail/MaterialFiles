@@ -351,6 +351,16 @@ class FileListAdapter(
         val isReadOnly = path.fileSystem.isReadOnly
         menu.findItem(R.id.action_cut).isVisible = !hasPickOptions && !isReadOnly
         menu.findItem(R.id.action_copy).isVisible = !hasPickOptions
+        val pasteState = listener.pasteState
+        val hasPasteFiles = pasteState.files.isNotEmpty()
+        val pasteMenuItem = menu.findItem(R.id.action_paste_into_folder)
+        if (pasteMenuItem != null) {
+            pasteMenuItem.isVisible = isDirectory && hasPasteFiles && !isReadOnly
+            if (hasPasteFiles) {
+                val actionName = if (pasteState.copy) "Copy here" else "Move here"
+                pasteMenuItem.title = "$actionName (${pasteState.files.size})"
+            }
+        }
         val checked = file in selectedFiles
         holder.itemLayout.isChecked = checked
         holder.nameText.apply {
@@ -916,6 +926,10 @@ class FileListAdapter(
                     listener.manageFolderThumbnail(file)
                     true
                 }
+                R.id.action_paste_into_folder -> {
+                    listener.pasteFiles(file.path)
+                    true
+                }
                 else -> false
             }
         }
@@ -1354,5 +1368,7 @@ class FileListAdapter(
         fun onTagClick(tag: FileTag)
         fun manageVideoThumbnail(file: FileItem)
         fun manageFolderThumbnail(file: FileItem)
+        val pasteState: PasteState
+        fun pasteFiles(targetDirectory: Path)
     }
 }

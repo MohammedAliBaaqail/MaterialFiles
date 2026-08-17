@@ -53,8 +53,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.zhanghai.android.files.R
 import me.zhanghai.android.files.provider.common.VideoMetadataRepository
+import me.zhanghai.android.files.file.fileProviderUri
 import me.zhanghai.android.files.util.args
 import me.zhanghai.android.files.util.putArgs
+import me.zhanghai.android.files.util.setDataSource
 import java.io.File
 import java.io.FileOutputStream
 import kotlinx.parcelize.RawValue
@@ -313,7 +315,7 @@ class VideoThumbnailManagementDialogFragment : AppCompatDialogFragment() {
                 // Get video duration
                 durationMillis = withContext(Dispatchers.IO) {
                     MediaMetadataRetriever().use { retriever ->
-                        retriever.setDataSource(path.toString())
+                        retriever.setDataSource(path)
                         
                         // Get duration
                         retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
@@ -440,7 +442,7 @@ class VideoThumbnailManagementDialogFragment : AppCompatDialogFragment() {
         player = ExoPlayer.Builder(requireContext())
             .build().apply {
             // Set media item
-            val mediaItem = MediaItem.fromUri(Uri.fromFile(File(path.toString())))
+            val mediaItem = MediaItem.fromUri(path.fileProviderUri)
             setMediaItem(mediaItem)
             
             // Prepare the player
@@ -534,7 +536,7 @@ class VideoThumbnailManagementDialogFragment : AppCompatDialogFragment() {
         withContext(Dispatchers.IO) {
             try {
                 MediaMetadataRetriever().use { retriever ->
-                    retriever.setDataSource(path.toString())
+                    retriever.setDataSource(path)
                     
                     // Convert to microseconds
                     val timeMicros = timeMillis * 1000

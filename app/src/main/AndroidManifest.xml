@@ -60,6 +60,7 @@
 
         <activity
             android:name="me.zhanghai.android.files.filelist.FileListActivity"
+            android:launchMode="singleTask"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|density"
             android:exported="true"
             android:visibleToInstantApps="true"
